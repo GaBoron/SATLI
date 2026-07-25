@@ -48,6 +48,12 @@ class SteamAccount:
     most_recent: bool = False
 
 
+@dataclass(frozen=True, slots=True)
+class OwnedGame:
+    app_id: str
+    name: str = ""
+
+
 @dataclass(slots=True)
 class DiscoveryRecord:
     app_id: str

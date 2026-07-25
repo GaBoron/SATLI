@@ -109,6 +109,13 @@
                 SettingsChanged="NetworkSettingsEditor_SettingsChanged"
                 TestConnectionRequested="NetworkSettingsEditor_TestConnectionRequested" />
 
+            <TextBlock Text="Steam 游戏库" Style="{StaticResource SubtitleTextBlockStyle}" Margin="0,12,0,0" />
+            <controls:SteamLibrarySettingsControl
+                x:Name="SteamLibrarySettingsEditor"
+                SettingsChanged="SteamLibrarySettingsEditor_SettingsChanged"
+                TestConnectionRequested="SteamLibrarySettingsEditor_TestConnectionRequested"
+                OpenApiKeyPageRequested="SteamLibrarySettingsEditor_OpenApiKeyPageRequested" />
+
             <TextBlock Text="日志" Style="{StaticResource SubtitleTextBlockStyle}" Margin="0,12,0,0" />
             <StackPanel Spacing="8">
                 <Border Style="{StaticResource SettingsCardStyle}">

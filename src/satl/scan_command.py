@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import os
 import sys
 from pathlib import Path
 from typing import Any
@@ -14,8 +15,19 @@ from satl.cli_protocol import (
 )
 from satl.errors import UsageError
 from satl.game_names import SteamGameNameResolver
+from satl.models import DiscoveryRecord
 from satl.native_languages import detect_achievement_languages
-from satl.steam import discover_local_games, find_steam_dir, schema_target
+from satl.steam import (
+    discover_accounts,
+    discover_local_games,
+    find_steam_dir,
+    schema_target,
+)
+from satl.steam_web_api import (
+    SteamWebApiClient,
+    SteamWebApiError,
+    merge_owned_games,
+)
 from satl.transaction import TransactionManager
 
 
@@ -26,6 +38,8 @@ def command_scan(args: argparse.Namespace) -> int:
     print_catalog_cache_notice(catalog, operation="scan", jsonl=args.jsonl)
     steam_dir = None if args.scope == "cloud" else find_steam_dir(args.steam_dir)
     discovered = {} if steam_dir is None else discover_local_games(steam_dir, args.account)
+    if steam_dir is not None and args.include_owned_games:
+        _merge_owned_games(args, steam_dir, discovered)
     manager = TransactionManager(Path(args.data_dir))
     if args.scope == "cloud":
         app_ids = sorted(catalog.entries, key=int)
@@ -148,3 +162,58 @@ def command_scan(args: argparse.Namespace) -> int:
     else:
         print("没有在本地 Steam 数据中匹配到翻译库条目。")
     return 0
+
+
+def _merge_owned_games(
+    args: argparse.Namespace,
+    steam_dir: Path,
+    discovered: dict[str, DiscoveryRecord],
+) -> None:
+    if args.offline:
+        _warn(
+            args,
+            "离线模式已启用，已跳过 Steam Web API 游戏库补全。",
+        )
+        return
+
+    accounts = discover_accounts(steam_dir)
+    selected = next(
+        (
+            account
+            for account in accounts
+            if account.steam_id == args.owned_account
+        ),
+        None,
+    )
+    if selected is None and not args.owned_account:
+        selected = next((account for account in accounts if account.most_recent), None)
+    if selected is None:
+        _warn(
+            args,
+            "没有可用于 Steam Web API 查询的本地账号，请在设置中选择 SteamID64。",
+        )
+        return
+
+    api_key = os.environ.get("SATL_STEAM_WEB_API_KEY", "")
+    if not api_key:
+        _warn(
+            args,
+            "Steam Web API Key 未配置，已继续使用本地扫描结果。",
+        )
+        return
+    try:
+        games = SteamWebApiClient().get_owned_games(api_key, selected.steam_id)
+    except SteamWebApiError as error:
+        _warn(
+            args,
+            f"Steam 游戏库补全失败，已继续使用本地扫描结果：{error}",
+        )
+        return
+    merge_owned_games(discovered, games, selected.steam_id)
+
+
+def _warn(args: argparse.Namespace, message: str) -> None:
+    if args.jsonl:
+        emit_jsonl("scan", "warning", {"message": message})
+    else:
+        print(f"警告：{message}", file=sys.stderr)

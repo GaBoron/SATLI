@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Sockets;
+using System.Text;
 using Satl_Gui.Models;
 using Satl_Gui.Services;
 using Xunit;
@@ -104,5 +105,104 @@ public sealed class NetworkServicesTests
                 Directory.Delete(directory, recursive: true);
             }
         }
+    }
+
+    [Fact]
+    public async Task SettingsServiceEncryptsSteamWebApiKeyAtRest()
+    {
+        var directory = Path.Combine(Path.GetTempPath(), $"satl-steam-api-{Guid.NewGuid():N}");
+        var path = Path.Combine(directory, "settings.json");
+        const string apiKey = "0123456789abcdef0123456789abcdef";
+        try
+        {
+            var service = new SettingsService(path);
+            await service.SaveAsync(new GuiSettings
+            {
+                SteamLibrary = new SteamLibrarySettings
+                {
+                    Enabled = true,
+                    SteamId = "76561198000000000",
+                    ApiKey = apiKey,
+                },
+            });
+
+            var serialized = await File.ReadAllTextAsync(path);
+            var loaded = await service.LoadAsync();
+
+            Assert.DoesNotContain(apiKey, serialized);
+            Assert.Contains("ProtectedApiKey", serialized);
+            Assert.True(loaded.SteamLibrary.Enabled);
+            Assert.Equal("76561198000000000", loaded.SteamLibrary.SteamId);
+            Assert.Equal(apiKey, loaded.SteamLibrary.ApiKey);
+        }
+        finally
+        {
+            if (Directory.Exists(directory))
+            {
+                Directory.Delete(directory, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
+    public void SteamLibraryValidatorRequiresCompleteCredentialsForUse()
+    {
+        var exception = Assert.Throws<ArgumentException>(() =>
+            SteamLibrarySettingsValidator.RequireConfigured(new SteamLibrarySettings
+            {
+                Enabled = true,
+                SteamId = "not-a-steam-id",
+                ApiKey = "short",
+            }));
+
+        Assert.Contains("SteamID64", exception.Message);
+        Assert.False(SteamLibrarySettingsValidator.IsConfigured(new SteamLibrarySettings()));
+        Assert.True(SteamLibrarySettingsValidator.IsConfigured(new SteamLibrarySettings
+        {
+            SteamId = "76561198000000000",
+            ApiKey = "0123456789abcdef0123456789abcdef",
+        }));
+    }
+
+    [Fact]
+    public async Task SteamWebApiProbeReadsGameCount()
+    {
+        Uri? requestedUri = null;
+        var service = new SteamWebApiProbeService(_ =>
+            new HttpClient(new StubHandler(request =>
+            {
+                requestedUri = request.RequestUri;
+                return new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = new StringContent(
+                        """{"response":{"game_count":42,"games":[]}}""",
+                        Encoding.UTF8,
+                        "application/json"),
+                };
+            })));
+
+        var result = await service.TestAsync(
+            new SteamLibrarySettings
+            {
+                Enabled = true,
+                SteamId = "76561198000000000",
+                ApiKey = "0123456789abcdef0123456789abcdef",
+            },
+            new NetworkSettings());
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(42, result.GameCount);
+        Assert.Contains("42", result.Message);
+        Assert.Contains("include_appinfo=false", requestedUri?.Query);
+    }
+
+    private sealed class StubHandler(
+        Func<HttpRequestMessage, HttpResponseMessage> responseFactory)
+        : HttpMessageHandler
+    {
+        protected override Task<HttpResponseMessage> SendAsync(
+            HttpRequestMessage request,
+            CancellationToken cancellationToken) =>
+            Task.FromResult(responseFactory(request));
     }
 }

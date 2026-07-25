@@ -34,6 +34,15 @@ def build_parser() -> argparse.ArgumentParser:
     _add_offline(scan)
     scan.add_argument("--account", help="仅使用指定的本地 SteamID64 账号缓存")
     scan.add_argument(
+        "--owned-account",
+        help="Steam Web API 游戏库补全使用的本地 SteamID64",
+    )
+    scan.add_argument(
+        "--include-owned-games",
+        action="store_true",
+        help="使用环境变量 SATL_STEAM_WEB_API_KEY 补全指定账号拥有的游戏",
+    )
+    scan.add_argument(
         "--scope",
         choices=("manageable", "local", "cloud"),
         default="manageable",

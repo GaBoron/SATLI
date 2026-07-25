@@ -49,6 +49,7 @@ public sealed class ProtocolTests
         var item = GameItem.FromPayload(document.RootElement);
 
         Assert.Equal("123", item.AppId);
+        Assert.Equal("已安装", item.DiscoveryText);
         Assert.True(item.IsModified);
         Assert.Equal("with-unlock-conditions", item.SelectedVariant?.VariantId);
         Assert.Contains("含解锁条件", item.SelectedVariant?.DisplayName);
@@ -238,6 +239,45 @@ public sealed class ProtocolTests
     public void SettingsEnableLogWordWrapByDefault()
     {
         Assert.True(new GuiSettings().LogWordWrap);
+    }
+
+    [Fact]
+    public void SteamLibraryCliOptionsNeverPlaceApiKeyInArguments()
+    {
+        const string apiKey = "0123456789abcdef0123456789abcdef";
+        var arguments = new List<string> { "scan", "--jsonl" };
+        var warning = SteamLibraryCliOptions.AppendScanArguments(
+            arguments,
+            new GuiSettings
+            {
+                SteamLibrary = new SteamLibrarySettings
+                {
+                    Enabled = true,
+                    SteamId = "76561198000000000",
+                    ApiKey = apiKey,
+                },
+            });
+
+        Assert.Null(warning);
+        Assert.Contains("--include-owned-games", arguments);
+        Assert.Contains("--owned-account", arguments);
+        Assert.Contains("76561198000000000", arguments);
+        Assert.DoesNotContain(apiKey, arguments);
+    }
+
+    [Fact]
+    public void SteamLibraryCliOptionsSkipIncompleteConfiguration()
+    {
+        var arguments = new List<string> { "scan" };
+        var warning = SteamLibraryCliOptions.AppendScanArguments(
+            arguments,
+            new GuiSettings
+            {
+                SteamLibrary = new SteamLibrarySettings { Enabled = true },
+            });
+
+        Assert.Contains("尚未填写完整", warning);
+        Assert.DoesNotContain("--include-owned-games", arguments);
     }
 
     [Fact]

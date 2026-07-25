@@ -146,7 +146,12 @@ public sealed class GameItem : ObservableObject
             GameName = GetString(payload, "game_name", "未知游戏"),
             CatalogStatus = GetString(payload, "catalog_status", "unknown"),
             DiscoveryText = payload.TryGetProperty("discovery", out var discovery)
-                ? string.Join(" / ", discovery.EnumerateArray().Select(source => source.GetString()).Where(source => !string.IsNullOrWhiteSpace(source)))
+                ? string.Join(
+                    " / ",
+                    discovery.EnumerateArray()
+                        .Select(source => source.GetString())
+                        .Where(source => !string.IsNullOrWhiteSpace(source))
+                        .Select(source => DiscoveryLabel(source!)))
                 : string.Empty,
             NativeLanguages = GetStringArray(payload, "native_languages"),
             InstalledState = GetString(payload, "installed_state", "unmanaged"),
@@ -187,4 +192,12 @@ public sealed class GameItem : ObservableObject
                 .Select(value => value!)
                 .ToArray()
             : [];
+
+    private static string DiscoveryLabel(string source) => source switch
+    {
+        "installed" => "已安装",
+        "account-cache" => "账号缓存",
+        "steam-web-api" => "Steam Web API",
+        _ => source,
+    };
 }

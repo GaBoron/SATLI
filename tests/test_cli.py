@@ -11,6 +11,7 @@ import pytest
 from satl.cli import main
 from satl.catalog import CatalogRepository
 from satl.game_names import GameNameResolution, SteamGameNameResolver
+from satl.models import OwnedGame
 
 
 def make_fixture(
@@ -261,6 +262,145 @@ def test_scan_local_scope_resolves_missing_names_online(
         if event["event"] == "item-succeeded" and event["payload"]["app_id"] == "456"
     )
     assert item["payload"]["game_name"] == "Online Game Name"
+
+
+def test_scan_can_merge_owned_games_from_steam_web_api(
+    tmp_path: Path,
+    monkeypatch,
+    capsys,
+) -> None:
+    steam, data_dir = make_fixture(tmp_path)
+    steam_id = "76561198000000000"
+    (steam / "config").mkdir()
+    (steam / "config" / "loginusers.vdf").write_text(
+        f'"users" {{ "{steam_id}" {{ "PersonaName" "Tester" "MostRecent" "1" }} }}',
+        encoding="utf-8",
+    )
+    cached_catalog = CatalogRepository(data_dir).load(offline=True)
+    monkeypatch.setattr(
+        "satl.scan_command.CatalogRepository",
+        lambda data_dir: SimpleNamespace(load=lambda offline: cached_catalog),
+    )
+    monkeypatch.setenv(
+        "SATL_STEAM_WEB_API_KEY",
+        "0123456789abcdef0123456789abcdef",
+    )
+    monkeypatch.setattr(
+        "satl.scan_command.SteamWebApiClient.get_owned_games",
+        lambda client, api_key, account_id: (
+            OwnedGame("123", "CLI Game"),
+            OwnedGame("456", "Never Installed"),
+        ),
+    )
+
+    result = main(
+        [
+            "scan",
+            "--scope",
+            "local",
+            "--include-owned-games",
+            "--owned-account",
+            steam_id,
+            "--jsonl",
+            "--steam-dir",
+            str(steam),
+            "--data-dir",
+            str(data_dir),
+        ]
+    )
+
+    assert result == 0
+    events = jsonl_events(capsys.readouterr().out)
+    owned = next(
+        event
+        for event in events
+        if event["event"] == "item-succeeded"
+        and event["payload"]["app_id"] == "456"
+    )
+    assert owned["payload"]["game_name"] == "Never Installed"
+    assert owned["payload"]["discovery"] == ["steam-web-api"]
+
+
+def test_scan_web_api_failure_degrades_to_local_results(
+    tmp_path: Path,
+    monkeypatch,
+    capsys,
+) -> None:
+    steam, data_dir = make_fixture(tmp_path)
+    steam_id = "76561198000000000"
+    (steam / "config").mkdir()
+    (steam / "config" / "loginusers.vdf").write_text(
+        f'"users" {{ "{steam_id}" {{ "PersonaName" "Tester" "MostRecent" "1" }} }}',
+        encoding="utf-8",
+    )
+    monkeypatch.delenv("SATL_STEAM_WEB_API_KEY", raising=False)
+
+    result = main(
+        [
+            "scan",
+            "--offline",
+            "--include-owned-games",
+            "--owned-account",
+            steam_id,
+            "--jsonl",
+            "--steam-dir",
+            str(steam),
+            "--data-dir",
+            str(data_dir),
+        ]
+    )
+
+    assert result == 0
+    events = jsonl_events(capsys.readouterr().out)
+    warnings = [event for event in events if event["event"] == "warning"]
+    assert any("跳过 Steam Web API" in event["payload"]["message"] for event in warnings)
+    assert any(
+        event["event"] == "item-succeeded"
+        and event["payload"]["app_id"] == "123"
+        for event in events
+    )
+
+
+def test_unknown_owned_account_does_not_filter_or_break_local_scan(
+    tmp_path: Path,
+    monkeypatch,
+    capsys,
+) -> None:
+    steam, data_dir = make_fixture(tmp_path)
+    monkeypatch.setenv(
+        "SATL_STEAM_WEB_API_KEY",
+        "0123456789abcdef0123456789abcdef",
+    )
+
+    result = main(
+        [
+            "scan",
+            "--scope",
+            "local",
+            "--include-owned-games",
+            "--owned-account",
+            "76561198000000000",
+            "--jsonl",
+            "--steam-dir",
+            str(steam),
+            "--data-dir",
+            str(data_dir),
+        ]
+    )
+
+    assert result == 0
+    events = jsonl_events(capsys.readouterr().out)
+    assert any(
+        event["event"] == "warning"
+        and "没有可用于 Steam Web API 查询的本地账号"
+        in event["payload"]["message"]
+        for event in events
+    )
+    assert any(
+        event["event"] == "item-succeeded"
+        and event["payload"]["app_id"] == "123"
+        for event in events
+    )
 
 
 def test_jsonl_escapes_cjk_for_codepage_safe_transport(tmp_path: Path, capsys) -> None:

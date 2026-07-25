@@ -71,7 +71,8 @@ public sealed class GameInventoryViewModel(GameInventoryScope scope) : Observabl
             var result = await _cli.RunAsync(
                 arguments,
                 HandleEvent,
-                networkSettings: App.ViewModel.Settings.Network);
+                networkSettings: App.ViewModel.Settings.Network,
+                steamLibrarySettings: App.ViewModel.Settings.SteamLibrary);
             if (!result.IsSuccess)
             {
                 throw new InvalidOperationException(result.ErrorMessage);
@@ -121,6 +122,14 @@ public sealed class GameInventoryViewModel(GameInventoryScope scope) : Observabl
         if (settings.Offline)
         {
             arguments.Add("--offline");
+        }
+        if (scope == GameInventoryScope.Local)
+        {
+            var warning = SteamLibraryCliOptions.AppendScanArguments(arguments, settings);
+            if (warning is not null)
+            {
+                App.ViewModel.ShowInfo(warning, InfoBarSeverity.Warning);
+            }
         }
         return arguments;
     }

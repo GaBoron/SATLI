@@ -8,8 +8,10 @@ namespace Satl_Gui.Services;
 
 public sealed class SettingsService
 {
-    private static readonly byte[] PasswordEntropy =
+    private static readonly byte[] ProxyPasswordEntropy =
         Encoding.UTF8.GetBytes("SATLInstaller.ProxyPassword.v1");
+    private static readonly byte[] SteamApiKeyEntropy =
+        Encoding.UTF8.GetBytes("SATLInstaller.SteamApiKey.v1");
     private readonly string _path;
 
     public SettingsService(string? path = null)
@@ -37,6 +39,7 @@ public sealed class SettingsService
                 SatlJsonSerializerContext.Default.GuiSettings) ?? new GuiSettings();
             settings.LogLevel = PersistentLogLevel(settings.LogLevel);
             settings.Network = LoadNetworkSettings(settings.Network);
+            settings.SteamLibrary = LoadSteamLibrarySettings(settings.SteamLibrary);
             return settings;
         }
         catch (JsonException)
@@ -59,6 +62,7 @@ public sealed class SettingsService
             await using (var stream = new FileStream(temporary, FileMode.CreateNew, FileAccess.Write, FileShare.None))
             {
                 var network = NetworkSettingsValidator.Normalize(settings.Network);
+                var steamLibrary = SteamLibrarySettingsValidator.Normalize(settings.SteamLibrary);
                 var persistentSettings = new GuiSettings
                 {
                     SteamDirectory = settings.SteamDirectory,
@@ -77,7 +81,17 @@ public sealed class SettingsService
                         ProxyMode = network.ProxyMode,
                         ProxyAddress = network.ProxyAddress,
                         ProxyUsername = network.ProxyUsername,
-                        ProtectedProxyPassword = ProtectPassword(network.ProxyPassword),
+                        ProtectedProxyPassword = ProtectSecret(
+                            network.ProxyPassword,
+                            ProxyPasswordEntropy),
+                    },
+                    SteamLibrary = new SteamLibrarySettings
+                    {
+                        Enabled = steamLibrary.Enabled,
+                        SteamId = steamLibrary.SteamId,
+                        ProtectedApiKey = ProtectSecret(
+                            steamLibrary.ApiKey,
+                            SteamApiKeyEntropy),
                     },
                 };
                 await JsonSerializer.SerializeAsync(
@@ -106,7 +120,9 @@ public sealed class SettingsService
         stored ??= new NetworkSettings();
         try
         {
-            stored.ProxyPassword = UnprotectPassword(stored.ProtectedProxyPassword);
+            stored.ProxyPassword = UnprotectSecret(
+                stored.ProtectedProxyPassword,
+                ProxyPasswordEntropy);
             return NetworkSettingsValidator.Normalize(stored);
         }
         catch (ArgumentException)
@@ -115,30 +131,40 @@ public sealed class SettingsService
         }
     }
 
-    private static string ProtectPassword(string password)
+    private static SteamLibrarySettings LoadSteamLibrarySettings(
+        SteamLibrarySettings? stored)
     {
-        if (string.IsNullOrEmpty(password))
+        stored ??= new SteamLibrarySettings();
+        stored.ApiKey = UnprotectSecret(
+            stored.ProtectedApiKey,
+            SteamApiKeyEntropy);
+        return SteamLibrarySettingsValidator.Normalize(stored);
+    }
+
+    private static string ProtectSecret(string secret, byte[] entropy)
+    {
+        if (string.IsNullOrEmpty(secret))
         {
             return string.Empty;
         }
         var protectedBytes = ProtectedData.Protect(
-            Encoding.UTF8.GetBytes(password),
-            PasswordEntropy,
+            Encoding.UTF8.GetBytes(secret),
+            entropy,
             DataProtectionScope.CurrentUser);
         return Convert.ToBase64String(protectedBytes);
     }
 
-    private static string UnprotectPassword(string protectedPassword)
+    private static string UnprotectSecret(string protectedSecret, byte[] entropy)
     {
-        if (string.IsNullOrWhiteSpace(protectedPassword))
+        if (string.IsNullOrWhiteSpace(protectedSecret))
         {
             return string.Empty;
         }
         try
         {
             var clearBytes = ProtectedData.Unprotect(
-                Convert.FromBase64String(protectedPassword),
-                PasswordEntropy,
+                Convert.FromBase64String(protectedSecret),
+                entropy,
                 DataProtectionScope.CurrentUser);
             return Encoding.UTF8.GetString(clearBytes);
         }

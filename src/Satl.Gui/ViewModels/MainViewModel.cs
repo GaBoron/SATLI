@@ -504,6 +504,14 @@ public sealed class MainViewModel : ObservableObject
             includeSteamDirectory: true,
             includeOffline: true,
             forceOffline: forceOffline);
+        var steamLibraryWarning = SteamLibraryCliOptions.AppendScanArguments(
+            arguments,
+            Settings,
+            forceOffline);
+        if (steamLibraryWarning is not null)
+        {
+            ShowInfo(steamLibraryWarning, InfoBarSeverity.Warning);
+        }
         var result = await RunCliAsync(arguments, "正在扫描本地 Steam 数据…");
         if (!result.IsSuccess)
         {
@@ -608,7 +616,7 @@ public sealed class MainViewModel : ObservableObject
                 {
                     App.DispatcherQueue.TryEnqueue(() => ShowInfo(warning.GetString() ?? "正在使用本地缓存。"));
                 }
-            }, diagnostic, Settings.Network);
+            }, diagnostic, Settings.Network, Settings.SteamLibrary);
         }
         catch (Exception exception)
         {
@@ -809,7 +817,10 @@ public sealed class MainViewModel : ObservableObject
         $"DnsMode={settings.Network.DnsMode}; DnsServers={settings.Network.DnsServers}; " +
         $"ProxyMode={settings.Network.ProxyMode}; ProxyAddress={settings.Network.ProxyAddress}; " +
         $"ProxyUsernameConfigured={!string.IsNullOrEmpty(settings.Network.ProxyUsername)}; " +
-        $"ProxyPasswordConfigured={!string.IsNullOrEmpty(settings.Network.ProxyPassword)}";
+        $"ProxyPasswordConfigured={!string.IsNullOrEmpty(settings.Network.ProxyPassword)}; " +
+        $"SteamLibraryEnabled={settings.SteamLibrary.Enabled}; SteamIdConfigured=" +
+        $"{!string.IsNullOrEmpty(settings.SteamLibrary.SteamId)}; SteamApiKeyConfigured=" +
+        $"{!string.IsNullOrEmpty(settings.SteamLibrary.ApiKey)}";
 
     private void ShowException(string operation, Exception exception)
     {

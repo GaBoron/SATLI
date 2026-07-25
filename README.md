@@ -31,6 +31,7 @@
 ## 主要功能
 
 - 自动检测 Steam 目录和本机成就缓存。
+- 可选使用个人 Steam Web API Key 补全指定账号已拥有但从未安装或启动的游戏；查询失败时自动退回本地扫描。
 - 本地 manifest 和翻译索引都没有游戏名时，先使用 Steam 商店查询，再用无需密钥的 SteamCMD API 补全隐藏或下架条目，并缓存成功结果；离线模式不会查询。
 - 搜索、批量选择并安装社区翻译。
 - 单个或批量安装、恢复前均显示确认弹窗；每页展示一个游戏的 BIN 成就表格，默认显示简体中文，并可切换该 BIN 实际包含的其他语言。
@@ -48,6 +49,7 @@
 
 翻译数据来自 [Steam 成就翻译库](https://github.com/GaBoron/steam-achievement-translation-library)。安装器不会编辑翻译内容，也不会把你的 Steam 文件上传到网络。
 联网补全本地游戏名称时只会向 Steam 商店或备用的 SteamCMD API 查询对应 App ID，不会发送 Steam 账号、目录或本地文件；查询成功的名称保存在数据目录的 `cache/steam-game-names.json`。
+启用 Steam 游戏库补全后，API Key 使用当前 Windows 账户的 DPAPI 加密保存在本机，只会直接发送给 Steam，并且不会写入命令行或日志。SteamID64 和游戏库查询结果受 Steam 隐私设置及 Web API 返回范围限制。
 
 ## 翻译请愿
 

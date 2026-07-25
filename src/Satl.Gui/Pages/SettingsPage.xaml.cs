@@ -11,6 +11,7 @@ namespace Satl_Gui.Pages;
 public sealed partial class SettingsPage : Page
 {
     private readonly SemaphoreSlim _settingsGate = new(1, 1);
+    private readonly SteamWebApiProbeService _steamWebApiProbe = new();
     private bool _isInitializing;
     private string _steamDirectory = string.Empty;
     private string _dataDirectory = string.Empty;
@@ -37,6 +38,9 @@ public sealed partial class SettingsPage : Page
         UpdateCheckSwitch.IsOn = ViewModel.Settings.CheckForUpdatesOnStartup;
         RefreshToggleStateLabels();
         NetworkSettingsEditor.LoadSettings(ViewModel.Settings.Network);
+        SteamLibrarySettingsEditor.LoadSettings(
+            ViewModel.Settings.SteamLibrary,
+            ViewModel.Settings.Offline);
         UpdateStatusText.Text = $"当前版本 v{UpdateService.CurrentVersionText}。";
         AboutVersionText.Text = $"版本 {UpdateService.CurrentVersionText} · Windows 10/11 x64";
         OpenReleaseButton.Visibility = ViewModel.LatestReleasePage is null ? Visibility.Collapsed : Visibility.Visible;
@@ -66,6 +70,7 @@ public sealed partial class SettingsPage : Page
                 LogWordWrap = LogWordWrapSwitch.IsOn,
                 CheckForUpdatesOnStartup = UpdateCheckSwitch.IsOn,
                 Network = NetworkSettingsEditor.ReadSettings(),
+                SteamLibrary = SteamLibrarySettingsEditor.ReadSettings(),
             });
             RefreshDirectoryLabels();
         }
@@ -140,6 +145,7 @@ public sealed partial class SettingsPage : Page
     private async void OfflineSwitch_Toggled(object sender, RoutedEventArgs e)
     {
         UpdateToggleStateText(OfflineSwitch, OfflineStateText);
+        SteamLibrarySettingsEditor.SetOffline(OfflineSwitch.IsOn);
         if (!_isInitializing)
         {
             await ApplySettingsAsync();
@@ -268,6 +274,43 @@ public sealed partial class SettingsPage : Page
             NetworkSettingsEditor.SetTestState(false, message);
             ViewModel.ShowInfo(message, InfoBarSeverity.Warning);
         }
+    }
+
+    private async void SteamLibrarySettingsEditor_SettingsChanged(
+        object? sender,
+        EventArgs e)
+    {
+        if (!_isInitializing)
+        {
+            await ApplySettingsAsync();
+        }
+    }
+
+    private async void SteamLibrarySettingsEditor_TestConnectionRequested(
+        object? sender,
+        EventArgs e)
+    {
+        SteamLibrarySettingsEditor.SetTestState(
+            true,
+            "正在验证 Steam Web API 凭据并读取游戏库…");
+        var result = await _steamWebApiProbe.TestAsync(
+            SteamLibrarySettingsEditor.ReadSettings(),
+            NetworkSettingsEditor.ReadSettings());
+        SteamLibrarySettingsEditor.SetTestState(false, result.Message);
+        if (!result.IsSuccess)
+        {
+            ViewModel.ShowInfo(result.Message, InfoBarSeverity.Warning);
+        }
+    }
+
+    private void SteamLibrarySettingsEditor_OpenApiKeyPageRequested(
+        object? sender,
+        EventArgs e)
+    {
+        Process.Start(new ProcessStartInfo("https://steamcommunity.com/dev/apikey")
+        {
+            UseShellExecute = true,
+        });
     }
 
     private void OpenData_Click(object sender, RoutedEventArgs e)

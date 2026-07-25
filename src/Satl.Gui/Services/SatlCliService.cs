@@ -12,7 +12,8 @@ public sealed class SatlCliService
         IEnumerable<string> arguments,
         Action<SatlEvent>? onEvent = null,
         Action<string>? onDiagnostic = null,
-        NetworkSettings? networkSettings = null)
+        NetworkSettings? networkSettings = null,
+        SteamLibrarySettings? steamLibrarySettings = null)
     {
         var argumentList = arguments.ToList();
         onDiagnostic?.Invoke($"步骤 1：解析 CLI 启动目标。请求参数={FormatArguments(argumentList)}");
@@ -46,6 +47,10 @@ public sealed class SatlCliService
         startInfo.Environment["PYTHONUTF8"] = "1";
         startInfo.Environment["PYTHONIOENCODING"] = "utf-8";
         ApplyNetworkEnvironment(startInfo, networkSettings);
+        if (argumentList.Contains("--include-owned-games", StringComparer.Ordinal))
+        {
+            ApplySteamLibraryEnvironment(startInfo, steamLibrarySettings);
+        }
         onDiagnostic?.Invoke(
             $"步骤 3：进程启动信息已组装。完整参数={FormatArguments(startInfo.ArgumentList)}；" +
             "标准输出/标准错误=UTF-8 重定向；隐藏控制台窗口=True。");
@@ -189,6 +194,17 @@ public sealed class SatlCliService
         startInfo.Environment["SATL_PROXY_ADDRESS"] = settings.ProxyAddress;
         startInfo.Environment["SATL_PROXY_USERNAME"] = settings.ProxyUsername;
         startInfo.Environment["SATL_PROXY_PASSWORD"] = settings.ProxyPassword;
+    }
+
+    private static void ApplySteamLibraryEnvironment(
+        ProcessStartInfo startInfo,
+        SteamLibrarySettings? rawSettings)
+    {
+        var settings = SteamLibrarySettingsValidator.Normalize(rawSettings);
+        if (settings.Enabled && !string.IsNullOrEmpty(settings.ApiKey))
+        {
+            startInfo.Environment["SATL_STEAM_WEB_API_KEY"] = settings.ApiKey;
+        }
     }
 
     private sealed record LaunchInfo(
