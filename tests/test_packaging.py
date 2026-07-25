@@ -21,6 +21,7 @@ def test_gui_and_installer_request_administrator_privileges() -> None:
 def test_installed_app_name_does_not_include_the_version() -> None:
     installer = (ROOT / "installer" / "SATLInstaller.iss").read_text(encoding="utf-8")
 
+    assert '#define MyAppName "Steam 成就翻译管理器"' in installer
     assert "UninstallDisplayName={#MyAppName}" in installer
 
 

@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="src/Satl.Gui/Assets/AppIcon.preview.png" width="112" alt="Steam 成就翻译安装器图标">
+  <img src="src/Satl.Gui/Assets/AppIcon.preview.png" width="112" alt="Steam 成就翻译管理器图标">
 </p>
 
-# Steam 成就翻译安装器
+# Steam 成就翻译管理器
 
 一款面向 Windows 10/11 的 Steam 成就翻译管理工具。它可以自动找到本机游戏，从社区翻译库选择合适版本，并安全完成安装、状态检查与恢复。
 

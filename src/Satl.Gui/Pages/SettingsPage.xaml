@@ -259,7 +259,7 @@
             <Border Style="{StaticResource SettingsCardStyle}">
                 <Grid Style="{StaticResource SettingsRowStyle}">
                     <StackPanel VerticalAlignment="Center" Spacing="3">
-                        <TextBlock Text="Steam 成就翻译安装器" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                        <TextBlock Text="Steam 成就翻译管理器" Style="{StaticResource BodyStrongTextBlockStyle}" />
                         <TextBlock x:Name="AboutVersionText" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                     </StackPanel>
                 </Grid>

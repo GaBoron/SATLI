@@ -11,7 +11,7 @@
   #error MyAppIcon is required
 #endif
 
-#define MyAppName "Steam 成就翻译安装器"
+#define MyAppName "Steam 成就翻译管理器"
 #define MyAppExeName "SATLInstaller.exe"
 #define MyAppPublisher "GaBoron"
 #define MyAppUrl "https://github.com/GaBoron/steam-achievement-translation-installer"
