@@ -14,6 +14,9 @@ from satl.game_names import GameNameResolution, SteamGameNameResolver
 from satl.models import OwnedGame
 
 
+RESERVED_TEST_STEAM_ID = "76561197960265728"
+
+
 def make_fixture(
     root: Path,
     *,
@@ -270,7 +273,7 @@ def test_scan_can_merge_owned_games_from_steam_web_api(
     capsys,
 ) -> None:
     steam, data_dir = make_fixture(tmp_path)
-    steam_id = "76561198000000000"
+    steam_id = RESERVED_TEST_STEAM_ID
     (steam / "config").mkdir()
     (steam / "config" / "loginusers.vdf").write_text(
         f'"users" {{ "{steam_id}" {{ "PersonaName" "Tester" "MostRecent" "1" }} }}',
@@ -327,7 +330,7 @@ def test_scan_web_api_failure_degrades_to_local_results(
     capsys,
 ) -> None:
     steam, data_dir = make_fixture(tmp_path)
-    steam_id = "76561198000000000"
+    steam_id = RESERVED_TEST_STEAM_ID
     (steam / "config").mkdir()
     (steam / "config" / "loginusers.vdf").write_text(
         f'"users" {{ "{steam_id}" {{ "PersonaName" "Tester" "MostRecent" "1" }} }}',
@@ -361,15 +364,29 @@ def test_scan_web_api_failure_degrades_to_local_results(
     )
 
 
-def test_unknown_owned_account_does_not_filter_or_break_local_scan(
+def test_explicit_owned_account_does_not_need_to_exist_in_local_loginusers(
     tmp_path: Path,
     monkeypatch,
     capsys,
 ) -> None:
     steam, data_dir = make_fixture(tmp_path)
+    steam_id = RESERVED_TEST_STEAM_ID
+    cached_catalog = CatalogRepository(data_dir).load(offline=True)
+    monkeypatch.setattr(
+        "satl.scan_command.CatalogRepository",
+        lambda data_dir: SimpleNamespace(load=lambda offline: cached_catalog),
+    )
     monkeypatch.setenv(
         "SATL_STEAM_WEB_API_KEY",
         "0123456789abcdef0123456789abcdef",
+    )
+    requested_accounts = []
+    monkeypatch.setattr(
+        "satl.scan_command.SteamWebApiClient.get_owned_games",
+        lambda client, api_key, account_id: (
+            requested_accounts.append(account_id)
+            or (OwnedGame("456", "Remote Library Game"),)
+        ),
     )
 
     result = main(
@@ -379,7 +396,7 @@ def test_unknown_owned_account_does_not_filter_or_break_local_scan(
             "local",
             "--include-owned-games",
             "--owned-account",
-            "76561198000000000",
+            steam_id,
             "--jsonl",
             "--steam-dir",
             str(steam),
@@ -390,15 +407,11 @@ def test_unknown_owned_account_does_not_filter_or_break_local_scan(
 
     assert result == 0
     events = jsonl_events(capsys.readouterr().out)
-    assert any(
-        event["event"] == "warning"
-        and "没有可用于 Steam Web API 查询的本地账号"
-        in event["payload"]["message"]
-        for event in events
-    )
+    assert requested_accounts == [steam_id]
     assert any(
         event["event"] == "item-succeeded"
-        and event["payload"]["app_id"] == "123"
+        and event["payload"]["app_id"] == "456"
+        and event["payload"]["discovery"] == ["steam-web-api"]
         for event in events
     )
 

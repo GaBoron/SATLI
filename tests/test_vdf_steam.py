@@ -13,7 +13,7 @@ from satl.steam import (
 from satl.vdf import parse_vdf
 
 
-STEAM_ID = "76561198000000000"
+STEAM_ID = "76561197960265728"
 
 
 def test_vdf_parser_handles_comments_nested_objects_and_escapes() -> None:

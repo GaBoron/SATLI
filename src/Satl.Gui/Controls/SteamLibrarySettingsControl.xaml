@@ -49,7 +49,12 @@
                             MaxLength="17"
                             InputScope="Number"
                             LostFocus="Field_LostFocus"
-                            AutomationProperties.HelpText="要查询的本地 Steam 账号的 17 位 SteamID64" />
+                            AutomationProperties.HelpText="要查询的 Steam 账号的 17 位 SteamID64" />
+                        <TextBlock
+                            Text="获取方法：Steam 中打开“查看我的个人资料”并复制页面 URL；若地址包含 /profiles/765…，其后的 17 位数字就是 SteamID64。也可在 Steam 账户明细页面查看。"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            FontSize="12"
+                            TextWrapping="Wrap" />
                         <PasswordBox
                             x:Name="ApiKeyBox"
                             Header="Steam Web API Key"

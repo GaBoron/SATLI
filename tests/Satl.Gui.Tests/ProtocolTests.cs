@@ -8,6 +8,8 @@ namespace Satl_Gui.Tests;
 
 public sealed class ProtocolTests
 {
+    private const string ReservedTestSteamId = "76561197960265728";
+
     [Fact]
     public void ParseEventReadsVersionedPayload()
     {
@@ -253,7 +255,7 @@ public sealed class ProtocolTests
                 SteamLibrary = new SteamLibrarySettings
                 {
                     Enabled = true,
-                    SteamId = "76561198000000000",
+                    SteamId = ReservedTestSteamId,
                     ApiKey = apiKey,
                 },
             });
@@ -261,7 +263,7 @@ public sealed class ProtocolTests
         Assert.Null(warning);
         Assert.Contains("--include-owned-games", arguments);
         Assert.Contains("--owned-account", arguments);
-        Assert.Contains("76561198000000000", arguments);
+        Assert.Contains(ReservedTestSteamId, arguments);
         Assert.DoesNotContain(apiKey, arguments);
     }
 

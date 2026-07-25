@@ -9,6 +9,8 @@ namespace Satl_Gui.Tests;
 
 public sealed class NetworkServicesTests
 {
+    private const string ReservedTestSteamId = "76561197960265728";
+
     [Fact]
     public void ValidatorAcceptsGeneralDesktopNetworkSettings()
     {
@@ -121,7 +123,7 @@ public sealed class NetworkServicesTests
                 SteamLibrary = new SteamLibrarySettings
                 {
                     Enabled = true,
-                    SteamId = "76561198000000000",
+                    SteamId = ReservedTestSteamId,
                     ApiKey = apiKey,
                 },
             });
@@ -132,7 +134,7 @@ public sealed class NetworkServicesTests
             Assert.DoesNotContain(apiKey, serialized);
             Assert.Contains("ProtectedApiKey", serialized);
             Assert.True(loaded.SteamLibrary.Enabled);
-            Assert.Equal("76561198000000000", loaded.SteamLibrary.SteamId);
+            Assert.Equal(ReservedTestSteamId, loaded.SteamLibrary.SteamId);
             Assert.Equal(apiKey, loaded.SteamLibrary.ApiKey);
         }
         finally
@@ -159,7 +161,7 @@ public sealed class NetworkServicesTests
         Assert.False(SteamLibrarySettingsValidator.IsConfigured(new SteamLibrarySettings()));
         Assert.True(SteamLibrarySettingsValidator.IsConfigured(new SteamLibrarySettings
         {
-            SteamId = "76561198000000000",
+            SteamId = ReservedTestSteamId,
             ApiKey = "0123456789abcdef0123456789abcdef",
         }));
     }
@@ -185,7 +187,7 @@ public sealed class NetworkServicesTests
             new SteamLibrarySettings
             {
                 Enabled = true,
-                SteamId = "76561198000000000",
+                SteamId = ReservedTestSteamId,
                 ApiKey = "0123456789abcdef0123456789abcdef",
             },
             new NetworkSettings());

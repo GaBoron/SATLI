@@ -14,7 +14,7 @@ from satl.steam_web_api import (
 
 
 API_KEY = "0123456789abcdef0123456789abcdef"
-STEAM_ID = "76561198000000000"
+STEAM_ID = "76561197960265728"
 
 
 class FakeResponse:
