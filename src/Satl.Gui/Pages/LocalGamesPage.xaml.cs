@@ -20,4 +20,12 @@ public sealed partial class LocalGamesPage : Page
 
     private async void Refresh_Click(object sender, RoutedEventArgs e) =>
         await ViewModel.RefreshAsync();
+
+    private void Edit_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button { Tag: GameItem game })
+        {
+            Frame.Navigate(typeof(AchievementEditorPage), game);
+        }
+    }
 }

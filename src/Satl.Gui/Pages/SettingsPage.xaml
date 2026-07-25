@@ -116,6 +116,9 @@
                 TestConnectionRequested="SteamLibrarySettingsEditor_TestConnectionRequested"
                 OpenApiKeyPageRequested="SteamLibrarySettingsEditor_OpenApiKeyPageRequested" />
 
+            <TextBlock Text="GitHub" Style="{StaticResource SubtitleTextBlockStyle}" Margin="0,12,0,0" />
+            <controls:GitHubSettingsControl />
+
             <TextBlock Text="日志" Style="{StaticResource SubtitleTextBlockStyle}" Margin="0,12,0,0" />
             <StackPanel Spacing="8">
                 <Border Style="{StaticResource SettingsCardStyle}">

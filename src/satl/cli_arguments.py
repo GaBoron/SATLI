@@ -9,6 +9,12 @@ from satl.cache_command import command_cache_refresh
 from satl.install_command import command_install
 from satl.petition_command import command_petition_export
 from satl.restore_command import command_restore
+from satl.schema_command import (
+    command_schema_apply,
+    command_schema_export,
+    command_schema_inspect,
+    command_schema_restore,
+)
 from satl.scan_command import command_scan
 from satl.status_command import command_status
 
@@ -121,6 +127,40 @@ def build_parser() -> argparse.ArgumentParser:
         "--jsonl", action="store_true", help="输出供桌面应用使用的 JSON Lines 事件"
     )
     petition_export.set_defaults(handler=command_petition_export)
+
+    schema = subparsers.add_parser("schema", help="检查、编辑、导出和恢复本地成就 schema")
+    schema_subparsers = schema.add_subparsers(dest="schema_command", required=True)
+
+    schema_inspect = schema_subparsers.add_parser("inspect", help="读取本地 schema 成就内容")
+    _add_data_dir(schema_inspect)
+    _add_steam_dir(schema_inspect)
+    schema_inspect.add_argument("app_id", metavar="APP_ID")
+    schema_inspect.add_argument("--jsonl", action="store_true")
+    schema_inspect.set_defaults(handler=command_schema_inspect)
+
+    schema_export = schema_subparsers.add_parser("export", help="导出编辑后的 BIN 或投稿 ZIP")
+    _add_data_dir(schema_export)
+    _add_steam_dir(schema_export)
+    _add_schema_edit_arguments(schema_export)
+    schema_export.add_argument("--format", choices=("bin", "zip"), required=True)
+    schema_export.add_argument("--output", type=Path, required=True)
+    schema_export.set_defaults(handler=command_schema_export)
+
+    schema_apply = schema_subparsers.add_parser("apply", help="安全写回编辑后的本地 schema")
+    _add_data_dir(schema_apply)
+    _add_steam_dir(schema_apply)
+    _add_schema_edit_arguments(schema_apply)
+    schema_apply.add_argument("--yes", action="store_true")
+    schema_apply.set_defaults(handler=command_schema_apply)
+
+    schema_restore = schema_subparsers.add_parser("restore", help="恢复上一次本地 schema 编辑")
+    _add_data_dir(schema_restore)
+    _add_steam_dir(schema_restore)
+    schema_restore.add_argument("app_id", metavar="APP_ID")
+    schema_restore.add_argument("--force", action="store_true")
+    schema_restore.add_argument("--yes", action="store_true")
+    schema_restore.add_argument("--jsonl", action="store_true")
+    schema_restore.set_defaults(handler=command_schema_restore)
     return parser
 
 
@@ -134,3 +174,11 @@ def _add_steam_dir(parser: argparse.ArgumentParser) -> None:
 
 def _add_offline(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--offline", action="store_true", help="仅使用已验证的本地缓存")
+
+
+def _add_schema_edit_arguments(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument("app_id", metavar="APP_ID")
+    parser.add_argument("--target-language", required=True)
+    parser.add_argument("--edits-file", type=Path, required=True)
+    parser.add_argument("--allow-incomplete", action="store_true")
+    parser.add_argument("--jsonl", action="store_true")

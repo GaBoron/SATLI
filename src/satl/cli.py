@@ -20,6 +20,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             operation = {
                 "cache": "cache-refresh",
                 "petition": "petition-export",
+                "schema": f"schema-{getattr(args, 'schema_command', 'unknown')}",
             }.get(getattr(args, "command", None), str(args.command))
             emit_jsonl(operation, "error", {"message": str(exc), "exit_code": exc.exit_code})
         else:

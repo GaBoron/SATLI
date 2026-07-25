@@ -1,0 +1,447 @@
+using System.Collections.ObjectModel;
+using System.ComponentModel;
+using Microsoft.UI.Windowing;
+using Microsoft.Windows.Storage.Pickers;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Navigation;
+using Satl_Gui.Models;
+using Satl_Gui.Services;
+
+namespace Satl_Gui.Pages;
+
+public sealed partial class AchievementEditorPage : Page
+{
+    private readonly SchemaEditorService _editor = new();
+    private SchemaInspection? _inspection;
+    private GameItem? _game;
+    private bool _isBusy;
+    private bool _isDirty;
+    private bool _changingLanguage;
+    private bool _allowNavigation;
+    private bool _allowClose;
+    private string _targetLanguage = "schinese";
+
+    public ObservableCollection<AchievementEditorRow> VisibleRows { get; } = [];
+
+    public AchievementEditorPage()
+    {
+        InitializeComponent();
+    }
+
+    protected override async void OnNavigatedTo(NavigationEventArgs e)
+    {
+        base.OnNavigatedTo(e);
+        _game = e.Parameter as GameItem;
+        if (_game is null)
+        {
+            App.ViewModel.ShowInfo("无法打开成就编辑器：缺少游戏信息。", InfoBarSeverity.Error);
+            return;
+        }
+        Frame.Navigating += Frame_Navigating;
+        App.Window.AppWindow.Closing += AppWindow_Closing;
+        await LoadAsync();
+    }
+
+    protected override void OnNavigatedFrom(NavigationEventArgs e)
+    {
+        Frame.Navigating -= Frame_Navigating;
+        App.Window.AppWindow.Closing -= AppWindow_Closing;
+        base.OnNavigatedFrom(e);
+    }
+
+    private async Task LoadAsync()
+    {
+        if (_game is null)
+        {
+            return;
+        }
+        await RunBusyAsync(LoadCoreAsync);
+    }
+
+    private async Task LoadCoreAsync()
+    {
+        var game = _game ?? throw new InvalidOperationException("缺少待编辑游戏。");
+        _inspection = await _editor.InspectAsync(game);
+        TitleText.Text = $"编辑 {game.GameName}";
+        MetadataText.Text =
+            $"App ID {_game.AppId} · {_inspection.Rows.Count} 个成就 · SHA-256 {_inspection.SourceSha256}";
+        ReferenceLanguageBox.ItemsSource = _inspection.Languages;
+        TargetLanguageBox.ItemsSource = _inspection.Languages;
+        var reference = _inspection.Languages.Contains("english", StringComparer.OrdinalIgnoreCase)
+            ? "english"
+            : _inspection.Languages.FirstOrDefault() ?? string.Empty;
+        ReferenceLanguageBox.SelectedItem = reference;
+        _targetLanguage = _inspection.Languages.Contains("schinese", StringComparer.OrdinalIgnoreCase)
+            ? "schinese"
+            : _inspection.Languages.FirstOrDefault() ?? "schinese";
+        TargetLanguageBox.SelectedItem = _targetLanguage;
+        foreach (var row in _inspection.Rows)
+        {
+            row.PropertyChanged += Row_PropertyChanged;
+            row.SelectReference(reference);
+            row.SelectTarget(_targetLanguage);
+        }
+        ApplyFilter();
+        RestoreButton.IsEnabled = _inspection.CanRestore;
+        _isDirty = false;
+        UpdateStatus();
+    }
+
+    private void Row_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName is nameof(AchievementEditorRow.TargetName)
+            or nameof(AchievementEditorRow.TargetDescription))
+        {
+            _isDirty = true;
+            UpdateStatus();
+        }
+    }
+
+    private void ApplyFilter()
+    {
+        VisibleRows.Clear();
+        if (_inspection is null)
+        {
+            return;
+        }
+        var query = SearchBox.Text.Trim();
+        foreach (var row in _inspection.Rows.Where(row =>
+                     string.IsNullOrWhiteSpace(query)
+                     || row.ApiName.Contains(query, StringComparison.OrdinalIgnoreCase)
+                     || row.ReferenceName.Contains(query, StringComparison.CurrentCultureIgnoreCase)
+                     || row.ReferenceDescription.Contains(query, StringComparison.CurrentCultureIgnoreCase)
+                     || row.TargetName.Contains(query, StringComparison.CurrentCultureIgnoreCase)
+                     || row.TargetDescription.Contains(query, StringComparison.CurrentCultureIgnoreCase)))
+        {
+            VisibleRows.Add(row);
+        }
+    }
+
+    private void SearchBox_TextChanged(AutoSuggestBox sender, AutoSuggestBoxTextChangedEventArgs args) =>
+        ApplyFilter();
+
+    private void ReferenceLanguageBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (_inspection is null || ReferenceLanguageBox.SelectedItem is not string language)
+        {
+            return;
+        }
+        foreach (var row in _inspection.Rows)
+        {
+            row.SelectReference(language);
+        }
+    }
+
+    private async void TargetLanguageBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (_changingLanguage || _inspection is null || TargetLanguageBox.SelectedItem is not string language)
+        {
+            return;
+        }
+        await SelectTargetLanguageAsync(language);
+    }
+
+    private async void TargetLanguageBox_LostFocus(object sender, RoutedEventArgs e)
+    {
+        if (_changingLanguage || _inspection is null)
+        {
+            return;
+        }
+        var value = TargetLanguageBox.Text.Trim().ToLowerInvariant();
+        if (!string.IsNullOrWhiteSpace(value) && value != _targetLanguage)
+        {
+            await SelectTargetLanguageAsync(value);
+        }
+    }
+
+    private async Task SelectTargetLanguageAsync(string language)
+    {
+        if (!System.Text.RegularExpressions.Regex.IsMatch(language, "^[a-z][a-z0-9_]{1,31}$")
+            || language is "token" or "tokens")
+        {
+            App.ViewModel.ShowInfo($"无效的 Steam 语言代码：{language}", InfoBarSeverity.Error);
+            return;
+        }
+        if (_isDirty && !await ConfirmAsync("切换目标语言", "当前未保存的修改将被放弃。是否继续？", "继续"))
+        {
+            _changingLanguage = true;
+            TargetLanguageBox.SelectedItem = _targetLanguage;
+            TargetLanguageBox.Text = _targetLanguage;
+            _changingLanguage = false;
+            return;
+        }
+        _targetLanguage = language;
+        foreach (var row in _inspection!.Rows)
+        {
+            row.SelectTarget(language);
+        }
+        _isDirty = false;
+        UpdateStatus();
+    }
+
+    private async void Save_Click(object sender, RoutedEventArgs e)
+    {
+        await SaveChangesAsync();
+    }
+
+    private async Task<bool> SaveChangesAsync()
+    {
+        if (!await ConfirmIncompleteAsync("保存到本机"))
+        {
+            return false;
+        }
+        if (!await ConfirmAsync(
+                "写回本地成就文件",
+                "请先从系统托盘正常退出 Steam。应用会在写回前创建可恢复备份。",
+                "确认写回"))
+        {
+            return false;
+        }
+        var saved = false;
+        await RunBusyAsync(async () =>
+        {
+            var result = await _editor.ApplyAsync(
+                _inspection!, _targetLanguage, _inspection!.Rows, allowIncomplete: true);
+            App.ViewModel.ShowInfo(
+                $"已保存本地编辑：修改 {result.ChangedFields} 个字段；备份位于 {result.Backup}",
+                InfoBarSeverity.Success);
+            await LoadCoreAsync();
+            saved = true;
+        });
+        return saved;
+    }
+
+    private async void ExportBin_Click(object sender, RoutedEventArgs e) =>
+        await ExportAsync("bin");
+
+    private async void ExportZip_Click(object sender, RoutedEventArgs e) =>
+        await ExportAsync("zip");
+
+    private async Task ExportAsync(string format)
+    {
+        if (!await ConfirmIncompleteAsync(format == "bin" ? "导出 BIN" : "导出投稿 ZIP"))
+        {
+            return;
+        }
+        var output = await PickDestinationAsync(format);
+        if (output is null)
+        {
+            return;
+        }
+        await RunBusyAsync(async () =>
+        {
+            var result = await _editor.ExportAsync(
+                _inspection!, _targetLanguage, _inspection!.Rows, true, format, output);
+            App.ViewModel.ShowInfo($"已导出：{result.Output}", InfoBarSeverity.Success);
+        });
+    }
+
+    private async void Restore_Click(object sender, RoutedEventArgs e)
+    {
+        if (_inspection is null || !await ConfirmAsync(
+                "恢复上次编辑",
+                "应用将恢复最近一次编辑前的校验备份。请先退出 Steam。",
+                "恢复"))
+        {
+            return;
+        }
+        await RunBusyAsync(async () =>
+        {
+            try
+            {
+                await _editor.RestoreAsync(_inspection.AppId, force: false);
+            }
+            catch (InvalidOperationException exception) when (exception.Message.Contains("发生变化"))
+            {
+                if (!await ConfirmAsync(
+                        "当前文件已变化",
+                        exception.Message + Environment.NewLine + "强制恢复会先归档当前文件。是否继续？",
+                        "强制恢复"))
+                {
+                    return;
+                }
+                await _editor.RestoreAsync(_inspection.AppId, force: true);
+            }
+            App.ViewModel.ShowInfo("已恢复上一次本地编辑。", InfoBarSeverity.Success);
+            await LoadCoreAsync();
+        });
+    }
+
+    private async void Back_Click(object sender, RoutedEventArgs e)
+    {
+        if (_isDirty && !await ResolveUnsavedChangesAsync("返回本地游戏页"))
+        {
+            return;
+        }
+        if (Frame.CanGoBack)
+        {
+            _allowNavigation = true;
+            Frame.GoBack();
+        }
+    }
+
+    private async void Frame_Navigating(object? sender, NavigatingCancelEventArgs e)
+    {
+        if (_allowNavigation || !_isDirty)
+        {
+            return;
+        }
+        e.Cancel = true;
+        if (!await ResolveUnsavedChangesAsync("离开成就编辑器"))
+        {
+            return;
+        }
+        _allowNavigation = true;
+        if (e.NavigationMode == NavigationMode.Back && Frame.CanGoBack)
+        {
+            Frame.GoBack();
+        }
+        else
+        {
+            Frame.Navigate(e.SourcePageType, e.Parameter, e.NavigationTransitionInfo);
+        }
+    }
+
+    private async void AppWindow_Closing(AppWindow sender, AppWindowClosingEventArgs args)
+    {
+        if (_allowClose || !_isDirty)
+        {
+            return;
+        }
+        args.Cancel = true;
+        if (!await ResolveUnsavedChangesAsync("关闭应用"))
+        {
+            return;
+        }
+        _allowClose = true;
+        App.Window.Close();
+    }
+
+    private async Task<bool> ResolveUnsavedChangesAsync(string destination)
+    {
+        var dialog = new ContentDialog
+        {
+            XamlRoot = XamlRoot,
+            Title = "未保存的修改",
+            Content = new TextBlock
+            {
+                Text = $"仍有未保存的成就修改。要先保存、放弃修改并{destination}，还是取消？",
+                TextWrapping = TextWrapping.Wrap,
+            },
+            PrimaryButtonText = "保存",
+            SecondaryButtonText = "放弃",
+            CloseButtonText = "取消",
+            DefaultButton = ContentDialogButton.Primary,
+        };
+        return await dialog.ShowAsync() switch
+        {
+            ContentDialogResult.Primary => await SaveChangesAsync(),
+            ContentDialogResult.Secondary => true,
+            _ => false,
+        };
+    }
+
+    private async Task<bool> ConfirmIncompleteAsync(string action)
+    {
+        if (_inspection is null)
+        {
+            return false;
+        }
+        var missingNames = _inspection.Rows.Count(row => string.IsNullOrEmpty(row.TargetName));
+        var missingDescriptions = _inspection.Rows.Count(row => string.IsNullOrEmpty(row.TargetDescription));
+        if (missingNames == 0 && missingDescriptions == 0)
+        {
+            return true;
+        }
+        return await ConfirmAsync(
+            "目标语言内容不完整",
+            $"缺少名称 {missingNames} 项，缺少说明 {missingDescriptions} 项。仍要{action}吗？",
+            "继续");
+    }
+
+    private async Task<string?> PickDestinationAsync(string format)
+    {
+        try
+        {
+            var extension = format == "bin" ? ".bin" : ".zip";
+            var picker = new FileSavePicker(App.Window.AppWindow.Id)
+            {
+                SuggestedStartLocation = PickerLocationId.Downloads,
+                SuggestedFileName = $"UserGameStatsSchema_{_inspection!.AppId}",
+                DefaultFileExtension = extension,
+                CommitButtonText = "导出",
+                SettingsIdentifier = format == "bin" ? "SchemaBinExportPicker" : "SchemaZipExportPicker",
+                ShowOverwritePrompt = true,
+                FileTypeChoices =
+                {
+                    {
+                        format == "bin" ? "Steam 成就 schema" : "投稿 ZIP",
+                        new List<string> { extension }
+                    },
+                },
+            };
+            return (await picker.PickSaveFileAsync())?.Path;
+        }
+        catch (Exception exception)
+        {
+            App.ViewModel.ShowInfo($"无法打开保存位置选择器：{exception.Message}", InfoBarSeverity.Error);
+            return null;
+        }
+    }
+
+    private async Task<bool> ConfirmAsync(string title, string message, string primary)
+    {
+        var dialog = new ContentDialog
+        {
+            XamlRoot = XamlRoot,
+            Title = title,
+            Content = new TextBlock { Text = message, TextWrapping = TextWrapping.Wrap },
+            PrimaryButtonText = primary,
+            CloseButtonText = "取消",
+            DefaultButton = ContentDialogButton.Close,
+        };
+        return await dialog.ShowAsync() == ContentDialogResult.Primary;
+    }
+
+    private async Task RunBusyAsync(Func<Task> action)
+    {
+        if (_isBusy)
+        {
+            return;
+        }
+        _isBusy = true;
+        BusyProgress.Visibility = Visibility.Visible;
+        PageLayout.IsHitTestVisible = false;
+        try
+        {
+            await action();
+        }
+        catch (Exception exception)
+        {
+            App.ViewModel.ShowInfo($"成就编辑操作失败：{exception.Message}", InfoBarSeverity.Error);
+            await App.Logs.WriteAsync("错误", "成就编辑", exception.ToString());
+        }
+        finally
+        {
+            PageLayout.IsHitTestVisible = true;
+            BusyProgress.Visibility = Visibility.Collapsed;
+            _isBusy = false;
+        }
+    }
+
+    private void UpdateStatus()
+    {
+        if (_inspection is null)
+        {
+            StatusText.Text = "正在加载…";
+            return;
+        }
+        var missingNames = _inspection.Rows.Count(row => string.IsNullOrEmpty(row.TargetName));
+        var missingDescriptions = _inspection.Rows.Count(row => string.IsNullOrEmpty(row.TargetDescription));
+        StatusText.Text =
+            $"目标语言 {_targetLanguage} · 显示 {VisibleRows.Count}/{_inspection.Rows.Count} · " +
+            $"缺少名称 {missingNames} · 缺少说明 {missingDescriptions}" +
+            (_isDirty ? " · 有未保存修改" : string.Empty);
+    }
+}

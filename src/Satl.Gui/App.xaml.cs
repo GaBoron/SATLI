@@ -33,6 +33,8 @@ public partial class App : Application
     public static Microsoft.UI.Dispatching.DispatcherQueue DispatcherQueue { get; private set; } = null!;
     public static MainViewModel ViewModel { get; } = new();
     public static LogService Logs { get; } = new();
+    public static GitHubIntegrationService GitHub { get; } =
+        new(() => ViewModel.Settings.Network);
 
     /// <summary>
     /// The native window handle (HWND). Use for file pickers,

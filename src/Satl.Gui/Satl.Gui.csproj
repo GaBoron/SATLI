@@ -25,7 +25,16 @@
     <ApplicationIcon>$(MSBuildProjectDirectory)\Assets\AppIcon.ico</ApplicationIcon>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <GitHubClientId Condition="'$(GitHubClientId)' == ''">$(SATL_GITHUB_CLIENT_ID)</GitHubClientId>
+    <GitHubClientId Condition="'$(GitHubClientId)' == ''">Iv23liRKwdJVLeXkGuXe</GitHubClientId>
   </PropertyGroup>
+
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
+      <_Parameter1>GitHubClientId</_Parameter1>
+      <_Parameter2>$(GitHubClientId)</_Parameter2>
+    </AssemblyAttribute>
+  </ItemGroup>
 
   <ItemGroup>
     <Content Include="Assets\AppIcon.ico" />

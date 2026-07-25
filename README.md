@@ -120,6 +120,20 @@ Steam 或游戏更新可能重新生成成就缓存。重新扫描后再次安�
 
 ## 开发与构建
 
+### GitHub 报告集成
+
+“云端”页的应用内报告使用 GitHub App 设备码授权。发布构建前，仓库管理员需要：
+
+1. 注册 GitHub App，启用 Device Flow 和短期 user-to-server token。
+2. 仅授予仓库 Metadata 读取、Issues 读写权限，并安装到
+   `GaBoron/steam-achievement-translation-library`。
+3. 官方构建使用公开 Client ID `Iv23liRKwdJVLeXkGuXe`。自定义构建可设置
+   `SATL_GITHUB_CLIENT_ID`，或向 MSBuild 传入 `-p:GitHubClientId=<Client ID>`。
+   Client ID 会作为公开程序集元数据嵌入；Client Secret 不得进入应用、仓库或构建产物。
+
+本地调试也可只设置运行时环境变量 `SATL_GITHUB_CLIENT_ID`。普通用户不需要配置
+GitHub App，只需在设置页绑定或解绑自己的 GitHub 账户。
+
 普通用户不需要执行本节。
 
 开发环境需要 Windows 10/11 x64、Python 3.13、.NET 10 SDK、WinUI 3 工具链和 Inno Setup 6。
