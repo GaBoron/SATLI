@@ -13,6 +13,7 @@ namespace Satl_Gui.Pages;
 public sealed partial class AchievementEditorPage : Page
 {
     private readonly SchemaEditorService _editor = new();
+    private readonly SchemaDraftStore _drafts = new();
     private SchemaInspection? _inspection;
     private GameItem? _game;
     private bool _isBusy;
@@ -82,10 +83,54 @@ public sealed partial class AchievementEditorPage : Page
             row.SelectReference(reference);
             row.SelectTarget(_targetLanguage);
         }
+        await RestoreDraftAsync();
         ApplyFilter();
         RestoreButton.IsEnabled = _inspection.CanRestore;
         _isDirty = false;
         UpdateStatus();
+    }
+
+    private async Task RestoreDraftAsync()
+    {
+        SchemaDraft? draft;
+        try
+        {
+            draft = await _drafts.LoadAsync(_inspection!.AppId);
+        }
+        catch (Exception exception)
+        {
+            App.ViewModel.ShowInfo($"无法读取成就草稿：{exception.Message}", InfoBarSeverity.Warning);
+            await App.Logs.WriteAsync("警告", "成就草稿", exception.ToString());
+            return;
+        }
+        if (draft is null)
+        {
+            return;
+        }
+        var compatibilityError = SchemaDraftStore.CompatibilityError(draft, _inspection!);
+        if (compatibilityError is not null)
+        {
+            App.ViewModel.ShowInfo(compatibilityError, InfoBarSeverity.Warning);
+            return;
+        }
+
+        _changingLanguage = true;
+        _targetLanguage = draft.TargetLanguage;
+        TargetLanguageBox.SelectedItem = _inspection!.Languages.FirstOrDefault(language =>
+            string.Equals(language, _targetLanguage, StringComparison.OrdinalIgnoreCase));
+        TargetLanguageBox.Text = _targetLanguage;
+        var values = draft.Rows.ToDictionary(row => row.ApiName, StringComparer.Ordinal);
+        foreach (var row in _inspection.Rows)
+        {
+            row.SelectTarget(_targetLanguage);
+            row.TargetName = values[row.ApiName].Name;
+            row.TargetDescription = values[row.ApiName].Description;
+        }
+        _changingLanguage = false;
+        _isDirty = false;
+        App.ViewModel.ShowInfo(
+            $"已恢复 {_targetLanguage} 草稿（保存于 {draft.SavedAt.ToLocalTime():g}）。",
+            InfoBarSeverity.Informational);
     }
 
     private void Row_PropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -185,6 +230,26 @@ public sealed partial class AchievementEditorPage : Page
         await SaveChangesAsync();
     }
 
+    private async void SaveDraft_Click(object sender, RoutedEventArgs e)
+    {
+        if (_inspection is null)
+        {
+            return;
+        }
+        await RunBusyAsync(async () =>
+        {
+            var draft = await _drafts.SaveAsync(
+                _inspection,
+                _targetLanguage,
+                _inspection.Rows);
+            _isDirty = false;
+            UpdateStatus();
+            App.ViewModel.ShowInfo(
+                $"已保存 {_targetLanguage} 草稿（{draft.Rows.Count} 个成就）。",
+                InfoBarSeverity.Success);
+        });
+    }
+
     private async Task<bool> SaveChangesAsync()
     {
         if (!await ConfirmIncompleteAsync("保存到本机"))
@@ -206,6 +271,14 @@ public sealed partial class AchievementEditorPage : Page
             App.ViewModel.ShowInfo(
                 $"已保存本地编辑：修改 {result.ChangedFields} 个字段；备份位于 {result.Backup}",
                 InfoBarSeverity.Success);
+            try
+            {
+                _drafts.Delete(_inspection.AppId);
+            }
+            catch (Exception exception)
+            {
+                await App.Logs.WriteAsync("警告", "成就草稿", $"本机写回成功，但删除草稿失败：{exception}");
+            }
             await LoadCoreAsync();
             saved = true;
         });

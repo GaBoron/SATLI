@@ -12,6 +12,7 @@ public sealed partial class LocalGamesPage : Page
     public LocalGamesPage()
     {
         InitializeComponent();
+        NavigationCacheMode = Microsoft.UI.Xaml.Navigation.NavigationCacheMode.Required;
         Loaded += LocalGamesPage_Loaded;
     }
 

@@ -16,6 +16,7 @@ public sealed partial class CloudGamesPage : Page
     public CloudGamesPage()
     {
         InitializeComponent();
+        NavigationCacheMode = Microsoft.UI.Xaml.Navigation.NavigationCacheMode.Required;
         Loaded += CloudGamesPage_Loaded;
     }
 

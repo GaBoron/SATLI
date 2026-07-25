@@ -54,6 +54,7 @@
                         LostFocus="TargetLanguageBox_LostFocus" />
                 </StackPanel>
             </CommandBar.Content>
+            <AppBarButton Icon="Page" Label="保存草稿" Click="SaveDraft_Click" />
             <AppBarButton Icon="Save" Label="保存到本机" Click="Save_Click" />
             <AppBarButton Icon="Download" Label="导出 BIN" Click="ExportBin_Click" />
             <AppBarButton Icon="Folder" Label="导出投稿 ZIP" Click="ExportZip_Click" />
