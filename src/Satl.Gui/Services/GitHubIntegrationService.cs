@@ -233,7 +233,8 @@ public sealed class GitHubIntegrationService
         var client = _clientFactory();
         client.DefaultRequestHeaders.Accept.Add(
             new MediaTypeWithQualityHeaderValue("application/vnd.github+json"));
-        client.DefaultRequestHeaders.UserAgent.ParseAdd("SATLInstaller/0.8.0");
+        client.DefaultRequestHeaders.UserAgent.ParseAdd(
+            $"SATLInstaller/{UpdateService.CurrentVersionText}");
         client.DefaultRequestHeaders.Add("X-GitHub-Api-Version", "2022-11-28");
         if (!string.IsNullOrWhiteSpace(accessToken))
         {

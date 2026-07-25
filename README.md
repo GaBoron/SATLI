@@ -14,7 +14,7 @@
 
 请从 [GitHub Releases](https://github.com/GaBoron/steam-achievement-translation-installer/releases/latest) 下载。
 
-下载 `SATLInstaller-Setup-v0.8.0.exe`，运行安装程序，之后从开始菜单打开。
+下载 `SATLInstaller-Setup-v0.9.0.exe`，运行安装程序，之后从开始菜单打开。
 项目只维护安装版，不再发布便携版。
 直接覆盖安装新版即可；安装程序会在复制新文件前清理旧版遗留的运行组件。
 
@@ -38,6 +38,10 @@
 - 支持同一游戏的多个翻译版本。
 - 显示已安装版本、正常、缺失或被修改等状态。
 - 安装前备份，支持普通恢复和确认后的强制恢复。
+- 在“本地”页按成就 API ID 编辑指定语言的名称与说明，可保存草稿、安全写回、
+  连续恢复，并导出校验后的 BIN 或投稿 ZIP。
+- 在“云端”页预览并提交文件过期或失效报告；GitHub 账户使用设备码绑定，
+  令牌通过当前 Windows 账户的 DPAPI 加密保存在本机。
 - 在线刷新翻译目录，也可使用离线缓存。
 - 支持跟随系统或自定义 DNS、系统/直连/手动网络代理，并可在设置中测试翻译源和更新源连接。
 - 浅色、深色和跟随系统主题。
@@ -47,7 +51,7 @@
 - 为尚未收录的游戏导出符合仓库要求的原始 schema ZIP，并直达翻译请愿或翻译贡献表单。
 - 支持 `Ctrl+A` 全选、`Ctrl+Shift+A` 清除选择、`Shift+左键` 连续选择、`Ctrl+F` 聚焦搜索和 `F5` 刷新。
 
-翻译数据来自 [Steam 成就翻译库](https://github.com/GaBoron/steam-achievement-translation-library)。安装器不会编辑翻译内容，也不会把你的 Steam 文件上传到网络。
+翻译数据来自 [Steam 成就翻译库](https://github.com/GaBoron/steam-achievement-translation-library)。本地编辑只修改你明确选择的语言字段；安装器不会把你的 Steam 文件上传到网络。
 联网补全本地游戏名称时只会向 Steam 商店或备用的 SteamCMD API 查询对应 App ID，不会发送 Steam 账号、目录或本地文件；查询成功的名称保存在数据目录的 `cache/steam-game-names.json`。
 启用 Steam 游戏库补全后，API Key 使用当前 Windows 账户的 DPAPI 加密保存在本机，只会直接发送给 Steam，并且不会写入命令行或日志。SteamID64 和游戏库查询结果受 Steam 隐私设置及 Web API 返回范围限制。
 
