@@ -1,6 +1,5 @@
 using System.Diagnostics;
 using System.Globalization;
-using Microsoft.Windows.Storage.Pickers;
 using Microsoft.UI.Input;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Automation;
@@ -229,23 +228,12 @@ public sealed partial class GamesPage : Page
     {
         try
         {
-            return await App.DispatcherQueue.EnqueueAsync(async () =>
-            {
-                var picker = new FileSavePicker(App.Window.AppWindow.Id)
-                {
-                    SuggestedStartLocation = PickerLocationId.Downloads,
-                    SuggestedFileName = $"UserGameStatsSchema_{appId}",
-                    DefaultFileExtension = ".zip",
-                    CommitButtonText = "导出",
-                    SettingsIdentifier = "PetitionSchemaExportPicker",
-                    ShowOverwritePrompt = true,
-                    FileTypeChoices =
-                    {
-                        { "ZIP 压缩文件", new List<string> { ".zip" } },
-                    },
-                };
-                return (await picker.PickSaveFileAsync())?.Path;
-            });
+            return NativeFilePickerService.PickSaveFile(
+                App.WindowHandle,
+                "导出翻译请愿 ZIP",
+                $"UserGameStatsSchema_{appId}.zip",
+                "ZIP 压缩文件",
+                ".zip");
         }
         catch (Exception exception)
         {

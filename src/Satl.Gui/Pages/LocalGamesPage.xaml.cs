@@ -1,4 +1,3 @@
-using Microsoft.Windows.Storage.Pickers;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Satl_Gui.Models;
@@ -109,19 +108,11 @@ public sealed partial class LocalGamesPage : Page
     {
         try
         {
-            return await App.DispatcherQueue.EnqueueAsync(async () =>
-            {
-                var picker = new FileOpenPicker(App.Window.AppWindow.Id)
-                {
-                    SuggestedStartLocation = PickerLocationId.Downloads,
-                    CommitButtonText = "导入",
-                    SettingsIdentifier = "LocalSchemaImportPicker",
-                    Title = "选择 Localizer Skill 生成的 BIN 或 ZIP",
-                };
-                picker.FileTypeFilter.Add(".bin");
-                picker.FileTypeFilter.Add(".zip");
-                return (await picker.PickSingleFileAsync())?.Path;
-            });
+            return NativeFilePickerService.PickOpenFile(
+                App.WindowHandle,
+                "选择 Localizer Skill 生成的 BIN 或 ZIP",
+                ("Steam 成就 schema", "*.bin"),
+                ("ZIP 压缩文件", "*.zip"));
         }
         catch (Exception exception)
         {

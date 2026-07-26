@@ -1,7 +1,6 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using Microsoft.UI.Windowing;
-using Microsoft.Windows.Storage.Pickers;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
@@ -454,29 +453,13 @@ public sealed partial class AchievementEditorPage : Page
     {
         try
         {
-            return await App.DispatcherQueue.EnqueueAsync(async () =>
-            {
-                var extension = format == "bin" ? ".bin" : ".zip";
-                var picker = new FileSavePicker(App.Window.AppWindow.Id)
-                {
-                    SuggestedStartLocation = PickerLocationId.Downloads,
-                    SuggestedFileName = $"UserGameStatsSchema_{_inspection!.AppId}",
-                    DefaultFileExtension = extension,
-                    CommitButtonText = "导出",
-                    SettingsIdentifier = format == "bin"
-                        ? "SchemaBinExportPicker"
-                        : "SchemaZipExportPicker",
-                    ShowOverwritePrompt = true,
-                    FileTypeChoices =
-                    {
-                        {
-                            format == "bin" ? "Steam 成就 schema" : "投稿 ZIP",
-                            new List<string> { extension }
-                        },
-                    },
-                };
-                return (await picker.PickSaveFileAsync())?.Path;
-            });
+            var extension = format == "bin" ? ".bin" : ".zip";
+            return NativeFilePickerService.PickSaveFile(
+                App.WindowHandle,
+                format == "bin" ? "导出 Steam 成就 schema" : "导出投稿 ZIP",
+                $"UserGameStatsSchema_{_inspection!.AppId}{extension}",
+                format == "bin" ? "Steam 成就 schema" : "投稿 ZIP",
+                extension);
         }
         catch (Exception exception)
         {
