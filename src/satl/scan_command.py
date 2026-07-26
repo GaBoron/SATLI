@@ -34,7 +34,9 @@ from satl.transaction import TransactionManager
 def command_scan(args: argparse.Namespace) -> int:
     if args.json and args.jsonl:
         raise UsageError("--json 与 --jsonl 不能同时使用")
-    catalog = CatalogRepository(Path(args.data_dir)).load(offline=args.offline)
+    catalog = CatalogRepository(Path(args.data_dir)).load(
+        offline=args.offline or args.catalog_cache_only
+    )
     print_catalog_cache_notice(catalog, operation="scan", jsonl=args.jsonl)
     steam_dir = None if args.scope == "cloud" else find_steam_dir(args.steam_dir)
     discovered = {} if steam_dir is None else discover_local_games(steam_dir, args.account)

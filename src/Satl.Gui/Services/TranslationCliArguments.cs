@@ -57,11 +57,15 @@ public sealed class TranslationCliArguments(Func<GuiSettings> settings)
         return arguments;
     }
 
-    public List<string> Scan(bool forceOffline, out string? warning)
+    public List<string> Scan(bool useCatalogCache, out string? warning)
     {
         var arguments = new List<string> { "scan", "--jsonl" };
-        AddCommon(arguments, includeSteamDirectory: true, includeOffline: true, forceOffline);
-        warning = SteamLibraryCliOptions.AppendScanArguments(arguments, settings(), forceOffline);
+        AddCommon(arguments, includeSteamDirectory: true, includeOffline: true);
+        if (useCatalogCache && !settings().Offline)
+        {
+            arguments.Add("--catalog-cache-only");
+        }
+        warning = SteamLibraryCliOptions.AppendScanArguments(arguments, settings());
         return arguments;
     }
 

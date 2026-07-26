@@ -6,11 +6,10 @@ public static class SteamLibraryCliOptions
 {
     public static string? AppendScanArguments(
         List<string> arguments,
-        GuiSettings settings,
-        bool forceOffline = false)
+        GuiSettings settings)
     {
         var steamLibrary = SteamLibrarySettingsValidator.Normalize(settings.SteamLibrary);
-        if (!steamLibrary.Enabled || settings.Offline || forceOffline)
+        if (!steamLibrary.Enabled || settings.Offline)
         {
             return null;
         }

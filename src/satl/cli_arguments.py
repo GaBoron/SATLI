@@ -39,6 +39,11 @@ def build_parser() -> argparse.ArgumentParser:
     _add_data_dir(scan)
     _add_steam_dir(scan)
     _add_offline(scan)
+    scan.add_argument(
+        "--catalog-cache-only",
+        action="store_true",
+        help="仅从本地缓存读取 index，同时保留其他已配置的联网数据源",
+    )
     scan.add_argument("--account", help="仅使用指定的本地 SteamID64 账号缓存")
     scan.add_argument(
         "--owned-account",

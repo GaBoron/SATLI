@@ -67,7 +67,7 @@ public sealed class TranslationManagementViewModel : ObservableObject
             {
                 refreshed = await RefreshCatalogCoreAsync();
             }
-            await ScanCoreAsync(forceOffline: refreshed || settings.Offline);
+            await ScanCoreAsync(useCatalogCache: refreshed);
             await LoadManagedCoreAsync(forceOffline: refreshed || settings.Offline);
             ShowInfo($"扫描完成，匹配到 {Games.Count} 个可用翻译。", InfoBarSeverity.Success);
         }
@@ -334,9 +334,9 @@ public sealed class TranslationManagementViewModel : ObservableObject
         return false;
     }
 
-    private async Task ScanCoreAsync(bool forceOffline = false)
+    private async Task ScanCoreAsync(bool useCatalogCache = false)
     {
-        var arguments = _arguments.Scan(forceOffline, out var steamLibraryWarning);
+        var arguments = _arguments.Scan(useCatalogCache, out var steamLibraryWarning);
         if (steamLibraryWarning is not null)
         {
             ShowInfo(steamLibraryWarning, InfoBarSeverity.Warning);
@@ -390,7 +390,7 @@ public sealed class TranslationManagementViewModel : ObservableObject
 
     private async Task ReloadAfterMutationAsync()
     {
-        await ScanCoreAsync(forceOffline: true);
+        await ScanCoreAsync(useCatalogCache: true);
         await LoadManagedCoreAsync(forceOffline: true);
     }
 

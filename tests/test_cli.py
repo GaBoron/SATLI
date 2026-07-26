@@ -324,6 +324,65 @@ def test_scan_can_merge_owned_games_from_steam_web_api(
     assert owned["payload"]["discovery"] == ["steam-web-api"]
 
 
+def test_scan_cached_catalog_still_intersects_steam_web_api_inventory(
+    tmp_path: Path,
+    monkeypatch,
+    capsys,
+) -> None:
+    steam, data_dir = make_fixture(tmp_path)
+    catalog_path = data_dir / "cache" / "index.json"
+    catalog = json.loads(catalog_path.read_text(encoding="utf-8"))
+    catalog["entries"].append(
+        {
+            "game_id": "456",
+            "game_name": "Catalog Inventory Game",
+            "status": "current",
+            "schema_file": "files/456/UserGameStatsSchema_456.bin",
+            "sha256": hashlib.sha256(b"second").hexdigest(),
+            "file_size_bytes": len(b"second"),
+            "achievement_count": 1,
+        }
+    )
+    catalog_path.write_text(json.dumps(catalog), encoding="utf-8")
+    monkeypatch.setenv(
+        "SATL_STEAM_WEB_API_KEY",
+        "0123456789abcdef0123456789abcdef",
+    )
+    monkeypatch.setattr(
+        "satl.scan_command.SteamWebApiClient.get_owned_games",
+        lambda client, api_key, account_id: (
+            OwnedGame("456", "Steam Inventory Name"),
+        ),
+    )
+
+    result = main(
+        [
+            "scan",
+            "--catalog-cache-only",
+            "--include-owned-games",
+            "--owned-account",
+            RESERVED_TEST_STEAM_ID,
+            "--jsonl",
+            "--steam-dir",
+            str(steam),
+            "--data-dir",
+            str(data_dir),
+        ]
+    )
+
+    assert result == 0
+    events = jsonl_events(capsys.readouterr().out)
+    owned = next(
+        event
+        for event in events
+        if event["event"] == "item-succeeded"
+        and event["payload"]["app_id"] == "456"
+    )
+    assert owned["payload"]["game_name"] == "Catalog Inventory Game"
+    assert owned["payload"]["discovery"] == ["steam-web-api"]
+    assert owned["payload"]["action"] == "available"
+
+
 def test_scan_web_api_failure_degrades_to_local_results(
     tmp_path: Path,
     monkeypatch,
