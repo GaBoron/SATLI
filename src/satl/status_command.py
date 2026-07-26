@@ -27,6 +27,7 @@ def command_status(args: argparse.Namespace) -> int:
         catalog = None
     records: list[dict[str, Any]] = []
     for app_id in app_ids:
+        details = manager.installation_details(app_id)
         entry = catalog.entries.get(app_id) if catalog else None
         if entry:
             record = game_record(
@@ -39,7 +40,7 @@ def command_status(args: argparse.Namespace) -> int:
         else:
             record = {
                 "app_id": app_id,
-                "game_name": app_id,
+                "game_name": details["game_name"] or app_id,
                 "discovery": [],
                 "catalog_status": "unknown",
                 "variants": [],
@@ -48,6 +49,13 @@ def command_status(args: argparse.Namespace) -> int:
                 "action": "none",
                 "error": None,
             }
+        record.update(
+            {
+                "installed_source": details["installed_source"],
+                "installed_at": details["installed_at"],
+                "installed_sha256": details["installed_sha256"],
+            }
+        )
         records.append(record)
     if args.jsonl:
         emit_jsonl("status", "plan", {"count": len(records)})

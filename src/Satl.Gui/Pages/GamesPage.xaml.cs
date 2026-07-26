@@ -24,7 +24,7 @@ public sealed partial class GamesPage : Page
 
     private int? _selectionAnchorIndex;
 
-    public MainViewModel ViewModel => App.ViewModel;
+    public TranslationManagementViewModel ViewModel => App.ViewModel.Translations;
 
     public GamesPage()
     {

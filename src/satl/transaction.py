@@ -30,6 +30,10 @@ def _copy_fsync(source: Path, destination: Path) -> None:
         temporary.unlink(missing_ok=True)
 
 
+def _optional_string(value: object) -> str | None:
+    return value.strip() if isinstance(value, str) and value.strip() else None
+
+
 class TransactionManager:
     def __init__(self, data_dir: Path, store: StateStore | None = None) -> None:
         self.data_dir = Path(data_dir).resolve()
@@ -42,8 +46,12 @@ class TransactionManager:
         source: Path,
         variant: SchemaVariant,
         *,
+        source_kind: str = "catalog",
+        game_name: str | None = None,
         dry_run: bool = False,
     ) -> dict[str, Any]:
+        if source_kind not in {"catalog", "local-import"}:
+            raise TransactionError(f"不支持的安装来源：{source_kind}")
         verify_schema_file(source, variant)
         target = Path(target).resolve()
         if target.name != f"UserGameStatsSchema_{app_id}.bin":
@@ -75,6 +83,8 @@ class TransactionManager:
             transaction = {
                 "id": transaction_id,
                 "installed_at": utc_now(),
+                "source_kind": source_kind,
+                "game_name": game_name.strip() if game_name and game_name.strip() else None,
                 "variant_id": variant.variant_id,
                 "schema_file": variant.schema_file,
                 "source_sha256": variant.sha256,
@@ -224,6 +234,29 @@ class TransactionManager:
             return None
         variant_id = transaction.get("variant_id")
         return variant_id if isinstance(variant_id, str) and variant_id else None
+
+    def installation_details(self, app_id: str) -> dict[str, str | None]:
+        transactions = self.store.transactions(app_id)
+        transaction = self.store.active_transaction(app_id)
+        if transaction is None and transactions:
+            transaction = transactions[-1]
+        if transaction is None:
+            return {
+                "installed_source": None,
+                "installed_at": None,
+                "installed_sha256": None,
+                "game_name": None,
+            }
+        variant_id = str(transaction.get("variant_id") or "")
+        source_kind = transaction.get("source_kind")
+        if source_kind not in {"catalog", "local-import"}:
+            source_kind = "local-import" if variant_id.startswith("local-") else "catalog"
+        return {
+            "installed_source": source_kind,
+            "installed_at": _optional_string(transaction.get("installed_at")),
+            "installed_sha256": _optional_string(transaction.get("installed_sha256")),
+            "game_name": _optional_string(transaction.get("game_name")),
+        }
 
     def _relative(self, path: Path) -> str:
         resolved = path.resolve()

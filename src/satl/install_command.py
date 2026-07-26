@@ -159,7 +159,14 @@ def command_install(args: argparse.Namespace) -> int:
             )
         try:
             source = repository.download_schema(variant, offline=args.offline)
-            manager.install(entry.app_id, schema_target(steam_dir, entry.app_id), source, variant)
+            manager.install(
+                entry.app_id,
+                schema_target(steam_dir, entry.app_id),
+                source,
+                variant,
+                source_kind="catalog",
+                game_name=entry.game_name,
+            )
             if args.jsonl:
                 emit_jsonl(
                     "install",

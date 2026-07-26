@@ -20,6 +20,7 @@ public sealed class GameItem : ObservableObject
     private string _selectedVariantId = string.Empty;
     private string _installedState = "unmanaged";
     private string _installedVariantId = string.Empty;
+    private string _installedSource = string.Empty;
 
     public required string AppId { get; init; }
     public required string GameName { get; init; }
@@ -86,6 +87,11 @@ public sealed class GameItem : ObservableObject
                 OnPropertyChanged(nameof(StateText));
                 OnPropertyChanged(nameof(IsModified));
                 OnPropertyChanged(nameof(InstalledVersionText));
+                OnPropertyChanged(nameof(ManagedSummaryText));
+                OnPropertyChanged(nameof(CanViewInstalledTranslation));
+                OnPropertyChanged(nameof(CanRestore));
+                OnPropertyChanged(nameof(RequiresForceRestore));
+                OnPropertyChanged(nameof(RestoreActionText));
             }
         }
     }
@@ -98,9 +104,30 @@ public sealed class GameItem : ObservableObject
             if (SetProperty(ref _installedVariantId, value))
             {
                 OnPropertyChanged(nameof(InstalledVersionText));
+                OnPropertyChanged(nameof(ManagedSummaryText));
             }
         }
     }
+
+    public string InstalledSource
+    {
+        get => _installedSource;
+        set
+        {
+            if (SetProperty(ref _installedSource, value))
+            {
+                OnPropertyChanged(nameof(IsLocalImport));
+                OnPropertyChanged(nameof(InstalledSourceText));
+                OnPropertyChanged(nameof(ManagedSummaryText));
+                OnPropertyChanged(nameof(CatalogText));
+                OnPropertyChanged(nameof(HasCatalogWarning));
+                OnPropertyChanged(nameof(CatalogWarningText));
+            }
+        }
+    }
+
+    public string InstalledAt { get; init; } = string.Empty;
+    public string InstalledSha256 { get; init; } = string.Empty;
 
     public string StateText => InstalledState switch
     {
@@ -113,6 +140,17 @@ public sealed class GameItem : ObservableObject
     };
 
     public bool IsModified => InstalledState == "modified";
+    public bool IsLocalImport => InstalledSource == "local-import"
+        || InstalledVariantId.StartsWith("local-", StringComparison.OrdinalIgnoreCase);
+    public bool CanViewInstalledTranslation => InstalledState is "installed" or "modified";
+    public bool CanRestore => InstalledState is "installed" or "modified" or "missing";
+    public bool RequiresForceRestore => InstalledState is "modified" or "missing";
+    public string RestoreActionText => RequiresForceRestore ? "强制恢复" : "恢复";
+    public string InstalledSourceText => IsLocalImport
+        ? "来源：本地导入"
+        : InstalledSource == "catalog"
+            ? "来源：社区翻译库"
+            : "来源：历史安装记录";
     public string InstalledVersionText
     {
         get
@@ -125,15 +163,18 @@ public sealed class GameItem : ObservableObject
             return $"已安装版本：{variant?.DisplayName ?? InstalledVariantId}";
         }
     }
+    public string ManagedSummaryText => $"{InstalledSourceText} · {InstalledVersionText}";
     public bool IsCurrent => CatalogStatus == "current";
     public bool HasNativeChinese => NativeLanguages.Any(language =>
         language.Equals("schinese", StringComparison.OrdinalIgnoreCase)
         || language.Equals("tchinese", StringComparison.OrdinalIgnoreCase));
-    public bool HasCatalogWarning => !IsCurrent && !HasNativeChinese;
-    public string CatalogText => HasNativeChinese
+    public bool HasCatalogWarning => !IsLocalImport && !IsCurrent && !HasNativeChinese;
+    public string CatalogText => IsLocalImport
+        ? "本地导入译本"
+        : HasNativeChinese
         ? "本游戏自带中文"
         : $"索引状态：{CatalogStatusPresentation.Label(CatalogStatus)}";
-    public string CatalogWarningText => HasNativeChinese
+    public string CatalogWarningText => IsLocalImport || HasNativeChinese
         ? string.Empty
         : CatalogStatusPresentation.Warning(CatalogStatus);
     public string Subtitle => $"App ID {AppId}" + (string.IsNullOrWhiteSpace(DiscoveryText) ? string.Empty : $" · {DiscoveryText}");
@@ -156,6 +197,9 @@ public sealed class GameItem : ObservableObject
             NativeLanguages = GetStringArray(payload, "native_languages"),
             InstalledState = GetString(payload, "installed_state", "unmanaged"),
             InstalledVariantId = GetString(payload, "installed_variant_id", string.Empty),
+            InstalledSource = GetString(payload, "installed_source", string.Empty),
+            InstalledAt = GetString(payload, "installed_at", string.Empty),
+            InstalledSha256 = GetString(payload, "installed_sha256", string.Empty),
         };
 
         if (payload.TryGetProperty("variants", out var variants) && variants.ValueKind == JsonValueKind.Array)

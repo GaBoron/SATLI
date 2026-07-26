@@ -76,10 +76,11 @@ public sealed partial class LocalGamesPage : Page
                 sourcePath,
                 preview.SchemaSha256,
                 App.ViewModel.Settings);
+            await ViewModel.RefreshAsync();
+            await App.ViewModel.Translations.ScanAsync(refreshCatalog: false);
             App.ViewModel.ShowInfo(
                 $"已导入并安装 {preview.Replacement.GameName}（App ID {preview.Replacement.AppId}）。",
                 InfoBarSeverity.Success);
-            await ViewModel.RefreshAsync();
         }
         catch (Exception exception)
         {

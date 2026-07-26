@@ -140,9 +140,18 @@ def test_local_import_installs_snapshot_and_records_transaction(
     target = steam / "appcache" / "stats" / "UserGameStatsSchema_123.bin"
     assert target.read_bytes() == payload
     state = json.loads((data_dir / "state.json").read_text(encoding="utf-8"))
-    assert state["apps"]["123"]["transactions"][-1]["variant_id"].startswith("local-")
+    transaction = state["apps"]["123"]["transactions"][-1]
+    assert transaction["variant_id"].startswith("local-")
+    assert transaction["source_kind"] == "local-import"
+    assert transaction["game_name"] == "Local Game"
     events = jsonl_events(capsys.readouterr().out)
     assert events[-1]["payload"]["succeeded"] == 1
+
+    assert main(["status", "123", "--offline", "--json", "--data-dir", str(data_dir)]) == 0
+    status = json.loads(capsys.readouterr().out)[0]
+    assert status["game_name"] == "Local Game"
+    assert status["installed_source"] == "local-import"
+    assert status["installed_sha256"] == hashlib.sha256(payload).hexdigest()
 
 
 def test_local_import_refuses_content_changed_after_preview(

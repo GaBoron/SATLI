@@ -44,6 +44,7 @@ def test_install_and_restore_existing_original(tmp_path: Path) -> None:
     assert (data / transaction["snapshot"]).read_bytes() == b"original"
     assert manager.status("123") == "installed"
     assert manager.installed_variant_id("123") == "default"
+    assert manager.installation_details("123")["installed_source"] == "catalog"
     assert manager.restore_preview_source("123", target).read_bytes() == b"original"
 
     manager.restore("123", target)
@@ -134,3 +135,29 @@ def test_dry_run_never_writes_target_or_state(tmp_path: Path) -> None:
     assert result["action"] == "would-install"
     assert not target.parent.exists()
     assert not manager.store.path.exists()
+
+
+def test_installation_details_preserve_local_source_and_infer_legacy_records(tmp_path: Path) -> None:
+    target = tmp_path / "Steam" / "appcache" / "stats" / "UserGameStatsSchema_123.bin"
+    payload = b"translated"
+    source = source_file(tmp_path, "translated.bin", payload)
+    manager = TransactionManager(tmp_path / "data")
+    transaction = manager.install(
+        "123",
+        target,
+        source,
+        variant_for("123", payload, "local-abcdef123456"),
+        source_kind="local-import",
+        game_name="Local Game",
+    )
+
+    details = manager.installation_details("123")
+    assert details["installed_source"] == "local-import"
+    assert details["game_name"] == "Local Game"
+    assert details["installed_at"] == transaction["installed_at"]
+    assert details["installed_sha256"] == transaction["installed_sha256"]
+
+    state = manager.store.load()
+    del state["apps"]["123"]["transactions"][-1]["source_kind"]
+    manager.store.save(state)
+    assert manager.installation_details("123")["installed_source"] == "local-import"

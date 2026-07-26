@@ -14,7 +14,7 @@ namespace Satl_Gui.Pages;
 public sealed partial class ManagedPage : Page
 {
     private int? _selectionAnchorIndex;
-    public MainViewModel ViewModel => App.ViewModel;
+    public TranslationManagementViewModel ViewModel => App.ViewModel.Translations;
     public ManagedPage()
     {
         InitializeComponent();
@@ -32,12 +32,21 @@ public sealed partial class ManagedPage : Page
 
     private async Task ConfirmRestoreAsync(bool force)
     {
-        var selected = ViewModel.ManagedGames.Where(item => item.IsSelected && (!force || item.IsModified)).ToList();
+        var selected = ViewModel.ManagedGames
+            .Where(item => item.IsSelected
+                && item.CanRestore
+                && (force ? item.RequiresForceRestore : !item.RequiresForceRestore))
+            .ToList();
         if (selected.Count == 0)
         {
-            ViewModel.ShowInfo(force ? "强制恢复仅适用于状态为“已被修改”的所选条目。" : "请先选择至少一个已管理游戏。", InfoBarSeverity.Warning);
+            ViewModel.ShowInfo(force ? "强制恢复仅适用于状态为“已被修改”或“文件缺失”的所选条目。" : "请先选择至少一个可恢复的游戏。", InfoBarSeverity.Warning);
             return;
         }
+        await ConfirmRestoreAsync(selected, force);
+    }
+
+    private async Task ConfirmRestoreAsync(IReadOnlyList<GameItem> selected, bool force)
+    {
         var previews = await ViewModel.PreviewRestoreAsync(selected, force);
         if (previews is null)
         {
@@ -52,6 +61,30 @@ public sealed partial class ManagedPage : Page
                 force ? "确认归档并恢复" : "确认恢复"))
         {
             await ViewModel.RestoreAsync(selected, force);
+        }
+    }
+
+    private async void ViewCurrent_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button { Tag: GameItem game } || !game.CanViewInstalledTranslation)
+        {
+            return;
+        }
+        var preview = await ViewModel.PreviewCurrentAsync(game);
+        if (preview is not null)
+        {
+            await ReplacementConfirmationDialog.ShowReadOnlyAsync(
+                XamlRoot,
+                [preview],
+                $"查看当前翻译 · {game.GameName}");
+        }
+    }
+
+    private async void RestoreItem_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button { Tag: GameItem game } && game.CanRestore)
+        {
+            await ConfirmRestoreAsync([game], force: game.RequiresForceRestore);
         }
     }
 

@@ -8,7 +8,7 @@
         <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="*" /></Grid.RowDefinitions>
         <StackPanel Spacing="4">
             <TextBlock Text="已管理" Style="{StaticResource TitleTextBlockStyle}" />
-            <TextBlock Text="查看 SATL 的安装记录，并恢复安装前文件。" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+            <TextBlock Text="查看社区或本地导入的当前译文，并恢复安装前文件。" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
         </StackPanel>
         <CommandBar Grid.Row="1" DefaultLabelPosition="Right">
             <AppBarButton Icon="Refresh" Label="刷新状态" Click="Refresh_Click" KeyboardAcceleratorTextOverride="F5" />
@@ -23,18 +23,20 @@
             </ListView.ItemContainerStyle>
             <ListView.ItemTemplate>
                 <DataTemplate x:DataType="models:GameItem">
-                    <Border Padding="16" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="8">
+                    <Border Padding="12" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="8">
                         <Grid ColumnSpacing="16">
-                            <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                            <CheckBox VerticalAlignment="Center" IsChecked="{x:Bind IsSelected, Mode=TwoWay}" Click="GameSelection_Click" AutomationProperties.Name="{x:Bind GameName}" />
-                            <StackPanel Grid.Column="1" Spacing="4">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                            <CheckBox VerticalAlignment="Center" IsChecked="{x:Bind IsSelected, Mode=TwoWay}" IsEnabled="{x:Bind CanRestore}" Click="GameSelection_Click" AutomationProperties.Name="{x:Bind GameName}" />
+                            <StackPanel Grid.Column="1" Spacing="2">
                                 <TextBlock Text="{x:Bind GameName}" Style="{StaticResource BodyStrongTextBlockStyle}" />
                                 <TextBlock Text="{x:Bind Subtitle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Style="{StaticResource CaptionTextBlockStyle}" />
-                                <TextBlock Text="{x:Bind CatalogText}" Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" Style="{StaticResource CaptionTextBlockStyle}" />
-                                <InfoBar IsOpen="{x:Bind HasCatalogWarning}" IsClosable="False" Severity="Warning" Message="{x:Bind CatalogWarningText}" />
-                                <TextBlock Text="{x:Bind InstalledVersionText, Mode=OneWay}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Style="{StaticResource CaptionTextBlockStyle}" />
+                                <TextBlock Text="{x:Bind ManagedSummaryText, Mode=OneWay}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Style="{StaticResource CaptionTextBlockStyle}" TextTrimming="CharacterEllipsis" />
                             </StackPanel>
                             <TextBlock Grid.Column="2" VerticalAlignment="Center" Text="{x:Bind StateText}" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                            <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                <Button Width="80" HorizontalContentAlignment="Center" Content="查看" Click="ViewCurrent_Click" Tag="{x:Bind}" IsEnabled="{x:Bind CanViewInstalledTranslation}" AutomationProperties.Name="查看当前安装的成就翻译" AutomationProperties.HelpText="{x:Bind GameName}" />
+                                <Button Width="80" HorizontalContentAlignment="Center" Content="{x:Bind RestoreActionText}" Click="RestoreItem_Click" Tag="{x:Bind}" IsEnabled="{x:Bind CanRestore}" AutomationProperties.Name="恢复安装前文件" AutomationProperties.HelpText="{x:Bind GameName}" />
+                            </StackPanel>
                         </Grid>
                     </Border>
                 </DataTemplate>

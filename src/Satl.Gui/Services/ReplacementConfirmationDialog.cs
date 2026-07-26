@@ -43,11 +43,22 @@ public static class ReplacementConfirmationDialog
             ["greek"] = "希腊语",
         };
 
-    public static async Task<bool> ShowAsync(
+    public static Task<bool> ShowAsync(
         XamlRoot xamlRoot,
         IReadOnlyList<ReplacementPreview> previews,
         string title,
-        string confirmText)
+        string confirmText) => ShowCoreAsync(xamlRoot, previews, title, confirmText);
+
+    public static async Task ShowReadOnlyAsync(
+        XamlRoot xamlRoot,
+        IReadOnlyList<ReplacementPreview> previews,
+        string title) => await ShowCoreAsync(xamlRoot, previews, title, confirmText: null);
+
+    private static async Task<bool> ShowCoreAsync(
+        XamlRoot xamlRoot,
+        IReadOnlyList<ReplacementPreview> previews,
+        string title,
+        string? confirmText)
     {
         if (previews.Count == 0)
         {
@@ -63,7 +74,9 @@ public static class ReplacementConfirmationDialog
         };
         var explanation = new TextBlock
         {
-            Text = "下表来自即将写入的 BIN 文件，并已通过 Binary KeyValues 字节级 roundtrip 校验。语言列表由该 BIN 的名称和说明字段自动扫描生成。",
+            Text = confirmText is null
+                ? "下表来自 Steam 当前使用的 BIN 文件，并已通过 Binary KeyValues 字节级 roundtrip 校验。语言列表由该 BIN 的名称和说明字段自动扫描生成。"
+                : "下表来自即将写入的 BIN 文件，并已通过 Binary KeyValues 字节级 roundtrip 校验。语言列表由该 BIN 的名称和说明字段自动扫描生成。",
             TextWrapping = TextWrapping.Wrap,
             Foreground = Application.Current.Resources["TextFillColorSecondaryBrush"] as Brush,
         };
@@ -188,9 +201,9 @@ public static class ReplacementConfirmationDialog
             XamlRoot = xamlRoot,
             Title = title,
             Content = content,
-            PrimaryButtonText = confirmText,
-            CloseButtonText = "取消",
-            DefaultButton = ContentDialogButton.Primary,
+            PrimaryButtonText = confirmText ?? string.Empty,
+            CloseButtonText = confirmText is null ? "关闭" : "取消",
+            DefaultButton = confirmText is null ? ContentDialogButton.Close : ContentDialogButton.Primary,
         };
 
         void ApplyAdaptiveSize()

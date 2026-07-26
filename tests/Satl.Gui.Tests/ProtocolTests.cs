@@ -113,6 +113,41 @@ public sealed class ProtocolTests
     }
 
     [Fact]
+    public void GameItemPresentsLocalImportsAsViewableAndRestorable()
+    {
+        using var document = JsonDocument.Parse(
+            """{"app_id":"123","game_name":"Local Game","catalog_status":"unknown","installed_state":"installed","installed_variant_id":"local-abcdef123456","installed_source":"local-import","installed_at":"2026-07-26T00:00:00Z","installed_sha256":"abcdef"}"""
+        );
+
+        var item = GameItem.FromPayload(document.RootElement);
+
+        Assert.True(item.IsLocalImport);
+        Assert.True(item.CanViewInstalledTranslation);
+        Assert.True(item.CanRestore);
+        Assert.Equal("本地导入译本", item.CatalogText);
+        Assert.Equal("来源：本地导入", item.InstalledSourceText);
+        Assert.False(item.HasCatalogWarning);
+        Assert.Equal("恢复", item.RestoreActionText);
+    }
+
+    [Fact]
+    public void ApplicationOperationStateSerializesOperationsAndReturnsToReady()
+    {
+        var state = new ApplicationOperationState();
+
+        Assert.True(state.TryBegin());
+        Assert.False(state.TryBegin());
+        state.SetStatus("正在测试…");
+        Assert.Equal("正在测试…", state.StatusMessage);
+
+        state.Complete();
+
+        Assert.False(state.IsBusy);
+        Assert.Equal("准备就绪", state.StatusMessage);
+        Assert.True(state.TryBegin());
+    }
+
+    [Fact]
     public void GameLoadingProgressTracksPlanLookupAndItems()
     {
         var progress = new GameLoadingProgress();

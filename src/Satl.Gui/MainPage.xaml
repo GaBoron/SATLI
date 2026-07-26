@@ -52,17 +52,17 @@
                 Severity="{x:Bind ViewModel.InfoSeverity, Mode=OneWay}" />
             <ProgressBar
                 Grid.Row="1"
-                Visibility="{x:Bind ViewModel.GameLoading.Visibility, Mode=OneWay}"
-                IsIndeterminate="{x:Bind ViewModel.GameLoading.IsIndeterminate, Mode=OneWay}"
-                Maximum="{x:Bind ViewModel.GameLoading.Maximum, Mode=OneWay}"
-                Value="{x:Bind ViewModel.GameLoading.Value, Mode=OneWay}"
+                Visibility="{x:Bind ViewModel.Operation.GameLoading.Visibility, Mode=OneWay}"
+                IsIndeterminate="{x:Bind ViewModel.Operation.GameLoading.IsIndeterminate, Mode=OneWay}"
+                Maximum="{x:Bind ViewModel.Operation.GameLoading.Maximum, Mode=OneWay}"
+                Value="{x:Bind ViewModel.Operation.GameLoading.Value, Mode=OneWay}"
                 AutomationProperties.Name="游戏加载进度" />
             <Frame x:Name="ContentFrame" Grid.Row="2" />
             <TextBlock
                 Grid.Row="3"
                 Margin="24,8,24,12"
                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                Text="{x:Bind ViewModel.StatusMessage, Mode=OneWay}"
+                Text="{x:Bind ViewModel.Operation.StatusMessage, Mode=OneWay}"
                 Style="{StaticResource CaptionTextBlockStyle}" />
         </Grid>
     </NavigationView>

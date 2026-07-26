@@ -101,6 +101,20 @@ def test_gui_resolves_the_internal_python_runtime() -> None:
     assert 'Path.Combine(runtimeDirectory, "satl.pyz")' in gui_service
 
 
+def test_main_view_model_delegates_translation_workflows() -> None:
+    main_view_model = (
+        ROOT / "src" / "Satl.Gui" / "ViewModels" / "MainViewModel.cs"
+    ).read_text(encoding="utf-8")
+    translation_view_model = (
+        ROOT / "src" / "Satl.Gui" / "ViewModels" / "TranslationManagementViewModel.cs"
+    ).read_text(encoding="utf-8")
+
+    assert "TranslationManagementViewModel Translations" in main_view_model
+    assert "SatlCliService" not in main_view_model
+    assert "PreviewCurrentAsync" in translation_view_model
+    assert len(main_view_model.splitlines()) < 400
+
+
 def test_release_surfaces_installable_artifacts_only() -> None:
     surfaces = [
         ROOT / "README.md",

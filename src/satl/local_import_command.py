@@ -100,6 +100,8 @@ def command_local_import(args: argparse.Namespace) -> int:
             schema_target(steam_dir, artifact.app_id),
             staged,
             variant,
+            source_kind="local-import",
+            game_name=game_name,
         )
     if args.jsonl:
         emit_jsonl(
