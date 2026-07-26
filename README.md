@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/GaBoron/steam-achievement-translation-installer/releases/latest"><img alt="最新版本" src="https://img.shields.io/github/v/release/GaBoron/steam-achievement-translation-installer?label=最新版本"></a>
+  <a href="https://github.com/GaBoron/steam-achievement-translation-installer/releases/latest"><img alt="最新版本" src="https://img.shields.io/github/v/release/GaBoron/steam-achievement-translation-installer?label=%E6%9C%80%E6%96%B0%E7%89%88%E6%9C%AC"></a>
   <img alt="Windows 10 / 11" src="https://img.shields.io/badge/Windows-10%20%2F%2011-0078D4">
   <a href="LICENSE"><img alt="MIT License" src="https://img.shields.io/badge/License-MIT-green.svg"></a>
 </p>
