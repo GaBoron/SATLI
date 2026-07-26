@@ -14,7 +14,7 @@
         </Grid.RowDefinitions>
         <StackPanel Spacing="4">
             <TextBlock Text="本地游戏" Style="{StaticResource TitleTextBlockStyle}" />
-            <TextBlock Text="查看 Steam 在本机安装或账号缓存中发现的全部游戏。" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+            <TextBlock Text="查看本机游戏，或导入 Localizer Skill 生成的标准 BIN/ZIP。" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
         </StackPanel>
         <CommandBar Grid.Row="1" DefaultLabelPosition="Right" IsDynamicOverflowEnabled="True">
             <CommandBar.Content>
@@ -25,6 +25,8 @@
                     QueryIcon="Find"
                     Text="{x:Bind ViewModel.SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
             </CommandBar.Content>
+            <AppBarButton Icon="OpenFile" Label="导入本地翻译" Click="Import_Click" AutomationProperties.Name="导入本地 BIN 或 ZIP" />
+            <AppBarButton Icon="Edit" Label="制作翻译" Click="Localizer_Click" AutomationProperties.Name="打开 Steam Achievement Localizer Skill" />
             <AppBarButton Icon="Refresh" Label="重新扫描" Click="Refresh_Click" />
         </CommandBar>
         <ProgressBar

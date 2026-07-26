@@ -25,6 +25,8 @@
 2. 勾选需要翻译的游戏，确认翻译版本。
 3. 点击“安装所选”，逐页检查每个游戏即将写入的 BIN 成就表格，再确认执行。
 
+如果译本由 [Steam Achievement Localizer Skill](https://github.com/GaBoron/steam-achievement-localizer-skill) 生成，可在“本地”页点击“导入本地翻译”，直接选择其 `final/` 目录中的标准 BIN 或 ZIP；应用会先校验和预览，再沿用相同的备份、安装与恢复流程。
+
 “已管理”页面会显示 SATL 管理的游戏、当前状态和已安装版本。需要撤销时可恢复安装前文件；如果文件之后被其他程序修改，软件会先拒绝普通恢复，只有在你明确确认后才执行强制恢复并归档当前文件。
 
 ## 主要功能
@@ -39,6 +41,8 @@
 ### 2. 安装与恢复
 
 - 安装前预览译本、目标语言和 BIN 中的成就内容。
+- 支持导入规范命名的本地 `UserGameStatsSchema_<app_id>.bin`，以及根目录仅含该 BIN 的标准 ZIP。
+- 本地导入会校验 ZIP 结构、Binary KeyValues 字节级 roundtrip 与预览 SHA-256，确认后文件如有变化将拒绝安装。
 - 支持批量安装、重复安装，以及同一游戏的多个候选译本。
 - 自动标记正常、可更新、缺失、已修改和缺少备份等状态。
 - 写入前自动备份；可普通恢复，也可在归档当前文件后强制恢复。
@@ -72,6 +76,16 @@
 如果你已经完成翻译，可从编辑页或投稿流程导出标准 ZIP，再点击“贡献翻译”提交。ZIP 根目录只包含一个 `UserGameStatsSchema_<app_id>.bin`，文件名、App ID、文件结构和语言内容会在生成或投稿时校验。
 
 导出不会修改 Steam 文件。如果找不到原始文件，请先启动对应游戏，让 Steam 生成一次成就缓存。
+
+## 使用 Localizer Skill 制作并导入翻译
+
+“本地”页的“制作翻译”会打开 [Steam Achievement Localizer Skill](https://github.com/GaBoron/steam-achievement-localizer-skill)。该 skill 负责研究多语言语境、制作翻译、无损写入和验证，并在项目的 `final/` 目录生成：
+
+- `UserGameStatsSchema_<app_id>.bin`
+- `UserGameStatsSchema_<app_id>.zip`
+- `report.json`
+
+返回安装器后点击“导入本地翻译”，选择 BIN 或 ZIP 即可。安装器不会修改所选源文件；它会检查文件名与 App ID、ZIP 单文件结构、schema roundtrip、成就内容和 SHA-256，显示逐项预览，并在确认后写入 Steam。写入前仍会创建 SATL 备份，因此可以在“已管理”页恢复。
 
 ## 报告云端文件问题
 

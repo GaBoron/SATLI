@@ -7,6 +7,7 @@ from pathlib import Path
 from satl import __version__
 from satl.cache_command import command_cache_refresh
 from satl.install_command import command_install
+from satl.local_import_command import command_local_import
 from satl.petition_command import command_petition_export
 from satl.restore_command import command_restore
 from satl.schema_command import (
@@ -82,6 +83,26 @@ def build_parser() -> argparse.ArgumentParser:
     )
     install.add_argument("--jsonl", action="store_true", help="输出供桌面应用使用的 JSON Lines 事件")
     install.set_defaults(handler=command_install)
+
+    local_import = subparsers.add_parser(
+        "local-import", help="导入 Localizer Skill 生成的本地 BIN 或 ZIP"
+    )
+    _add_data_dir(local_import)
+    _add_steam_dir(local_import)
+    local_import.add_argument("source", type=Path, metavar="BIN_OR_ZIP")
+    local_import.add_argument("--yes", action="store_true", help="跳过交互确认")
+    local_import.add_argument("--dry-run", action="store_true", help="仅校验和显示计划，不写入")
+    local_import.add_argument(
+        "--preview-content",
+        action="store_true",
+        help="在 JSONL dry-run 中输出本地 schema 的成就内容",
+    )
+    local_import.add_argument(
+        "--expected-sha256",
+        help="要求导入内容与预览得到的 SHA-256 一致",
+    )
+    local_import.add_argument("--jsonl", action="store_true", help="输出供桌面应用使用的 JSON Lines 事件")
+    local_import.set_defaults(handler=command_local_import)
 
     status = subparsers.add_parser("status", help="检查 SATL 管理的安装状态")
     _add_data_dir(status)
