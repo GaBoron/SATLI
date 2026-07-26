@@ -10,6 +10,17 @@ from satl.schema_edit import apply_schema
 from satl.transaction import TransactionManager
 
 
+def test_existing_local_edit_without_stored_name_uses_steam_manifest(tmp_path: Path) -> None:
+    target, data_dir, _ = _fixture(tmp_path)
+    edits = _write_edits(target, tmp_path / "edits.json", "本地名称")
+    apply_schema(target, "123", "schinese", edits, data_dir, allow_incomplete=False)
+
+    record = ManagedGameRegistry(data_dir).record("123")
+
+    assert record.installed_source == "local-edit"
+    assert record.game_name == "本地清单游戏"
+
+
 def test_local_edit_layer_restores_before_underlying_catalog_install(tmp_path: Path) -> None:
     target, data_dir, original = _fixture(tmp_path)
     installed = original.replace("原始名称".encode(), "社区名称".encode())
@@ -50,6 +61,12 @@ def test_catalog_install_layer_restores_to_underlying_local_edit(tmp_path: Path)
 def _fixture(tmp_path: Path) -> tuple[Path, Path, bytes]:
     target = tmp_path / "Steam" / "appcache" / "stats" / "UserGameStatsSchema_123.bin"
     target.parent.mkdir(parents=True)
+    manifest = tmp_path / "Steam" / "steamapps" / "appmanifest_123.acf"
+    manifest.parent.mkdir(parents=True)
+    manifest.write_text(
+        '"AppState" { "appid" "123" "name" "本地清单游戏" }',
+        encoding="utf-8",
+    )
     original = _schema("原始名称")
     target.write_bytes(original)
     return target, tmp_path / "data", original

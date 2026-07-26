@@ -5,8 +5,9 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Literal
 
-from satl.errors import IntegrityError, TransactionError
+from satl.errors import IntegrityError, PreflightError, TransactionError
 from satl.schema_edit import EditHistoryStore, restore_schema, sha256_path
+from satl.steam import discover_installed_games
 from satl.transaction import TransactionManager
 
 
@@ -38,6 +39,7 @@ class ManagedGameRegistry:
         self.data_dir = Path(data_dir).expanduser().resolve()
         self.installations = TransactionManager(self.data_dir)
         self.edits = EditHistoryStore(self.data_dir)
+        self._local_names_by_steam_dir: dict[Path, dict[str, str]] = {}
 
     def managed_app_ids(self) -> tuple[str, ...]:
         app_ids = set(self.installations.store.managed_app_ids())
@@ -67,7 +69,8 @@ class ManagedGameRegistry:
                 installed_source="local-edit",
                 installed_at=_optional_string(transaction.get("edited_at")),
                 installed_sha256=edited_hash,
-                game_name=self._known_game_name(app_id),
+                game_name=_optional_string(transaction.get("game_name"))
+                or self._known_game_name(app_id, transaction),
             )
 
         transaction = candidate.transaction
@@ -177,12 +180,28 @@ class ManagedGameRegistry:
             raise IntegrityError(f"编辑前备份 SHA-256 不匹配：{snapshot}")
         return snapshot
 
-    def _known_game_name(self, app_id: str) -> str | None:
+    def _known_game_name(
+        self,
+        app_id: str,
+        edit_transaction: dict[str, Any],
+    ) -> str | None:
         for transaction in reversed(self.installations.store.transactions(app_id)):
             game_name = _optional_string(transaction.get("game_name"))
             if game_name:
                 return game_name
-        return None
+        target = Path(str(edit_transaction.get("target") or ""))
+        if (
+            target.parent.name.casefold() != "stats"
+            or target.parent.parent.name.casefold() != "appcache"
+        ):
+            return None
+        steam_dir = target.parent.parent.parent.resolve()
+        if steam_dir not in self._local_names_by_steam_dir:
+            try:
+                self._local_names_by_steam_dir[steam_dir] = discover_installed_games(steam_dir)
+            except (OSError, PreflightError):
+                self._local_names_by_steam_dir[steam_dir] = {}
+        return _optional_string(self._local_names_by_steam_dir[steam_dir].get(app_id))
 
 
 def _optional_string(value: object) -> str | None:

@@ -243,6 +243,7 @@ def apply_schema(
     data_dir: Path,
     *,
     allow_incomplete: bool,
+    game_name: str | None = None,
 ) -> dict[str, Any]:
     source = _validated_schema_path(source_path, app_id)
     localized, report = render_schema(
@@ -274,6 +275,7 @@ def apply_schema(
         transaction = {
             "id": transaction_id,
             "edited_at": _utc_now(),
+            "game_name": game_name.strip() if game_name and game_name.strip() else None,
             "target": str(source),
             "target_language": report["target_language"],
             "original_sha256": report["source_sha256"],

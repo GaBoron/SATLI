@@ -645,6 +645,10 @@ def test_local_schema_edit_enters_managed_status_and_restores_through_managed_fl
     capsys,
 ) -> None:
     steam, data_dir = make_fixture(tmp_path)
+    catalog_path = data_dir / "cache" / "index.json"
+    catalog = json.loads(catalog_path.read_text(encoding="utf-8"))
+    catalog["entries"] = []
+    catalog_path.write_text(json.dumps(catalog), encoding="utf-8")
     target = steam / "appcache" / "stats" / "UserGameStatsSchema_123.bin"
     target.parent.mkdir(parents=True)
     original = preview_schema_bytes()
@@ -681,6 +685,8 @@ def test_local_schema_edit_enters_managed_status_and_restores_through_managed_fl
             "schinese",
             "--edits-file",
             str(edits),
+            "--game-name",
+            "本地编辑游戏",
             "--yes",
             "--jsonl",
             "--steam-dir",
@@ -697,6 +703,7 @@ def test_local_schema_edit_enters_managed_status_and_restores_through_managed_fl
     assert managed[0]["installed_state"] == "installed"
     assert managed[0]["installed_source"] == "local-edit"
     assert managed[0]["installed_variant_id"].startswith("local-edit-")
+    assert managed[0]["game_name"] == "本地编辑游戏"
 
     assert main(
         [

@@ -44,7 +44,8 @@ public sealed class SchemaEditorService
                 .Where(value => !string.IsNullOrWhiteSpace(value))
                 .Select(value => value!)
                 .ToArray(),
-            rows);
+            rows,
+            game.GameName);
     }
 
     public Task<SchemaEditResult> ApplyAsync(
@@ -56,7 +57,11 @@ public sealed class SchemaEditorService
             inspection,
             targetLanguage,
             rows,
-            ["schema", "apply", inspection.AppId, "--yes", "--jsonl"],
+            [
+                "schema", "apply", inspection.AppId,
+                "--game-name", inspection.GameName,
+                "--yes", "--jsonl",
+            ],
             allowIncomplete);
 
     public Task<SchemaEditResult> ExportAsync(

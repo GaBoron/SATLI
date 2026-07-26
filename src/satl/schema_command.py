@@ -64,6 +64,7 @@ def command_schema_apply(args: argparse.Namespace) -> int:
         Path(args.edits_file),
         Path(args.data_dir),
         allow_incomplete=args.allow_incomplete,
+        game_name=getattr(args, "game_name", None),
     )
     if args.jsonl:
         emit_jsonl("schema-apply", "item-succeeded", report)

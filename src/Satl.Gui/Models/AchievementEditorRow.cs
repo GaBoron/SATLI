@@ -61,7 +61,8 @@ public sealed record SchemaInspection(
     string SourceSha256,
     bool CanRestore,
     IReadOnlyList<string> Languages,
-    IReadOnlyList<AchievementEditorRow> Rows);
+    IReadOnlyList<AchievementEditorRow> Rows,
+    string GameName = "");
 
 public sealed record SchemaEditResult(
     string OutputSha256,

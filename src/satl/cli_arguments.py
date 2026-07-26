@@ -176,6 +176,7 @@ def build_parser() -> argparse.ArgumentParser:
     _add_data_dir(schema_apply)
     _add_steam_dir(schema_apply)
     _add_schema_edit_arguments(schema_apply)
+    schema_apply.add_argument("--game-name", help="记录本地编辑对应的游戏名称")
     schema_apply.add_argument("--yes", action="store_true")
     schema_apply.set_defaults(handler=command_schema_apply)
 
