@@ -8,6 +8,10 @@ namespace Satl_Gui.Services;
 
 public static class ReplacementConfirmationDialog
 {
+    private const double DefaultDialogMaxHeight = 756;
+    private const double DialogViewportMargin = 48;
+    private const double DialogChromeHeight = 180;
+
     private static readonly IReadOnlyDictionary<string, string> LanguageNames =
         new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
@@ -217,11 +221,16 @@ public static class ReplacementConfirmationDialog
         {
             var dialogWidth = Math.Clamp(xamlRoot.Size.Width - 48, 420, 1280);
             var contentWidth = Math.Max(340, dialogWidth - 48);
+            var dialogHeight = Math.Min(
+                DefaultDialogMaxHeight,
+                Math.Max(320, xamlRoot.Size.Height - DialogViewportMargin));
+            var contentHeight = Math.Max(140, dialogHeight - DialogChromeHeight);
             dialog.Resources["ContentDialogMaxWidth"] = dialogWidth;
             dialog.Resources["ContentDialogMinWidth"] = Math.Min(640, dialogWidth);
+            dialog.Resources["ContentDialogMaxHeight"] = dialogHeight;
             content.Width = contentWidth;
             content.MaxWidth = contentWidth;
-            content.Height = Math.Min(760, Math.Max(240, xamlRoot.Size.Height - 180));
+            content.Height = contentHeight;
         }
 
         void RootChanged(XamlRoot sender, XamlRootChangedEventArgs args) => ApplyAdaptiveSize();
