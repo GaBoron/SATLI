@@ -117,6 +117,7 @@ public sealed class GameItem : ObservableObject
             if (SetProperty(ref _installedSource, value))
             {
                 OnPropertyChanged(nameof(IsLocalImport));
+                OnPropertyChanged(nameof(IsLocalEdit));
                 OnPropertyChanged(nameof(InstalledSourceText));
                 OnPropertyChanged(nameof(ManagedSummaryText));
                 OnPropertyChanged(nameof(CatalogText));
@@ -141,14 +142,19 @@ public sealed class GameItem : ObservableObject
 
     public bool IsModified => InstalledState == "modified";
     public bool IsLocalImport => InstalledSource == "local-import"
-        || InstalledVariantId.StartsWith("local-", StringComparison.OrdinalIgnoreCase);
+        || (string.IsNullOrWhiteSpace(InstalledSource)
+            && InstalledVariantId.StartsWith("local-", StringComparison.OrdinalIgnoreCase)
+            && !InstalledVariantId.StartsWith("local-edit-", StringComparison.OrdinalIgnoreCase));
+    public bool IsLocalEdit => InstalledSource == "local-edit";
     public bool CanViewInstalledTranslation => InstalledState is "installed" or "modified";
     public bool CanRestore => InstalledState is "installed" or "modified" or "missing";
     public bool RequiresForceRestore => InstalledState is "modified" or "missing";
     public string RestoreActionText => RequiresForceRestore ? "强制恢复" : "恢复";
-    public string InstalledSourceText => IsLocalImport
-        ? "来源：本地导入"
-        : InstalledSource == "catalog"
+    public string InstalledSourceText => IsLocalEdit
+        ? "来源：本地编辑"
+        : IsLocalImport
+            ? "来源：本地导入"
+            : InstalledSource == "catalog"
             ? "来源：社区翻译库"
             : "来源：历史安装记录";
     public string InstalledVersionText
@@ -168,13 +174,15 @@ public sealed class GameItem : ObservableObject
     public bool HasNativeChinese => NativeLanguages.Any(language =>
         language.Equals("schinese", StringComparison.OrdinalIgnoreCase)
         || language.Equals("tchinese", StringComparison.OrdinalIgnoreCase));
-    public bool HasCatalogWarning => !IsLocalImport && !IsCurrent && !HasNativeChinese;
-    public string CatalogText => IsLocalImport
-        ? "本地导入译本"
+    public bool HasCatalogWarning => !IsLocalEdit && !IsLocalImport && !IsCurrent && !HasNativeChinese;
+    public string CatalogText => IsLocalEdit
+        ? "本地编辑译本"
+        : IsLocalImport
+            ? "本地导入译本"
         : HasNativeChinese
         ? "本游戏自带中文"
         : $"索引状态：{CatalogStatusPresentation.Label(CatalogStatus)}";
-    public string CatalogWarningText => IsLocalImport || HasNativeChinese
+    public string CatalogWarningText => IsLocalEdit || IsLocalImport || HasNativeChinese
         ? string.Empty
         : CatalogStatusPresentation.Warning(CatalogStatus);
     public string Subtitle => $"App ID {AppId}" + (string.IsNullOrWhiteSpace(DiscoveryText) ? string.Empty : $" · {DiscoveryText}");

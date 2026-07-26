@@ -193,17 +193,28 @@ class EditHistoryStore:
         self.save(state)
 
     def active(self, app_id: str) -> dict[str, Any] | None:
-        state = self.load()
-        app = state["apps"].get(app_id)
-        if not isinstance(app, dict):
-            return None
-        transactions = app.get("transactions")
-        if not isinstance(transactions, list):
-            raise TransactionError(f"{app_id} 的编辑事务记录无效")
-        for transaction in reversed(transactions):
+        for transaction in reversed(self.transactions(app_id)):
             if isinstance(transaction, dict) and not transaction.get("restored_at"):
                 return transaction
         return None
+
+    def transactions(self, app_id: str) -> list[dict[str, Any]]:
+        state = self.load()
+        app = state["apps"].get(app_id)
+        if app is None:
+            return []
+        if not isinstance(app, dict):
+            raise TransactionError(f"{app_id} 的编辑历史无效")
+        transactions = app.get("transactions")
+        if not isinstance(transactions, list) or not all(
+            isinstance(transaction, dict) for transaction in transactions
+        ):
+            raise TransactionError(f"{app_id} 的编辑事务记录无效")
+        return list(transactions)
+
+    def managed_app_ids(self) -> tuple[str, ...]:
+        state = self.load()
+        return tuple(sorted((str(key) for key in state["apps"]), key=lambda value: int(value)))
 
     def mark_restored(
         self,

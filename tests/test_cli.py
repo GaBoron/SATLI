@@ -639,6 +639,100 @@ def test_install_and_status_offline(tmp_path: Path, monkeypatch, capsys) -> None
     assert output[0]["installed_variant_id"] == "default"
 
 
+def test_local_schema_edit_enters_managed_status_and_restores_through_managed_flow(
+    tmp_path: Path,
+    monkeypatch,
+    capsys,
+) -> None:
+    steam, data_dir = make_fixture(tmp_path)
+    target = steam / "appcache" / "stats" / "UserGameStatsSchema_123.bin"
+    target.parent.mkdir(parents=True)
+    original = preview_schema_bytes()
+    target.write_bytes(original)
+    edits = tmp_path / "edits.json"
+    edits.write_text(
+        json.dumps(
+            {
+                "version": 1,
+                "app_id": "123",
+                "source_sha256": hashlib.sha256(original).hexdigest(),
+                "target_language": "schinese",
+                "rows": [
+                    {
+                        "api_name": "ACH_FIRST",
+                        "name": "本地修改名称",
+                        "description": "本地修改说明",
+                    }
+                ],
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr("satl.schema_command.is_steam_running", lambda: False)
+    monkeypatch.setattr("satl.restore_command.is_steam_running", lambda: False)
+
+    assert main(
+        [
+            "schema",
+            "apply",
+            "123",
+            "--target-language",
+            "schinese",
+            "--edits-file",
+            str(edits),
+            "--yes",
+            "--jsonl",
+            "--steam-dir",
+            str(steam),
+            "--data-dir",
+            str(data_dir),
+        ]
+    ) == 0
+    capsys.readouterr()
+
+    assert main(["status", "--offline", "--json", "--data-dir", str(data_dir)]) == 0
+    managed = json.loads(capsys.readouterr().out)
+    assert [record["app_id"] for record in managed] == ["123"]
+    assert managed[0]["installed_state"] == "installed"
+    assert managed[0]["installed_source"] == "local-edit"
+    assert managed[0]["installed_variant_id"].startswith("local-edit-")
+
+    assert main(
+        [
+            "restore",
+            "123",
+            "--dry-run",
+            "--preview-content",
+            "--jsonl",
+            "--steam-dir",
+            str(steam),
+            "--data-dir",
+            str(data_dir),
+        ]
+    ) == 0
+    preview = next(
+        event
+        for event in jsonl_events(capsys.readouterr().out)
+        if event["event"] == "item-preview"
+    )
+    assert preview["payload"]["rows"][0]["translations"]["schinese"]["name"] == "第一个"
+
+    assert main(
+        [
+            "restore",
+            "123",
+            "--yes",
+            "--jsonl",
+            "--steam-dir",
+            str(steam),
+            "--data-dir",
+            str(data_dir),
+        ]
+    ) == 0
+    assert target.read_bytes() == original
+
+
 def test_install_and_restore_jsonl_emit_item_results(tmp_path: Path, monkeypatch, capsys) -> None:
     steam, data_dir = make_fixture(tmp_path)
     monkeypatch.setattr("satl.install_command.is_steam_running", lambda: False)

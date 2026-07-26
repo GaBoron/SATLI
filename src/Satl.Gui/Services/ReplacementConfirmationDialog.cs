@@ -100,7 +100,10 @@ public static class ReplacementConfirmationDialog
         });
         languageBar.Children.Add(languageBox);
 
-        var tableHost = new Grid();
+        var tableHost = new Grid
+        {
+            VerticalAlignment = VerticalAlignment.Stretch,
+        };
         var previous = new Button { Content = "上一页" };
         var next = new Button { Content = "下一页" };
         var pageText = new TextBlock { VerticalAlignment = VerticalAlignment.Center };
@@ -179,7 +182,11 @@ public static class ReplacementConfirmationDialog
         pager.Children.Add(pageText);
         pager.Children.Add(next);
 
-        var content = new Grid { RowSpacing = 10 };
+        var content = new Grid
+        {
+            RowSpacing = 10,
+            VerticalAlignment = VerticalAlignment.Stretch,
+        };
         content.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
         content.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
         content.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
@@ -214,7 +221,7 @@ public static class ReplacementConfirmationDialog
             dialog.Resources["ContentDialogMinWidth"] = Math.Min(640, dialogWidth);
             content.Width = contentWidth;
             content.MaxWidth = contentWidth;
-            tableHost.Height = Math.Clamp(xamlRoot.Size.Height - 330, 220, 600);
+            content.Height = Math.Min(760, Math.Max(240, xamlRoot.Size.Height - 180));
         }
 
         void RootChanged(XamlRoot sender, XamlRootChangedEventArgs args) => ApplyAdaptiveSize();
@@ -268,6 +275,7 @@ public static class ReplacementConfirmationDialog
         return new ScrollViewer
         {
             Content = rows,
+            VerticalAlignment = VerticalAlignment.Stretch,
             HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
             HorizontalScrollMode = ScrollMode.Disabled,
             VerticalScrollBarVisibility = ScrollBarVisibility.Auto,

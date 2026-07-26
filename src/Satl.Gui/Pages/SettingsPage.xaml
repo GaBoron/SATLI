@@ -4,8 +4,12 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:controls="using:Satl_Gui.Controls">
-    <ScrollViewer>
-        <StackPanel Padding="32,24,32,32" Spacing="12" MaxWidth="960" HorizontalAlignment="Stretch">
+    <ScrollViewer
+        HorizontalContentAlignment="Stretch"
+        HorizontalScrollBarVisibility="Disabled"
+        HorizontalScrollMode="Disabled">
+        <Grid HorizontalAlignment="Stretch">
+            <StackPanel Padding="32,24,32,32" Spacing="12" MaxWidth="960" HorizontalAlignment="Center">
             <StackPanel Spacing="4">
                 <TextBlock Text="设置" Style="{StaticResource TitleTextBlockStyle}" />
                 <TextBlock Text="管理安装器使用的目录、连接方式和外观。更改会立即生效。" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
@@ -264,6 +268,7 @@
                     </StackPanel>
                 </Grid>
             </Border>
-        </StackPanel>
+            </StackPanel>
+        </Grid>
     </ScrollViewer>
 </Page>

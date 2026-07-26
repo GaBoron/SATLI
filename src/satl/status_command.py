@@ -8,18 +8,16 @@ from satl.catalog import CatalogRepository
 from satl.cli_protocol import emit_jsonl, game_record, print_json
 from satl.cli_validation import validate_app_ids
 from satl.errors import CatalogError, UsageError
+from satl.managed_games import ManagedGameRegistry
 from satl.models import Catalog
-from satl.state import StateStore
-from satl.transaction import TransactionManager
 
 
 def command_status(args: argparse.Namespace) -> int:
     if args.json and args.jsonl:
         raise UsageError("--json 与 --jsonl 不能同时使用")
     data_dir = Path(args.data_dir)
-    store = StateStore(data_dir)
-    manager = TransactionManager(data_dir)
-    app_ids = validate_app_ids(args.app_ids or list(store.managed_app_ids()))
+    registry = ManagedGameRegistry(data_dir)
+    app_ids = validate_app_ids(args.app_ids or list(registry.managed_app_ids()))
     catalog: Catalog | None
     try:
         catalog = CatalogRepository(data_dir).load(offline=args.offline)
@@ -27,33 +25,33 @@ def command_status(args: argparse.Namespace) -> int:
         catalog = None
     records: list[dict[str, Any]] = []
     for app_id in app_ids:
-        details = manager.installation_details(app_id)
+        managed = registry.record(app_id)
         entry = catalog.entries.get(app_id) if catalog else None
         if entry:
             record = game_record(
                 entry,
                 [],
-                manager.status(app_id),
+                managed.installed_state,
                 "none",
-                manager.installed_variant_id(app_id),
+                managed.installed_variant_id,
             )
         else:
             record = {
                 "app_id": app_id,
-                "game_name": details["game_name"] or app_id,
+                "game_name": managed.game_name or app_id,
                 "discovery": [],
                 "catalog_status": "unknown",
                 "variants": [],
-                "installed_state": manager.status(app_id),
-                "installed_variant_id": manager.installed_variant_id(app_id),
+                "installed_state": managed.installed_state,
+                "installed_variant_id": managed.installed_variant_id,
                 "action": "none",
                 "error": None,
             }
         record.update(
             {
-                "installed_source": details["installed_source"],
-                "installed_at": details["installed_at"],
-                "installed_sha256": details["installed_sha256"],
+                "installed_source": managed.installed_source,
+                "installed_at": managed.installed_at,
+                "installed_sha256": managed.installed_sha256,
             }
         )
         records.append(record)

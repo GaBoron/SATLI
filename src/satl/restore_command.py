@@ -8,8 +8,8 @@ from satl.bkv import achievement_preview
 from satl.cli_protocol import emit_jsonl
 from satl.cli_validation import confirm, validate_app_ids
 from satl.errors import PreflightError, SatlError, UsageError
+from satl.managed_games import ManagedGameRegistry
 from satl.steam import find_steam_dir, is_steam_running, schema_target
-from satl.transaction import TransactionManager
 
 
 def command_restore(args: argparse.Namespace) -> int:
@@ -19,12 +19,12 @@ def command_restore(args: argparse.Namespace) -> int:
         raise UsageError("APP_ID 与 --all 不能同时使用")
     if not args.all and not args.app_ids:
         raise UsageError("请指定 APP_ID，或使用 --all")
-    manager = TransactionManager(Path(args.data_dir))
+    registry = ManagedGameRegistry(Path(args.data_dir))
     if args.all:
         app_ids = [
             app_id
-            for app_id in manager.store.managed_app_ids()
-            if manager.store.active_transaction(app_id) is not None
+            for app_id in registry.managed_app_ids()
+            if registry.has_active_transaction(app_id)
         ]
     else:
         app_ids = validate_app_ids(args.app_ids)
@@ -50,7 +50,7 @@ def command_restore(args: argparse.Namespace) -> int:
     if args.dry_run:
         if args.preview_content:
             for app_id in app_ids:
-                source = manager.restore_preview_source(
+                source = registry.restore_preview_source(
                     app_id,
                     schema_target(steam_dir, app_id),
                 )
@@ -87,7 +87,7 @@ def command_restore(args: argparse.Namespace) -> int:
         if args.jsonl:
             emit_jsonl("restore", "item-started", {"app_id": app_id, "force": args.force})
         try:
-            manager.restore(
+            registry.restore(
                 app_id,
                 schema_target(steam_dir, app_id),
                 force=args.force,

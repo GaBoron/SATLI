@@ -131,6 +131,25 @@ public sealed class ProtocolTests
     }
 
     [Fact]
+    public void GameItemPresentsLocalEditsAsViewableAndRestorable()
+    {
+        using var document = JsonDocument.Parse(
+            """{"app_id":"123","game_name":"Edited Game","catalog_status":"unknown","installed_state":"installed","installed_variant_id":"local-edit-abcdef123456","installed_source":"local-edit","installed_at":"2026-07-26T00:00:00Z","installed_sha256":"abcdef"}"""
+        );
+
+        var item = GameItem.FromPayload(document.RootElement);
+
+        Assert.True(item.IsLocalEdit);
+        Assert.False(item.IsLocalImport);
+        Assert.True(item.CanViewInstalledTranslation);
+        Assert.True(item.CanRestore);
+        Assert.Equal("本地编辑译本", item.CatalogText);
+        Assert.Equal("来源：本地编辑", item.InstalledSourceText);
+        Assert.False(item.HasCatalogWarning);
+        Assert.Equal("恢复", item.RestoreActionText);
+    }
+
+    [Fact]
     public void ApplicationOperationStateSerializesOperationsAndReturnsToReady()
     {
         var state = new ApplicationOperationState();

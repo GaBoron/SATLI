@@ -6,6 +6,7 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:models="using:Satl_Gui.Models"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    KeyboardAcceleratorPlacementMode="Hidden"
     mc:Ignorable="d">
     <Grid x:Name="PageLayout" Padding="32,24,32,16" RowSpacing="16">
         <Grid.RowDefinitions>
