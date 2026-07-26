@@ -183,6 +183,10 @@ powershell -ExecutionPolicy Bypass -File .\scripts\build.ps1
 
 构建结果位于 `dist\release\`：安装版 EXE 和 `SHA256SUMS.txt`。
 
+## 统计
+
+![Alt](https://repobeats.axiom.co/api/embed/ce4cc9d3800947708218fb165750a35fb9f37083.svg "Repobeats analytics image")
+
 ## 许可证
 
 程序代码采用 [MIT License](LICENSE)。第三方组件和翻译数据的权利说明见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
