@@ -37,7 +37,11 @@ def command_scan(args: argparse.Namespace) -> int:
     catalog = CatalogRepository(Path(args.data_dir)).load(
         offline=args.offline or args.catalog_cache_only
     )
-    print_catalog_cache_notice(catalog, operation="scan", jsonl=args.jsonl)
+    # ``--catalog-cache-only`` is used after the GUI has just refreshed the
+    # catalog successfully. Reading that fresh cache is intentional and must
+    # not be reported as a failed or disabled network refresh.
+    if not args.catalog_cache_only:
+        print_catalog_cache_notice(catalog, operation="scan", jsonl=args.jsonl)
     steam_dir = None if args.scope == "cloud" else find_steam_dir(args.steam_dir)
     discovered = {} if steam_dir is None else discover_local_games(steam_dir, args.account)
     if steam_dir is not None and args.include_owned_games:

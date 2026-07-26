@@ -372,6 +372,7 @@ def test_scan_cached_catalog_still_intersects_steam_web_api_inventory(
 
     assert result == 0
     events = jsonl_events(capsys.readouterr().out)
+    assert not any(event["event"] == "warning" for event in events)
     owned = next(
         event
         for event in events
