@@ -14,10 +14,10 @@ public sealed partial class AchievementEditorPage : Page
 {
     private readonly SchemaEditorService _editor = new();
     private readonly SchemaDraftStore _drafts = new();
+    private readonly AchievementEditState _editState = new();
     private SchemaInspection? _inspection;
     private GameItem? _game;
     private bool _isBusy;
-    private bool _isDirty;
     private bool _changingLanguage;
     private bool _allowNavigation;
     private bool _allowClose;
@@ -86,7 +86,7 @@ public sealed partial class AchievementEditorPage : Page
         await RestoreDraftAsync();
         ApplyFilter();
         RestoreButton.IsEnabled = _inspection.CanRestore;
-        _isDirty = false;
+        _editState.Accept(_targetLanguage, _inspection.Rows);
         UpdateStatus();
     }
 
@@ -127,7 +127,6 @@ public sealed partial class AchievementEditorPage : Page
             row.TargetDescription = values[row.ApiName].Description;
         }
         _changingLanguage = false;
-        _isDirty = false;
         App.ViewModel.ShowInfo(
             $"已恢复 {_targetLanguage} 草稿（保存于 {draft.SavedAt.ToLocalTime():g}）。",
             InfoBarSeverity.Informational);
@@ -138,7 +137,6 @@ public sealed partial class AchievementEditorPage : Page
         if (e.PropertyName is nameof(AchievementEditorRow.TargetName)
             or nameof(AchievementEditorRow.TargetDescription))
         {
-            _isDirty = true;
             UpdateStatus();
         }
     }
@@ -202,27 +200,46 @@ public sealed partial class AchievementEditorPage : Page
 
     private async Task SelectTargetLanguageAsync(string language)
     {
-        if (!System.Text.RegularExpressions.Regex.IsMatch(language, "^[a-z][a-z0-9_]{1,31}$")
-            || language is "token" or "tokens")
+        if (_changingLanguage)
         {
-            App.ViewModel.ShowInfo($"无效的 Steam 语言代码：{language}", InfoBarSeverity.Error);
             return;
         }
-        if (_isDirty && !await ConfirmAsync("切换目标语言", "当前未保存的修改将被放弃。是否继续？", "继续"))
+        _changingLanguage = true;
+        try
         {
-            _changingLanguage = true;
-            TargetLanguageBox.SelectedItem = _targetLanguage;
-            TargetLanguageBox.Text = _targetLanguage;
+            language = language.Trim().ToLowerInvariant();
+            if (!System.Text.RegularExpressions.Regex.IsMatch(language, "^[a-z][a-z0-9_]{1,31}$")
+                || language is "token" or "tokens")
+            {
+                App.ViewModel.ShowInfo($"无效的 Steam 语言代码：{language}", InfoBarSeverity.Error);
+                return;
+            }
+            if (language == _targetLanguage)
+            {
+                return;
+            }
+            if (HasUnsavedChanges
+                && !await ConfirmAsync(
+                    "切换目标语言",
+                    "当前未保存的修改将被放弃。是否继续？",
+                    "继续"))
+            {
+                TargetLanguageBox.SelectedItem = _targetLanguage;
+                TargetLanguageBox.Text = _targetLanguage;
+                return;
+            }
+            _targetLanguage = language;
+            foreach (var row in _inspection!.Rows)
+            {
+                row.SelectTarget(language);
+            }
+            _editState.Accept(_targetLanguage, _inspection.Rows);
+            UpdateStatus();
+        }
+        finally
+        {
             _changingLanguage = false;
-            return;
         }
-        _targetLanguage = language;
-        foreach (var row in _inspection!.Rows)
-        {
-            row.SelectTarget(language);
-        }
-        _isDirty = false;
-        UpdateStatus();
     }
 
     private async void Save_Click(object sender, RoutedEventArgs e)
@@ -242,7 +259,7 @@ public sealed partial class AchievementEditorPage : Page
                 _inspection,
                 _targetLanguage,
                 _inspection.Rows);
-            _isDirty = false;
+            _editState.Accept(_targetLanguage, _inspection.Rows);
             UpdateStatus();
             App.ViewModel.ShowInfo(
                 $"已保存 {_targetLanguage} 草稿（{draft.Rows.Count} 个成就）。",
@@ -343,7 +360,7 @@ public sealed partial class AchievementEditorPage : Page
 
     private async void Back_Click(object sender, RoutedEventArgs e)
     {
-        if (_isDirty && !await ResolveUnsavedChangesAsync("返回本地游戏页"))
+        if (HasUnsavedChanges && !await ResolveUnsavedChangesAsync("返回本地游戏页"))
         {
             return;
         }
@@ -356,7 +373,7 @@ public sealed partial class AchievementEditorPage : Page
 
     private async void Frame_Navigating(object? sender, NavigatingCancelEventArgs e)
     {
-        if (_allowNavigation || !_isDirty)
+        if (_allowNavigation || !HasUnsavedChanges)
         {
             return;
         }
@@ -378,7 +395,7 @@ public sealed partial class AchievementEditorPage : Page
 
     private async void AppWindow_Closing(AppWindow sender, AppWindowClosingEventArgs args)
     {
-        if (_allowClose || !_isDirty)
+        if (_allowClose || !HasUnsavedChanges)
         {
             return;
         }
@@ -437,28 +454,34 @@ public sealed partial class AchievementEditorPage : Page
     {
         try
         {
-            var extension = format == "bin" ? ".bin" : ".zip";
-            var picker = new FileSavePicker(App.Window.AppWindow.Id)
+            return await App.DispatcherQueue.EnqueueAsync(async () =>
             {
-                SuggestedStartLocation = PickerLocationId.Downloads,
-                SuggestedFileName = $"UserGameStatsSchema_{_inspection!.AppId}",
-                DefaultFileExtension = extension,
-                CommitButtonText = "导出",
-                SettingsIdentifier = format == "bin" ? "SchemaBinExportPicker" : "SchemaZipExportPicker",
-                ShowOverwritePrompt = true,
-                FileTypeChoices =
+                var extension = format == "bin" ? ".bin" : ".zip";
+                var picker = new FileSavePicker(App.Window.AppWindow.Id)
                 {
+                    SuggestedStartLocation = PickerLocationId.Downloads,
+                    SuggestedFileName = $"UserGameStatsSchema_{_inspection!.AppId}",
+                    DefaultFileExtension = extension,
+                    CommitButtonText = "导出",
+                    SettingsIdentifier = format == "bin"
+                        ? "SchemaBinExportPicker"
+                        : "SchemaZipExportPicker",
+                    ShowOverwritePrompt = true,
+                    FileTypeChoices =
                     {
-                        format == "bin" ? "Steam 成就 schema" : "投稿 ZIP",
-                        new List<string> { extension }
+                        {
+                            format == "bin" ? "Steam 成就 schema" : "投稿 ZIP",
+                            new List<string> { extension }
+                        },
                     },
-                },
-            };
-            return (await picker.PickSaveFileAsync())?.Path;
+                };
+                return (await picker.PickSaveFileAsync())?.Path;
+            });
         }
         catch (Exception exception)
         {
             App.ViewModel.ShowInfo($"无法打开保存位置选择器：{exception.Message}", InfoBarSeverity.Error);
+            await App.Logs.WriteAsync("错误", "文件选择器", exception.ToString());
             return null;
         }
     }
@@ -515,6 +538,10 @@ public sealed partial class AchievementEditorPage : Page
         StatusText.Text =
             $"目标语言 {_targetLanguage} · 显示 {VisibleRows.Count}/{_inspection.Rows.Count} · " +
             $"缺少名称 {missingNames} · 缺少说明 {missingDescriptions}" +
-            (_isDirty ? " · 有未保存修改" : string.Empty);
+            (HasUnsavedChanges ? " · 有未保存修改" : string.Empty);
     }
+
+    private bool HasUnsavedChanges =>
+        _inspection is not null
+        && _editState.IsDirty(_targetLanguage, _inspection.Rows);
 }

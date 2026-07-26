@@ -109,20 +109,24 @@ public sealed partial class LocalGamesPage : Page
     {
         try
         {
-            var picker = new FileOpenPicker(App.Window.AppWindow.Id)
+            return await App.DispatcherQueue.EnqueueAsync(async () =>
             {
-                SuggestedStartLocation = PickerLocationId.Downloads,
-                CommitButtonText = "导入",
-                SettingsIdentifier = "LocalSchemaImportPicker",
-                Title = "选择 Localizer Skill 生成的 BIN 或 ZIP",
-            };
-            picker.FileTypeFilter.Add(".bin");
-            picker.FileTypeFilter.Add(".zip");
-            return (await picker.PickSingleFileAsync())?.Path;
+                var picker = new FileOpenPicker(App.Window.AppWindow.Id)
+                {
+                    SuggestedStartLocation = PickerLocationId.Downloads,
+                    CommitButtonText = "导入",
+                    SettingsIdentifier = "LocalSchemaImportPicker",
+                    Title = "选择 Localizer Skill 生成的 BIN 或 ZIP",
+                };
+                picker.FileTypeFilter.Add(".bin");
+                picker.FileTypeFilter.Add(".zip");
+                return (await picker.PickSingleFileAsync())?.Path;
+            });
         }
         catch (Exception exception)
         {
             App.ViewModel.ShowInfo($"无法打开本地导入文件选择器：{exception.Message}", InfoBarSeverity.Error);
+            await App.Logs.WriteAsync("错误", "文件选择器", exception.ToString());
             return null;
         }
     }

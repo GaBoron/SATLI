@@ -229,24 +229,28 @@ public sealed partial class GamesPage : Page
     {
         try
         {
-            var picker = new FileSavePicker(App.Window.AppWindow.Id)
+            return await App.DispatcherQueue.EnqueueAsync(async () =>
             {
-                SuggestedStartLocation = PickerLocationId.Downloads,
-                SuggestedFileName = $"UserGameStatsSchema_{appId}",
-                DefaultFileExtension = ".zip",
-                CommitButtonText = "导出",
-                SettingsIdentifier = "PetitionSchemaExportPicker",
-                ShowOverwritePrompt = true,
-                FileTypeChoices =
+                var picker = new FileSavePicker(App.Window.AppWindow.Id)
                 {
-                    { "ZIP 压缩文件", new List<string> { ".zip" } },
-                },
-            };
-            return (await picker.PickSaveFileAsync())?.Path;
+                    SuggestedStartLocation = PickerLocationId.Downloads,
+                    SuggestedFileName = $"UserGameStatsSchema_{appId}",
+                    DefaultFileExtension = ".zip",
+                    CommitButtonText = "导出",
+                    SettingsIdentifier = "PetitionSchemaExportPicker",
+                    ShowOverwritePrompt = true,
+                    FileTypeChoices =
+                    {
+                        { "ZIP 压缩文件", new List<string> { ".zip" } },
+                    },
+                };
+                return (await picker.PickSaveFileAsync())?.Path;
+            });
         }
         catch (Exception exception)
         {
             ViewModel.ShowInfo($"无法打开保存位置选择器：{exception.Message}", InfoBarSeverity.Error);
+            await App.Logs.WriteAsync("错误", "文件选择器", exception.ToString());
             return null;
         }
     }
