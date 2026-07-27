@@ -3,9 +3,11 @@
 ## Desktop application dependencies
 
 The Windows desktop interface uses the MIT-licensed Microsoft Windows App SDK,
-Microsoft Windows SDK Build Tools, and CommunityToolkit.Mvvm projects. Test-only
-dependencies include the MIT-licensed xUnit.net runner and Microsoft.NET.Test.Sdk.
-Their respective copyright and license notices remain with those projects.
+Microsoft Windows SDK Build Tools, and CommunityToolkit.Mvvm projects. It also
+uses the BSD-2-Clause-licensed Markdig project to render GitHub Release Markdown.
+Test-only dependencies include the MIT-licensed xUnit.net runner and
+Microsoft.NET.Test.Sdk. Their respective copyright and license notices remain
+with those projects.
 
 The installable Windows package is built with Inno Setup and includes its
 official Simplified Chinese message file from the Inno Setup source repository.

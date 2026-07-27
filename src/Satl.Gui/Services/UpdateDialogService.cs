@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Satl_Gui.Controls;
 
 namespace Satl_Gui.Services;
 
@@ -11,19 +12,13 @@ public static class UpdateDialogService
         UpdateCheckResult update,
         UpdateService updateService)
     {
-        var notes = new TextBlock
+        var notes = new ReleaseNotesMarkdownView(
+            update.ReleaseNotes,
+            new Uri($"{UpdateService.RepositoryUrl}/"));
+        var notesFrame = new Border
         {
-            Text = string.IsNullOrWhiteSpace(update.ReleaseNotes)
-                ? "此版本未提供发布说明。"
-                : update.ReleaseNotes,
-            TextWrapping = TextWrapping.Wrap,
-            IsTextSelectionEnabled = true,
-        };
-        var notesScroller = new ScrollViewer
-        {
-            Content = notes,
-            MaxHeight = 420,
-            VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+            Child = notes,
+            Height = 420,
         };
         var progress = new ProgressBar
         {
@@ -42,7 +37,7 @@ public static class UpdateDialogService
             Text = $"v{update.CurrentVersion} → v{update.LatestVersion}",
             Style = Application.Current.Resources["SubtitleTextBlockStyle"] as Style,
         });
-        content.Children.Add(notesScroller);
+        content.Children.Add(notesFrame);
         content.Children.Add(progress);
         content.Children.Add(status);
 
