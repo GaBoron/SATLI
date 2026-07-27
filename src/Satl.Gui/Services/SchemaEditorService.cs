@@ -144,7 +144,8 @@ public sealed class SchemaEditorService
         AddConfiguredPaths(arguments);
         var result = await _cli.RunAsync(
             arguments,
-            networkSettings: App.ViewModel.Settings.Network);
+            networkSettings: App.ViewModel.Settings.Network,
+            downloadSourceSettings: App.ViewModel.Settings.DownloadSources);
         if (!result.IsSuccess)
         {
             throw new InvalidOperationException(

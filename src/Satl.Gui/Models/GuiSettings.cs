@@ -12,5 +12,6 @@ public sealed class GuiSettings
     public bool LogWordWrap { get; set; } = true;
     public bool CheckForUpdatesOnStartup { get; set; } = true;
     public NetworkSettings Network { get; set; } = new();
+    public DownloadSourceSettings DownloadSources { get; set; } = new();
     public SteamLibrarySettings SteamLibrary { get; set; } = new();
 }

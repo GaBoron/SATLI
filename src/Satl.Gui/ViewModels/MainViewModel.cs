@@ -86,14 +86,17 @@ public sealed class MainViewModel : ObservableObject
     public Task<UpdateCheckResult?> CheckForUpdatesAsync() =>
         CheckForUpdatesCoreAsync(showCurrentResult: true);
 
-    public async Task<NetworkProbeResult> TestNetworkAsync(NetworkSettings settings)
+    public async Task<NetworkProbeResult> TestNetworkAsync(
+        NetworkSettings settings,
+        DownloadSourceSettings downloadSources)
     {
         var normalized = NetworkSettingsValidator.Normalize(settings);
+        var normalizedSources = DownloadSourceCatalog.Normalize(downloadSources);
         await App.Logs.WriteAsync(
             "信息",
             "网络测试",
             $"开始测试连接。DNS={normalized.DnsMode}；代理={normalized.ProxyMode}。");
-        var result = await _networkProbeService.TestAsync(normalized);
+        var result = await _networkProbeService.TestAsync(normalized, normalizedSources);
         await App.Logs.WriteAsync(
             result.IsSuccess ? "信息" : "警告",
             "网络测试",
@@ -107,6 +110,7 @@ public sealed class MainViewModel : ObservableObject
     public async Task UpdateSettingsAsync(GuiSettings settings)
     {
         settings.Network = NetworkSettingsValidator.Normalize(settings.Network);
+        settings.DownloadSources = DownloadSourceCatalog.Normalize(settings.DownloadSources);
         var previous = Settings;
         var enablingDebug = settings.LoggingEnabled
             && settings.LogLevel == "debug"
@@ -262,6 +266,8 @@ public sealed class MainViewModel : ObservableObject
         $"ProxyMode={settings.Network.ProxyMode}; ProxyAddress={settings.Network.ProxyAddress}; " +
         $"ProxyUsernameConfigured={!string.IsNullOrEmpty(settings.Network.ProxyUsername)}; " +
         $"ProxyPasswordConfigured={!string.IsNullOrEmpty(settings.Network.ProxyPassword)}; " +
+        $"IndexSources={DownloadSourceCatalog.EnvironmentOrder(settings.DownloadSources.IndexSourceOrder)}; " +
+        $"FileSources={DownloadSourceCatalog.EnvironmentOrder(settings.DownloadSources.FileSourceOrder)}; " +
         $"SteamLibraryEnabled={settings.SteamLibrary.Enabled}; SteamIdConfigured=" +
         $"{!string.IsNullOrEmpty(settings.SteamLibrary.SteamId)}; SteamApiKeyConfigured=" +
         $"{!string.IsNullOrEmpty(settings.SteamLibrary.ApiKey)}";

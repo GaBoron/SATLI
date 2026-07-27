@@ -451,7 +451,7 @@ public sealed class TranslationManagementViewModel : ObservableObject
                     App.DispatcherQueue.TryEnqueue(
                         () => ShowInfo(warning.GetString() ?? "正在使用本地缓存。"));
                 }
-            }, diagnostic, settings.Network, settings.SteamLibrary);
+            }, diagnostic, settings.Network, settings.SteamLibrary, settings.DownloadSources);
         }
         catch (Exception exception)
         {

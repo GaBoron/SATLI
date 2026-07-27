@@ -8,12 +8,18 @@ from urllib.error import URLError
 import pytest
 
 from satl import __version__
-from satl.catalog import USER_AGENT, CatalogRepository, parse_catalog, verify_schema_file
+from satl.catalog import CATALOG_URLS, USER_AGENT, CatalogRepository, parse_catalog, verify_schema_file
+from satl.download_sources import DEFAULT_FILE_ROOTS
 from satl.errors import CatalogError, IntegrityError
 
 
 def test_user_agent_uses_package_version() -> None:
     assert USER_AGENT.startswith(f"satl/{__version__} ")
+
+
+def test_default_sources_prioritize_jsdelivr() -> None:
+    assert CATALOG_URLS[0].startswith("https://cdn.jsdelivr.net/")
+    assert DEFAULT_FILE_ROOTS[0].startswith("https://cdn.jsdelivr.net/")
 
 
 def legacy_entry(data: bytes = b"default") -> dict[str, object]:
@@ -223,6 +229,29 @@ def test_catalog_falls_back_after_invalid_first_source(tmp_path: Path) -> None:
     catalog = repository.refresh()
     assert catalog.source == "https://second.invalid"
     assert "123" in catalog.entries
+
+
+def test_repository_uses_environment_source_orders(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    payload = json.dumps({"version": 1, "entries": [legacy_entry()]}).encode()
+    variant = parse_catalog(payload).entries["123"].primary_variant()
+    calls: list[str] = []
+
+    def opener(request, timeout):
+        calls.append(request.full_url)
+        return Response(payload if "index.json" in request.full_url else b"default")
+
+    monkeypatch.setenv("SATL_INDEX_SOURCES", "github;jsdelivr")
+    monkeypatch.setenv("SATL_FILE_SOURCES", "github;jsdelivr-fastly")
+    repository = CatalogRepository(tmp_path, opener=opener)
+
+    repository.refresh()
+    repository.download_schema(variant)
+
+    assert calls[0].startswith("https://raw.githubusercontent.com/")
+    assert calls[1].startswith("https://raw.githubusercontent.com/")
 
 
 def test_ephemeral_catalog_fetch_does_not_write_cache(tmp_path: Path) -> None:

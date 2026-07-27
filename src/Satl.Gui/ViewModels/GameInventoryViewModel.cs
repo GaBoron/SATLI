@@ -72,7 +72,8 @@ public sealed class GameInventoryViewModel(GameInventoryScope scope) : Observabl
                 arguments,
                 HandleEvent,
                 networkSettings: App.ViewModel.Settings.Network,
-                steamLibrarySettings: App.ViewModel.Settings.SteamLibrary);
+                steamLibrarySettings: App.ViewModel.Settings.SteamLibrary,
+                downloadSourceSettings: App.ViewModel.Settings.DownloadSources);
             if (!result.IsSuccess)
             {
                 throw new InvalidOperationException(result.ErrorMessage);

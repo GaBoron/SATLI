@@ -13,6 +13,11 @@ from pathlib import Path, PurePosixPath
 from typing import Any, Callable
 
 from satl import __version__
+from satl.download_sources import (
+    DEFAULT_CATALOG_URLS,
+    DEFAULT_FILE_ROOTS,
+    DownloadSourceOrder,
+)
 from satl.errors import CatalogError, IntegrityError
 from satl.models import Catalog, CatalogEntry, SchemaVariant
 from satl.network import (
@@ -22,10 +27,8 @@ from satl.network import (
     is_network_error,
 )
 
-REPOSITORY = "GaBoron/steam-achievement-translation-library"
-RAW_ROOT = f"https://raw.githubusercontent.com/{REPOSITORY}/main"
-JSDELIVR_ROOT = f"https://cdn.jsdelivr.net/gh/{REPOSITORY}@main"
-CATALOG_URLS = (f"{RAW_ROOT}/index.json", f"{JSDELIVR_ROOT}/index.json")
+CATALOG_URLS = DEFAULT_CATALOG_URLS
+DOWNLOAD_ROOTS = DEFAULT_FILE_ROOTS
 APP_ID_RE = re.compile(r"^[0-9]+$")
 VARIANT_ID_RE = re.compile(r"^[a-z0-9][a-z0-9-]{0,63}$")
 SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
@@ -190,14 +193,20 @@ class CatalogRepository:
         *,
         opener: Callable[..., Any] | None = None,
         direct_opener: Callable[..., Any] | None = None,
-        catalog_urls: tuple[str, ...] = CATALOG_URLS,
-        roots: tuple[str, ...] = (RAW_ROOT, JSDELIVR_ROOT),
+        catalog_urls: tuple[str, ...] | None = None,
+        roots: tuple[str, ...] | None = None,
     ) -> None:
         self.data_dir = Path(data_dir)
-        self.catalog_urls = catalog_urls
-        self.roots = roots
         self._opener = opener
         try:
+            if catalog_urls is None or roots is None:
+                source_order = DownloadSourceOrder.from_environment()
+                if catalog_urls is None:
+                    catalog_urls = source_order.catalog_urls
+                if roots is None:
+                    roots = source_order.file_roots
+            self.catalog_urls = catalog_urls
+            self.roots = roots
             self._transport = None if opener is not None else NetworkTransport(
                 direct_opener=direct_opener
             )

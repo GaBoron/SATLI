@@ -13,7 +13,8 @@ public sealed class SatlCliService
         Action<SatlEvent>? onEvent = null,
         Action<string>? onDiagnostic = null,
         NetworkSettings? networkSettings = null,
-        SteamLibrarySettings? steamLibrarySettings = null)
+        SteamLibrarySettings? steamLibrarySettings = null,
+        DownloadSourceSettings? downloadSourceSettings = null)
     {
         var argumentList = arguments.ToList();
         onDiagnostic?.Invoke($"步骤 1：解析 CLI 启动目标。请求参数={FormatArguments(argumentList)}");
@@ -47,6 +48,7 @@ public sealed class SatlCliService
         startInfo.Environment["PYTHONUTF8"] = "1";
         startInfo.Environment["PYTHONIOENCODING"] = "utf-8";
         ApplyNetworkEnvironment(startInfo, networkSettings);
+        ApplyDownloadSourceEnvironment(startInfo, downloadSourceSettings);
         if (argumentList.Contains("--include-owned-games", StringComparer.Ordinal))
         {
             ApplySteamLibraryEnvironment(startInfo, steamLibrarySettings);
@@ -194,6 +196,17 @@ public sealed class SatlCliService
         startInfo.Environment["SATL_PROXY_ADDRESS"] = settings.ProxyAddress;
         startInfo.Environment["SATL_PROXY_USERNAME"] = settings.ProxyUsername;
         startInfo.Environment["SATL_PROXY_PASSWORD"] = settings.ProxyPassword;
+    }
+
+    private static void ApplyDownloadSourceEnvironment(
+        ProcessStartInfo startInfo,
+        DownloadSourceSettings? rawSettings)
+    {
+        var settings = DownloadSourceCatalog.Normalize(rawSettings);
+        startInfo.Environment["SATL_INDEX_SOURCES"] =
+            DownloadSourceCatalog.EnvironmentOrder(settings.IndexSourceOrder);
+        startInfo.Environment["SATL_FILE_SOURCES"] =
+            DownloadSourceCatalog.EnvironmentOrder(settings.FileSourceOrder);
     }
 
     private static void ApplySteamLibraryEnvironment(

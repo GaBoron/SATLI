@@ -69,7 +69,8 @@ public sealed class LocalImportService
         var result = await _cli.RunAsync(
             arguments,
             networkSettings: settings.Network,
-            steamLibrarySettings: settings.SteamLibrary);
+            steamLibrarySettings: settings.SteamLibrary,
+            downloadSourceSettings: settings.DownloadSources);
         if (!result.IsSuccess)
         {
             throw new InvalidOperationException(

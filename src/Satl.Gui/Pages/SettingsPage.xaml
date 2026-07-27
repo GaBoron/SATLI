@@ -113,6 +113,11 @@
                 SettingsChanged="NetworkSettingsEditor_SettingsChanged"
                 TestConnectionRequested="NetworkSettingsEditor_TestConnectionRequested" />
 
+            <TextBlock Text="下载源" Style="{StaticResource SubtitleTextBlockStyle}" Margin="0,12,0,0" />
+            <controls:DownloadSourceSettingsControl
+                x:Name="DownloadSourceSettingsEditor"
+                SettingsChanged="DownloadSourceSettingsEditor_SettingsChanged" />
+
             <TextBlock Text="Steam 游戏库" Style="{StaticResource SubtitleTextBlockStyle}" Margin="0,12,0,0" />
             <controls:SteamLibrarySettingsControl
                 x:Name="SteamLibrarySettingsEditor"

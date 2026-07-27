@@ -39,6 +39,7 @@ public sealed class SettingsService
                 SatlJsonSerializerContext.Default.GuiSettings) ?? new GuiSettings();
             settings.LogLevel = PersistentLogLevel(settings.LogLevel);
             settings.Network = LoadNetworkSettings(settings.Network);
+            settings.DownloadSources = DownloadSourceCatalog.Normalize(settings.DownloadSources);
             settings.SteamLibrary = LoadSteamLibrarySettings(settings.SteamLibrary);
             return settings;
         }
@@ -62,6 +63,7 @@ public sealed class SettingsService
             await using (var stream = new FileStream(temporary, FileMode.CreateNew, FileAccess.Write, FileShare.None))
             {
                 var network = NetworkSettingsValidator.Normalize(settings.Network);
+                var downloadSources = DownloadSourceCatalog.Normalize(settings.DownloadSources);
                 var steamLibrary = SteamLibrarySettingsValidator.Normalize(settings.SteamLibrary);
                 var persistentSettings = new GuiSettings
                 {
@@ -85,6 +87,7 @@ public sealed class SettingsService
                             network.ProxyPassword,
                             ProxyPasswordEntropy),
                     },
+                    DownloadSources = downloadSources,
                     SteamLibrary = new SteamLibrarySettings
                     {
                         Enabled = steamLibrary.Enabled,

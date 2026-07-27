@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<UserControl
+    x:Class="Satl_Gui.Controls.DownloadSourceSettingsControl"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:models="using:Satl_Gui.Models">
+    <StackPanel Spacing="8">
+        <Border Style="{StaticResource SettingsCardStyle}">
+            <Grid Style="{StaticResource SettingsRowStyle}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel VerticalAlignment="Center" Spacing="3">
+                    <TextBlock Text="下载源优先级" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                    <TextBlock
+                        Text="每次按列表从上到下尝试。索引和翻译文件可以使用不同顺序。"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        TextWrapping="Wrap" />
+                </StackPanel>
+                <Button
+                    Grid.Column="1"
+                    Content="恢复推荐顺序"
+                    Click="ResetOrder_Click"
+                    AutomationProperties.Name="恢复推荐下载源顺序" />
+            </Grid>
+        </Border>
+
+        <Border Style="{StaticResource SettingsCardStyle}">
+            <StackPanel Padding="20,16" Spacing="10">
+                <StackPanel Spacing="3">
+                    <TextBlock Text="索引下载顺序" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                    <TextBlock
+                        Text="用于获取 index.json；默认优先 jsDelivr。"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        TextWrapping="Wrap" />
+                </StackPanel>
+                <ListView
+                    ItemsSource="{x:Bind IndexSources, Mode=OneWay}"
+                    SelectionMode="None"
+                    IsItemClickEnabled="False">
+                    <ListView.ItemTemplate>
+                        <DataTemplate x:DataType="models:DownloadSourceOption">
+                            <Grid Padding="4,8" ColumnSpacing="12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Spacing="2">
+                                    <TextBlock Text="{x:Bind DisplayName}" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                                    <TextBlock
+                                        Text="{x:Bind Description}"
+                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                        FontSize="12"
+                                        TextWrapping="Wrap" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
+                                    <Button
+                                        Content="↑"
+                                        Tag="{x:Bind Id}"
+                                        Click="IndexMoveUp_Click"
+                                        AutomationProperties.Name="上移索引下载源" />
+                                    <Button
+                                        Content="↓"
+                                        Tag="{x:Bind Id}"
+                                        Click="IndexMoveDown_Click"
+                                        AutomationProperties.Name="下移索引下载源" />
+                                </StackPanel>
+                            </Grid>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
+            </StackPanel>
+        </Border>
+
+        <Border Style="{StaticResource SettingsCardStyle}">
+            <StackPanel Padding="20,16" Spacing="10">
+                <StackPanel Spacing="3">
+                    <TextBlock Text="翻译文件下载顺序" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                    <TextBlock
+                        Text="用于下载并校验 BIN 文件；默认优先两个 CDN。"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        TextWrapping="Wrap" />
+                </StackPanel>
+                <ListView
+                    ItemsSource="{x:Bind FileSources, Mode=OneWay}"
+                    SelectionMode="None"
+                    IsItemClickEnabled="False">
+                    <ListView.ItemTemplate>
+                        <DataTemplate x:DataType="models:DownloadSourceOption">
+                            <Grid Padding="4,8" ColumnSpacing="12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Spacing="2">
+                                    <TextBlock Text="{x:Bind DisplayName}" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                                    <TextBlock
+                                        Text="{x:Bind Description}"
+                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                        FontSize="12"
+                                        TextWrapping="Wrap" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
+                                    <Button
+                                        Content="↑"
+                                        Tag="{x:Bind Id}"
+                                        Click="FileMoveUp_Click"
+                                        AutomationProperties.Name="上移文件下载源" />
+                                    <Button
+                                        Content="↓"
+                                        Tag="{x:Bind Id}"
+                                        Click="FileMoveDown_Click"
+                                        AutomationProperties.Name="下移文件下载源" />
+                                </StackPanel>
+                            </Grid>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
+            </StackPanel>
+        </Border>
+    </StackPanel>
+</UserControl>

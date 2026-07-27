@@ -38,6 +38,7 @@ public sealed partial class SettingsPage : Page
         UpdateCheckSwitch.IsOn = ViewModel.Settings.CheckForUpdatesOnStartup;
         RefreshToggleStateLabels();
         NetworkSettingsEditor.LoadSettings(ViewModel.Settings.Network);
+        DownloadSourceSettingsEditor.LoadSettings(ViewModel.Settings.DownloadSources);
         SteamLibrarySettingsEditor.LoadSettings(
             ViewModel.Settings.SteamLibrary,
             ViewModel.Settings.Offline);
@@ -70,6 +71,7 @@ public sealed partial class SettingsPage : Page
                 LogWordWrap = LogWordWrapSwitch.IsOn,
                 CheckForUpdatesOnStartup = UpdateCheckSwitch.IsOn,
                 Network = NetworkSettingsEditor.ReadSettings(),
+                DownloadSources = DownloadSourceSettingsEditor.ReadSettings(),
                 SteamLibrary = SteamLibrarySettingsEditor.ReadSettings(),
             });
             RefreshDirectoryLabels();
@@ -263,7 +265,9 @@ public sealed partial class SettingsPage : Page
         try
         {
             var settings = NetworkSettingsValidator.Normalize(NetworkSettingsEditor.ReadSettings());
-            var result = await ViewModel.TestNetworkAsync(settings);
+            var result = await ViewModel.TestNetworkAsync(
+                settings,
+                DownloadSourceSettingsEditor.ReadSettings());
             NetworkSettingsEditor.SetTestState(false, result.Message);
         }
         catch (Exception exception)
@@ -274,6 +278,16 @@ public sealed partial class SettingsPage : Page
                 : NetworkErrorMessage.Describe(exception, "测试网络连接");
             NetworkSettingsEditor.SetTestState(false, message);
             ViewModel.ShowInfo(message, InfoBarSeverity.Warning);
+        }
+    }
+
+    private async void DownloadSourceSettingsEditor_SettingsChanged(
+        object? sender,
+        EventArgs e)
+    {
+        if (!_isInitializing)
+        {
+            await ApplySettingsAsync();
         }
     }
 
