@@ -106,7 +106,7 @@
 - 连接测试
 - 离线模式和最近成功加载的云端列表
 
-“设置 → 下载源”可分别调整 `index.json` 与翻译 BIN 文件的来源顺序，应用会从上到下依次尝试。默认索引顺序为 jsDelivr、GitHub Raw、jsDelivr Fastly、StaticDelivr；默认文件顺序为 jsDelivr、jsDelivr Fastly、GitHub Raw。StaticDelivr 只提供索引候选，因为实际验证中其二进制文件响应不适合作为安装器下载源。列表可随时恢复为推荐顺序。
+“设置 → 下载源”可分别拖动调整 `index.json` 与翻译 BIN 文件的来源顺序，应用会从上到下依次尝试。默认索引顺序为 jsDelivr、GitHub Raw、jsDelivr Fastly、StaticDelivr；默认文件顺序为 jsDelivr、jsDelivr Fastly、GitHub Raw。StaticDelivr 只提供索引候选，因为实际验证中其二进制文件响应不适合作为安装器下载源。两个列表可分别恢复默认顺序。
 
 无法访问 GitHub 时，更新检查失败不会影响扫描、安装、编辑或恢复。
 

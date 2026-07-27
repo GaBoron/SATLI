@@ -35,43 +35,25 @@ public sealed partial class DownloadSourceSettingsControl : UserControl
         FileSourceOrder = FileSources.Select(source => source.Id).ToList(),
     };
 
-    private void IndexMoveUp_Click(object sender, RoutedEventArgs e) =>
-        Move(IndexSources, SourceId(sender), -1);
-
-    private void IndexMoveDown_Click(object sender, RoutedEventArgs e) =>
-        Move(IndexSources, SourceId(sender), 1);
-
-    private void FileMoveUp_Click(object sender, RoutedEventArgs e) =>
-        Move(FileSources, SourceId(sender), -1);
-
-    private void FileMoveDown_Click(object sender, RoutedEventArgs e) =>
-        Move(FileSources, SourceId(sender), 1);
-
-    private void ResetOrder_Click(object sender, RoutedEventArgs e)
+    private void ResetIndexOrder_Click(object sender, RoutedEventArgs e)
     {
-        LoadSettings(new DownloadSourceSettings());
+        Replace(
+            IndexSources,
+            DownloadSourceCatalog.Options(DownloadSourceDefaults.IndexOrder));
         NotifyChanged();
     }
 
-    private void Move(
-        ObservableCollection<DownloadSourceOption> sources,
-        string sourceId,
-        int offset)
+    private void ResetFileOrder_Click(object sender, RoutedEventArgs e)
     {
-        var source = sources.FirstOrDefault(item => item.Id == sourceId);
-        if (source is null)
-        {
-            return;
-        }
-        var index = sources.IndexOf(source);
-        var destination = index + offset;
-        if (destination < 0 || destination >= sources.Count)
-        {
-            return;
-        }
-        sources.Move(index, destination);
+        Replace(
+            FileSources,
+            DownloadSourceCatalog.Options(DownloadSourceDefaults.FileOrder));
         NotifyChanged();
     }
+
+    private void SourceList_DragItemsCompleted(
+        ListViewBase sender,
+        DragItemsCompletedEventArgs args) => NotifyChanged();
 
     private void NotifyChanged()
     {
@@ -80,9 +62,6 @@ public sealed partial class DownloadSourceSettingsControl : UserControl
             SettingsChanged?.Invoke(this, EventArgs.Empty);
         }
     }
-
-    private static string SourceId(object sender) =>
-        (sender as Button)?.Tag?.ToString() ?? string.Empty;
 
     private static void Replace(
         ObservableCollection<DownloadSourceOption> destination,
