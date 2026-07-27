@@ -438,6 +438,59 @@ public sealed class ProtocolTests
     }
 
     [Fact]
+    public async Task LogServiceAddsExceptionDetailByVerbosity()
+    {
+        var root = Path.Combine(Path.GetTempPath(), $"satl-log-test-{Guid.NewGuid():N}");
+        try
+        {
+            var service = new LogService(root);
+            var exception = CaptureTestException();
+
+            service.Configure(enabled: true, level: "standard", retentionDays: 30);
+            await service.WriteAsync("错误", "测试", "操作失败");
+            await service.WriteExceptionDetailsAsync("测试", exception);
+            var standard = await service.ReadRecentAsync();
+            Assert.Contains("操作失败", standard);
+            Assert.DoesNotContain("异常类型=", standard);
+            Assert.DoesNotContain(nameof(CaptureTestException), standard);
+
+            await service.ClearAsync();
+            service.Configure(enabled: true, level: "detailed", retentionDays: 30);
+            await service.WriteExceptionDetailsAsync("测试", exception);
+            var detailed = await service.ReadRecentAsync();
+            Assert.Contains("异常类型=System.InvalidOperationException", detailed);
+            Assert.Contains("HRESULT=", detailed);
+            Assert.DoesNotContain(nameof(CaptureTestException), detailed);
+
+            await service.ClearAsync();
+            service.Configure(enabled: true, level: "debug", retentionDays: 30);
+            await service.WriteExceptionDetailsAsync("测试", exception);
+            var debug = await service.ReadRecentAsync();
+            Assert.Contains("异常类型=System.InvalidOperationException", debug);
+            Assert.Contains(nameof(CaptureTestException), debug);
+        }
+        finally
+        {
+            if (Directory.Exists(root))
+            {
+                Directory.Delete(root, recursive: true);
+            }
+        }
+    }
+
+    private static Exception CaptureTestException()
+    {
+        try
+        {
+            throw new InvalidOperationException("用于测试的异常");
+        }
+        catch (Exception exception)
+        {
+            return exception;
+        }
+    }
+
+    [Fact]
     public async Task LogServiceReadsOnlyTheLatestLogFile()
     {
         var root = Path.Combine(Path.GetTempPath(), $"satl-log-test-{Guid.NewGuid():N}");

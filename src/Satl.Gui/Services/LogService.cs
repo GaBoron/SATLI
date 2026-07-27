@@ -65,6 +65,17 @@ public sealed class LogService
         }
     }
 
+    public async Task WriteExceptionDetailsAsync(string category, Exception exception)
+    {
+        await WriteAsync(
+            "详细",
+            category,
+            $"异常类型={exception.GetType().FullName}；HRESULT=0x{exception.HResult:X8}；"
+            + $"消息={exception.Message}",
+            detailed: true);
+        await WriteAsync("调试", category, exception.ToString(), debug: true);
+    }
+
     public async Task<string> ReadRecentAsync(int maximumLines = 1000)
     {
         await _gate.WaitAsync();

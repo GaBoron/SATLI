@@ -36,6 +36,7 @@ public sealed partial class SettingsPage : Page
         LogRetentionBox.SelectedIndex = ViewModel.Settings.LogRetentionDays switch { 7 => 0, 90 => 2, _ => 1 };
         LogWordWrapSwitch.IsOn = ViewModel.Settings.LogWordWrap;
         UpdateCheckSwitch.IsOn = ViewModel.Settings.CheckForUpdatesOnStartup;
+        RefreshLogLevelDescription();
         RefreshToggleStateLabels();
         NetworkSettingsEditor.LoadSettings(ViewModel.Settings.Network);
         DownloadSourceSettingsEditor.LoadSettings(ViewModel.Settings.DownloadSources);
@@ -78,7 +79,7 @@ public sealed partial class SettingsPage : Page
         }
         catch (Exception exception)
         {
-            _ = App.Logs.WriteAsync("调试", "设置", exception.ToString(), debug: true);
+            _ = App.Logs.WriteExceptionDetailsAsync("设置", exception);
             ViewModel.ShowInfo($"无法应用设置：{exception.Message}", InfoBarSeverity.Error);
         }
         finally
@@ -174,6 +175,7 @@ public sealed partial class SettingsPage : Page
 
     private async void LogSettings_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
+        RefreshLogLevelDescription();
         if (!_isInitializing && IsLoaded)
         {
             var level = (LogLevelBox.SelectedItem as ComboBoxItem)?.Tag?.ToString();
@@ -182,10 +184,27 @@ public sealed partial class SettingsPage : Page
                 _isInitializing = true;
                 LogLevelBox.SelectedIndex = ViewModel.Settings.LogLevel == "detailed" ? 1 : 0;
                 _isInitializing = false;
+                RefreshLogLevelDescription();
                 return;
             }
             await ApplySettingsAsync();
         }
+    }
+
+    private void RefreshLogLevelDescription()
+    {
+        if (LogLevelDescriptionText is null)
+        {
+            return;
+        }
+
+        var level = (LogLevelBox.SelectedItem as ComboBoxItem)?.Tag?.ToString();
+        LogLevelDescriptionText.Text = level switch
+        {
+            "detailed" => "包含基础日志，并增加逐项处理事件和异常类型，适合排查具体项目。",
+            "debug" => "包含详细日志，并记录参数、原始事件、耗时、完整异常和环境；重启后自动恢复为“详细”。",
+            _ => "仅记录关键结果、警告和错误摘要，适合日常使用。",
+        };
     }
 
     private async Task<bool> ConfirmDebugModeAsync()
@@ -272,7 +291,7 @@ public sealed partial class SettingsPage : Page
         }
         catch (Exception exception)
         {
-            _ = App.Logs.WriteAsync("调试", "网络测试", exception.ToString(), debug: true);
+            _ = App.Logs.WriteExceptionDetailsAsync("网络测试", exception);
             var message = exception is ArgumentException
                 ? exception.Message
                 : NetworkErrorMessage.Describe(exception, "测试网络连接");

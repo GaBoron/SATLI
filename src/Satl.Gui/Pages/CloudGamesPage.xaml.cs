@@ -65,7 +65,7 @@ public sealed partial class CloudGamesPage : Page
         catch (Exception exception)
         {
             App.ViewModel.ShowInfo($"GitHub 报告提交失败：{exception.Message}", InfoBarSeverity.Error);
-            await App.Logs.WriteAsync("错误", "GitHub 报告", exception.ToString());
+            await App.Logs.WriteExceptionDetailsAsync("GitHub 报告", exception);
         }
     }
 

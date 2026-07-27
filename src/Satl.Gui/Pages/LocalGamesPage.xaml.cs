@@ -84,7 +84,7 @@ public sealed partial class LocalGamesPage : Page
         catch (Exception exception)
         {
             App.ViewModel.ShowInfo($"本地导入失败：{exception.Message}", InfoBarSeverity.Error);
-            await App.Logs.WriteAsync("错误", "本地导入", exception.ToString());
+            await App.Logs.WriteExceptionDetailsAsync("本地导入", exception);
         }
         finally
         {
@@ -117,7 +117,7 @@ public sealed partial class LocalGamesPage : Page
         catch (Exception exception)
         {
             App.ViewModel.ShowInfo($"无法打开本地导入文件选择器：{exception.Message}", InfoBarSeverity.Error);
-            await App.Logs.WriteAsync("错误", "文件选择器", exception.ToString());
+            await App.Logs.WriteExceptionDetailsAsync("文件选择器", exception);
             return null;
         }
     }

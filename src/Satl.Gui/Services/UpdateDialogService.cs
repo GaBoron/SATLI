@@ -91,7 +91,8 @@ public static class UpdateDialogService
                     ? NetworkErrorMessage.Describe(exception, "下载更新")
                     : $"更新下载失败：{exception.Message}";
                 dialog.IsPrimaryButtonEnabled = true;
-                await App.Logs.WriteAsync("错误", "更新", exception.ToString());
+                await App.Logs.WriteAsync("错误", "更新", status.Text);
+                await App.Logs.WriteExceptionDetailsAsync("更新", exception);
             }
             finally
             {

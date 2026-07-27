@@ -94,7 +94,7 @@ public sealed class GameInventoryViewModel(GameInventoryScope scope) : Observabl
             StatusMessage = "加载失败";
             Loading.Fail(StatusMessage);
             App.ViewModel.ShowInfo(exception.Message, InfoBarSeverity.Error);
-            await App.Logs.WriteAsync("错误", "游戏清单", exception.ToString());
+            await App.Logs.WriteExceptionDetailsAsync("游戏清单", exception);
         }
         finally
         {

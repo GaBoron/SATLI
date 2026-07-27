@@ -99,7 +99,7 @@ public sealed partial class AchievementEditorPage : Page
         catch (Exception exception)
         {
             App.ViewModel.ShowInfo($"无法读取成就草稿：{exception.Message}", InfoBarSeverity.Warning);
-            await App.Logs.WriteAsync("警告", "成就草稿", exception.ToString());
+            await App.Logs.WriteExceptionDetailsAsync("成就草稿", exception);
             return;
         }
         if (draft is null)
@@ -293,7 +293,8 @@ public sealed partial class AchievementEditorPage : Page
             }
             catch (Exception exception)
             {
-                await App.Logs.WriteAsync("警告", "成就草稿", $"本机写回成功，但删除草稿失败：{exception}");
+                await App.Logs.WriteAsync("警告", "成就草稿", $"本机写回成功，但删除草稿失败：{exception.Message}");
+                await App.Logs.WriteExceptionDetailsAsync("成就草稿", exception);
             }
             await LoadCoreAsync();
             saved = true;
@@ -464,7 +465,7 @@ public sealed partial class AchievementEditorPage : Page
         catch (Exception exception)
         {
             App.ViewModel.ShowInfo($"无法打开保存位置选择器：{exception.Message}", InfoBarSeverity.Error);
-            await App.Logs.WriteAsync("错误", "文件选择器", exception.ToString());
+            await App.Logs.WriteExceptionDetailsAsync("文件选择器", exception);
             return null;
         }
     }
@@ -499,7 +500,7 @@ public sealed partial class AchievementEditorPage : Page
         catch (Exception exception)
         {
             App.ViewModel.ShowInfo($"成就编辑操作失败：{exception.Message}", InfoBarSeverity.Error);
-            await App.Logs.WriteAsync("错误", "成就编辑", exception.ToString());
+            await App.Logs.WriteExceptionDetailsAsync("成就编辑", exception);
         }
         finally
         {

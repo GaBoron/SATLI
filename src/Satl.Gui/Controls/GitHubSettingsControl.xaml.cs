@@ -57,7 +57,7 @@ public sealed partial class GitHubSettingsControl : UserControl
         catch (Exception exception)
         {
             App.ViewModel.ShowInfo($"GitHub 绑定失败：{exception.Message}", InfoBarSeverity.Error);
-            await App.Logs.WriteAsync("错误", "GitHub 绑定", exception.ToString());
+            await App.Logs.WriteExceptionDetailsAsync("GitHub 绑定", exception);
         }
         finally
         {

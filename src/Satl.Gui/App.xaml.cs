@@ -122,7 +122,8 @@ public partial class App : Application
 
     private static void App_UnhandledException(object sender, Microsoft.UI.Xaml.UnhandledExceptionEventArgs e)
     {
-        _ = Logs.WriteAsync("错误", "应用", e.Exception.ToString());
+        _ = Logs.WriteAsync("错误", "应用", $"发生未处理异常：{e.Exception.Message}");
+        _ = Logs.WriteExceptionDetailsAsync("应用", e.Exception);
         LogStartupException(e.Exception);
     }
 

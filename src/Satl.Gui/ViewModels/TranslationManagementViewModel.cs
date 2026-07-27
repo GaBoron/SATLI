@@ -453,7 +453,7 @@ public sealed class TranslationManagementViewModel : ObservableObject
                 }
             }, diagnostic, settings.Network, settings.SteamLibrary, settings.DownloadSources);
         }
-        catch (Exception exception)
+        catch (Exception)
         {
             if (tracksGameLoading)
             {
@@ -462,7 +462,7 @@ public sealed class TranslationManagementViewModel : ObservableObject
             await Task.WhenAll(diagnosticWrites);
             await App.Logs.WriteAsync(
                 "调试", operation,
-                $"CLI 调用抛出异常。耗时={stopwatch.ElapsedMilliseconds} ms。{exception}",
+                $"CLI 调用抛出异常。耗时={stopwatch.ElapsedMilliseconds} ms。",
                 debug: true);
             throw;
         }
@@ -513,7 +513,7 @@ public sealed class TranslationManagementViewModel : ObservableObject
 
     private void ShowException(string operation, Exception exception)
     {
-        _ = App.Logs.WriteAsync("调试", operation, exception.ToString(), debug: true);
+        _ = App.Logs.WriteExceptionDetailsAsync(operation, exception);
         var message = NetworkErrorMessage.IsNetworkError(exception)
             ? NetworkErrorMessage.Describe(exception, operation)
             : exception.Message;

@@ -209,8 +209,9 @@ public sealed class MainViewModel : ObservableObject
             await App.Logs.WriteAsync(
                 "调试",
                 "更新",
-                $"更新检查异常。耗时={stopwatch.ElapsedMilliseconds} ms。{exception}",
+                $"更新检查异常。耗时={stopwatch.ElapsedMilliseconds} ms。",
                 debug: true);
+            await App.Logs.WriteExceptionDetailsAsync("更新", exception);
             if (showCurrentResult)
             {
                 ShowInfo(message, InfoBarSeverity.Warning);

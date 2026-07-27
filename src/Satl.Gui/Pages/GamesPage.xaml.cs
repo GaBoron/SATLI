@@ -238,7 +238,7 @@ public sealed partial class GamesPage : Page
         catch (Exception exception)
         {
             ViewModel.ShowInfo($"无法打开保存位置选择器：{exception.Message}", InfoBarSeverity.Error);
-            await App.Logs.WriteAsync("错误", "文件选择器", exception.ToString());
+            await App.Logs.WriteExceptionDetailsAsync("文件选择器", exception);
             return null;
         }
     }
