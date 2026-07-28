@@ -147,6 +147,22 @@ public sealed class TranslationManagementViewModel : ObservableObject
             var result = await RunCliAsync(
                 _arguments.Install(selected, dryRun: false, yes: true, previewContent: false),
                 "正在安装翻译…");
+            var summary = InstallOperationSummary.TryCreate(result);
+            if (summary is not null)
+            {
+                if (summary.HasSucceededItems)
+                {
+                    await ReloadAfterMutationAsync();
+                }
+                ShowInfo(
+                    summary.Message,
+                    summary.Failed == 0
+                        ? InfoBarSeverity.Success
+                        : summary.HasSucceededItems
+                            ? InfoBarSeverity.Warning
+                            : InfoBarSeverity.Error);
+                return;
+            }
             if (!result.IsSuccess)
             {
                 ShowResultError(result);

@@ -8,6 +8,36 @@ namespace Satl_Gui.Tests;
 public sealed class TranslationManagementViewModelTests
 {
     [Fact]
+    public void InstallSummaryReportsEveryFailureAndContinuedBatch()
+    {
+        using var firstFailure = JsonDocument.Parse(
+            """{"app_id":"456","game_name":"Game B","message":"拒绝访问"}""");
+        using var success = JsonDocument.Parse("""{"app_id":"123","game_name":"Game A"}""");
+        using var secondFailure = JsonDocument.Parse(
+            """{"app_id":"789","game_name":"Game C","message":"文件被占用"}""");
+        using var completed = JsonDocument.Parse("""{"succeeded":1,"failed":2,"exit_code":7}""");
+        var result = new CliRunResult(
+            7,
+            [
+                new SatlEvent(1, "install", "item-failed", firstFailure.RootElement.Clone()),
+                new SatlEvent(1, "install", "item-succeeded", success.RootElement.Clone()),
+                new SatlEvent(1, "install", "item-failed", secondFailure.RootElement.Clone()),
+                new SatlEvent(1, "install", "completed", completed.RootElement.Clone()),
+            ],
+            string.Empty);
+
+        var summary = InstallOperationSummary.TryCreate(result);
+
+        Assert.NotNull(summary);
+        Assert.True(summary.HasSucceededItems);
+        Assert.Equal(1, summary.Succeeded);
+        Assert.Equal(2, summary.Failed);
+        Assert.Contains("单项失败未中止后续任务", summary.Message);
+        Assert.Contains("456 Game B：拒绝访问", summary.Message);
+        Assert.Contains("789 Game C：文件被占用", summary.Message);
+    }
+
+    [Fact]
     public void ParseCurrentPreviewUsesManagedGameIdentityAndInstalledVariant()
     {
         using var document = JsonDocument.Parse(

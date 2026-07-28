@@ -9,6 +9,7 @@ from typing import Any
 
 from satl.catalog import sha256_file, verify_schema_file
 from satl.errors import IntegrityError, TransactionError
+from satl.file_replacement import replace_staged_file
 from satl.models import SchemaVariant
 from satl.state import StateStore
 
@@ -25,9 +26,13 @@ def _copy_fsync(source: Path, destination: Path) -> None:
             shutil.copyfileobj(reader, writer, length=1024 * 1024)
             writer.flush()
             os.fsync(writer.fileno())
-        os.replace(temporary, destination)
+        replace_staged_file(temporary, destination)
     finally:
-        temporary.unlink(missing_ok=True)
+        try:
+            temporary.unlink(missing_ok=True)
+        except OSError:
+            # Preserve the primary copy/replace error when cleanup is blocked.
+            pass
 
 
 def _optional_string(value: object) -> str | None:
@@ -78,7 +83,7 @@ class TransactionManager:
                 writer.flush()
                 os.fsync(writer.fileno())
             verify_schema_file(stage, variant)
-            os.replace(stage, target)
+            replace_staged_file(stage, target)
             replaced = True
             transaction = {
                 "id": transaction_id,
@@ -110,7 +115,11 @@ class TransactionManager:
                 raise
             raise TransactionError(f"安装 {app_id} 失败：{exc}") from exc
         finally:
-            stage.unlink(missing_ok=True)
+            try:
+                stage.unlink(missing_ok=True)
+            except OSError:
+                # Cleanup must not hide the actionable failure or abort a batch.
+                pass
             if not replaced:
                 shutil.rmtree(backup_dir, ignore_errors=True)
 

@@ -1,10 +1,13 @@
 from __future__ import annotations
 
 import hashlib
+import os
+import stat
 from pathlib import Path
 
 import pytest
 
+from satl import file_replacement
 from satl.errors import TransactionError
 from satl.models import SchemaVariant
 from satl.state import StateStore
@@ -51,6 +54,54 @@ def test_install_and_restore_existing_original(tmp_path: Path) -> None:
     assert target.read_bytes() == b"original"
     assert manager.status("123") == "restored"
     assert manager.installed_variant_id("123") is None
+
+
+def test_install_clears_read_only_target_before_windows_replace(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    target = tmp_path / "Steam" / "appcache" / "stats" / "UserGameStatsSchema_123.bin"
+    target.parent.mkdir(parents=True)
+    target.write_bytes(b"original")
+    target.chmod(stat.S_IREAD)
+    source = source_file(tmp_path, "translated.bin", b"translated")
+    real_replace = os.replace
+
+    def windows_replace(stage: Path, destination: Path) -> None:
+        if Path(destination) == target and not target.stat().st_mode & stat.S_IWRITE:
+            raise PermissionError(13, "Access is denied", str(target))
+        real_replace(stage, destination)
+
+    monkeypatch.setattr(file_replacement.os, "replace", windows_replace)
+
+    TransactionManager(tmp_path / "data").install(
+        "123", target, source, variant_for("123", b"translated")
+    )
+
+    assert target.read_bytes() == b"translated"
+
+
+def test_install_reports_replace_stage_and_permission_diagnosis(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    target = tmp_path / "Steam" / "appcache" / "stats" / "UserGameStatsSchema_123.bin"
+    target.parent.mkdir(parents=True)
+    target.write_bytes(b"original")
+    source = source_file(tmp_path, "translated.bin", b"translated")
+    real_replace = os.replace
+
+    def denied_replace(stage: Path, destination: Path) -> None:
+        if Path(destination) == target:
+            raise PermissionError(13, "Access is denied", str(target))
+        real_replace(stage, destination)
+
+    monkeypatch.setattr(file_replacement.os, "replace", denied_replace)
+
+    with pytest.raises(TransactionError, match=r"阶段=replace.*ACL.*安全软件"):
+        TransactionManager(tmp_path / "data").install(
+            "123", target, source, variant_for("123", b"translated")
+        )
+
+    assert target.read_bytes() == b"original"
 
 
 def test_restore_deletes_file_when_no_original_existed(tmp_path: Path) -> None:

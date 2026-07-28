@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import sys
+import traceback
 from pathlib import Path
 from typing import Sequence
 
@@ -9,7 +10,7 @@ from satl.bkv import achievement_preview
 from satl.catalog import CatalogRepository
 from satl.cli_protocol import emit_jsonl, print_catalog_cache_notice
 from satl.cli_validation import confirm
-from satl.errors import PreflightError, SatlError, UsageError
+from satl.errors import PreflightError, SatlError, TransactionError, UsageError
 from satl.models import Catalog, CatalogEntry, SchemaVariant
 from satl.steam import discover_local_games, find_steam_dir, is_steam_running, schema_target
 from satl.transaction import TransactionManager
@@ -180,7 +181,12 @@ def command_install(args: argparse.Namespace) -> int:
             else:
                 print(f"已安装：{entry.app_id} / {variant.variant_id}")
             successes += 1
-        except SatlError as exc:
+        except Exception as exc:
+            failure = exc if isinstance(exc, SatlError) else TransactionError(
+                f"安装 {entry.app_id} 时发生未预期错误：{type(exc).__name__}: {exc}"
+            )
+            if not isinstance(exc, SatlError):
+                traceback.print_exc(file=sys.stderr)
             if args.jsonl:
                 emit_jsonl(
                     "install",
@@ -188,13 +194,14 @@ def command_install(args: argparse.Namespace) -> int:
                     {
                         "app_id": entry.app_id,
                         "game_name": entry.game_name,
-                        "message": str(exc),
-                        "exit_code": exc.exit_code,
+                        "variant_id": variant.variant_id,
+                        "message": str(failure),
+                        "exit_code": failure.exit_code,
                     },
                 )
             else:
-                print(f"失败：{entry.app_id}：{exc}", file=sys.stderr)
-            failures.append(exc)
+                print(f"失败：{entry.app_id}：{failure}", file=sys.stderr)
+            failures.append(failure)
     exit_code = 0 if not failures else (7 if successes else failures[0].exit_code)
     if args.jsonl:
         emit_jsonl(

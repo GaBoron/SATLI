@@ -12,6 +12,7 @@ from satl.cli import main
 from satl.catalog import CatalogRepository
 from satl.game_names import GameNameResolution, SteamGameNameResolver
 from satl.models import OwnedGame
+from satl.transaction import TransactionManager
 
 
 RESERVED_TEST_STEAM_ID = "76561197960265728"
@@ -825,6 +826,63 @@ def test_install_jsonl_reports_partial_failure(tmp_path: Path, monkeypatch, caps
     events = jsonl_events(capsys.readouterr().out)
     assert any(event["event"] == "item-succeeded" for event in events)
     assert any(event["event"] == "item-failed" for event in events)
+    assert events[-1]["payload"] == {"exit_code": 7, "failed": 1, "succeeded": 1}
+
+
+def test_install_continues_after_unexpected_item_failure(tmp_path: Path, monkeypatch, capsys) -> None:
+    steam, data_dir = make_fixture(tmp_path)
+    payload = b"translated"
+    (steam / "steamapps" / "appmanifest_456.acf").write_text(
+        '"AppState" {}', encoding="utf-8"
+    )
+    catalog_path = data_dir / "cache" / "index.json"
+    catalog = json.loads(catalog_path.read_text(encoding="utf-8"))
+    catalog["entries"].insert(
+        0,
+        {
+            "game_id": "456",
+            "game_name": "Unexpected Failure",
+            "status": "current",
+            "schema_file": "files/456/UserGameStatsSchema_456.bin",
+            "sha256": hashlib.sha256(payload).hexdigest(),
+            "file_size_bytes": len(payload),
+            "achievement_count": 1,
+        },
+    )
+    catalog_path.write_text(json.dumps(catalog), encoding="utf-8")
+    monkeypatch.setattr("satl.install_command.is_steam_running", lambda: False)
+    real_install = TransactionManager.install
+
+    def fail_first_item(self, app_id, *args, **kwargs):
+        if app_id == "123":
+            raise RuntimeError("simulated unexpected failure")
+        return real_install(self, app_id, *args, **kwargs)
+
+    monkeypatch.setattr(TransactionManager, "install", fail_first_item)
+
+    result = main(
+        [
+            "install",
+            "456",
+            "123",
+            "--offline",
+            "--yes",
+            "--jsonl",
+            "--steam-dir",
+            str(steam),
+            "--data-dir",
+            str(data_dir),
+        ]
+    )
+
+    assert result == 7
+    events = jsonl_events(capsys.readouterr().out)
+    results = [
+        (event["event"], event["payload"].get("app_id"))
+        for event in events
+        if event["event"] in {"item-failed", "item-succeeded"}
+    ]
+    assert results == [("item-failed", "123"), ("item-succeeded", "456")]
     assert events[-1]["payload"] == {"exit_code": 7, "failed": 1, "succeeded": 1}
 
 
