@@ -17,6 +17,10 @@ public sealed class TranslationManagementViewModel : ObservableObject
     private readonly TranslationCliArguments _arguments;
     private string _searchText = string.Empty;
     private string _detectedSteamDirectory = string.Empty;
+    private GameInstallFilterOption _selectedFilterOption = GameInstallFiltering.Options[0];
+    private int _updateAvailableCount;
+
+    public event Action<int, bool>? UpdatesDetected;
 
     public TranslationManagementViewModel(
         Func<GuiSettings> settings,
@@ -32,6 +36,28 @@ public sealed class TranslationManagementViewModel : ObservableObject
     public ObservableCollection<GameItem> Games { get; } = [];
     public ObservableCollection<GameItem> VisibleGames { get; } = [];
     public ObservableCollection<GameItem> ManagedGames { get; } = [];
+    public IReadOnlyList<GameInstallFilterOption> FilterOptions => GameInstallFiltering.Options;
+    public int SelectedCount => Games.Count(item => item.IsSelected);
+    public string SelectedCountText => $"已选 {SelectedCount} 项";
+    public int UpdateAvailableCount
+    {
+        get => _updateAvailableCount;
+        private set => SetProperty(ref _updateAvailableCount, value);
+    }
+
+    public GameInstallFilterOption SelectedFilterOption
+    {
+        get => _selectedFilterOption;
+        set
+        {
+            if (value is null || !SetProperty(ref _selectedFilterOption, value))
+            {
+                return;
+            }
+            ClearSelection();
+            ApplyFilter();
+        }
+    }
     public string DetectedSteamDirectory
     {
         get => _detectedSteamDirectory;
@@ -69,7 +95,14 @@ public sealed class TranslationManagementViewModel : ObservableObject
             }
             await ScanCoreAsync(useCatalogCache: refreshed);
             await LoadManagedCoreAsync(forceOffline: refreshed || settings.Offline);
-            ShowInfo($"扫描完成，匹配到 {Games.Count} 个可用翻译。", InfoBarSeverity.Success);
+            if (refreshCatalog && UpdateAvailableCount > 0)
+            {
+                UpdatesDetected?.Invoke(UpdateAvailableCount, !refreshed);
+            }
+            else if (UpdateAvailableCount == 0 || !refreshCatalog)
+            {
+                ShowInfo($"扫描完成，匹配到 {Games.Count} 个可用翻译。", InfoBarSeverity.Success);
+            }
         }
         catch (Exception exception)
         {
@@ -400,8 +433,12 @@ public sealed class TranslationManagementViewModel : ObservableObject
                 scanned.InstalledState = managed.InstalledState;
                 scanned.InstalledVariantId = managed.InstalledVariantId;
                 scanned.InstalledSource = managed.InstalledSource;
+                scanned.InstalledAt = managed.InstalledAt;
+                scanned.InstalledSha256 = managed.InstalledSha256;
             }
         }
+        UpdateAvailableCount = GameInstallFiltering.CountUpdates(Games);
+        ApplyFilter();
     }
 
     private async Task ReloadAfterMutationAsync()
@@ -435,7 +472,8 @@ public sealed class TranslationManagementViewModel : ObservableObject
             var settings = _settings();
             result = await _cli.RunAsync(arguments, satlEvent =>
             {
-                _ = App.Logs.WriteAsync("详细", satlEvent.Operation, DescribeEvent(satlEvent), detailed: true);
+                _ = App.Logs.WriteAsync(
+                    "详细", satlEvent.Operation, CliEventDescription.Format(satlEvent), detailed: true);
                 if (tracksGameLoading)
                 {
                     void UpdateProgress()
@@ -505,27 +543,40 @@ public sealed class TranslationManagementViewModel : ObservableObject
         VisibleGames.Clear();
         var query = SearchText.Trim();
         foreach (var game in Games.Where(game =>
-                     string.IsNullOrWhiteSpace(query)
-                     || game.GameName.Contains(query, StringComparison.CurrentCultureIgnoreCase)
-                     || game.AppId.Contains(query, StringComparison.OrdinalIgnoreCase)))
+                     GameInstallFiltering.Matches(game, SelectedFilterOption.Value)
+                     && (string.IsNullOrWhiteSpace(query)
+                         || game.GameName.Contains(query, StringComparison.CurrentCultureIgnoreCase)
+                         || game.AppId.Contains(query, StringComparison.OrdinalIgnoreCase))))
         {
             VisibleGames.Add(game);
         }
     }
 
-    private static string DescribeEvent(SatlEvent satlEvent)
+    public void SelectVisible()
     {
-        var appId = satlEvent.Payload.TryGetProperty("app_id", out var appIdValue)
-            ? $"，App ID {appIdValue.GetString()}"
-            : string.Empty;
-        var variant = satlEvent.Payload.TryGetProperty("variant_id", out var variantValue)
-            ? $"，版本 {variantValue.GetString()}"
-            : string.Empty;
-        var message = satlEvent.Payload.TryGetProperty("message", out var messageValue)
-            ? $"：{messageValue.GetString()}"
-            : string.Empty;
-        return $"事件 {satlEvent.Event}{appId}{variant}{message}";
+        foreach (var game in VisibleGames)
+        {
+            game.IsSelected = true;
+        }
+        RefreshSelectionCount();
     }
+
+    public void ClearSelection()
+    {
+        foreach (var game in Games)
+        {
+            game.IsSelected = false;
+        }
+        RefreshSelectionCount();
+    }
+
+    public void RefreshSelectionCount()
+    {
+        OnPropertyChanged(nameof(SelectedCount));
+        OnPropertyChanged(nameof(SelectedCountText));
+    }
+
+    public void ShowUpdates() => SelectedFilterOption = GameInstallFiltering.UpdateOption;
 
     private void ShowException(string operation, Exception exception)
     {

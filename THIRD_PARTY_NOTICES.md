@@ -19,6 +19,12 @@ Python is distributed under the Python Software Foundation License; the
 runtime's complete `LICENSE.txt` is included beside its binaries in
 `_satl_runtime`.
 
+The embedded Python command line payload includes the Dulwich project, which is
+dual-licensed under Apache-2.0 or GPL-2.0-or-later, for local Git repository access, and
+the MIT-licensed urllib3 project used by Dulwich. SATL uses only Dulwich's
+pure-Python implementation and does not require Git for Windows or additional
+native libraries.
+
 ## Translation data
 
 This program downloads community-maintained achievement schema files from

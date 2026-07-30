@@ -36,6 +36,8 @@
                             <TextBlock Grid.Column="2" VerticalAlignment="Center" Text="{x:Bind StateText}" Style="{StaticResource BodyStrongTextBlockStyle}" />
                             <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
                                 <Button Width="80" HorizontalContentAlignment="Center" Content="查看" Click="ViewCurrent_Click" Tag="{x:Bind}" IsEnabled="{x:Bind CanViewInstalledTranslation}" AutomationProperties.Name="查看当前安装的成就翻译" AutomationProperties.HelpText="{x:Bind GameName}" />
+                                <Button Width="80" HorizontalContentAlignment="Center" Content="编辑" Click="Edit_Click" Tag="{x:Bind}" IsEnabled="{x:Bind CanViewInstalledTranslation}" AutomationProperties.Name="编辑当前翻译" />
+                                <Button Width="80" HorizontalContentAlignment="Center" Content="历史" Click="History_Click" Tag="{x:Bind}" AutomationProperties.Name="查看 Git 修订历史" />
                                 <Button Width="80" HorizontalContentAlignment="Center" Content="{x:Bind RestoreActionText}" Click="RestoreItem_Click" Tag="{x:Bind}" IsEnabled="{x:Bind CanRestore}" AutomationProperties.Name="恢复安装前文件" AutomationProperties.HelpText="{x:Bind GameName}" />
                             </StackPanel>
                         </Grid>

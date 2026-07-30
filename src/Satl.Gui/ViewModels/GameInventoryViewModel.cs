@@ -13,10 +13,24 @@ public sealed class GameInventoryViewModel(GameInventoryScope scope) : Observabl
     private string _statusMessage = "准备就绪";
     private bool _isBusy;
     private bool _initialized;
+    private GameInstallFilterOption _selectedFilterOption = GameInstallFiltering.Options[0];
 
     public ObservableCollection<GameItem> Games { get; } = [];
     public ObservableCollection<GameItem> VisibleGames { get; } = [];
     public GameLoadingProgress Loading { get; } = new();
+    public IReadOnlyList<GameInstallFilterOption> FilterOptions => GameInstallFiltering.Options;
+
+    public GameInstallFilterOption SelectedFilterOption
+    {
+        get => _selectedFilterOption;
+        set
+        {
+            if (value is not null && SetProperty(ref _selectedFilterOption, value))
+            {
+                ApplyFilter();
+            }
+        }
+    }
 
     public string SearchText
     {
@@ -168,9 +182,10 @@ public sealed class GameInventoryViewModel(GameInventoryScope scope) : Observabl
         VisibleGames.Clear();
         var query = SearchText.Trim();
         foreach (var game in Games.Where(game =>
-                     string.IsNullOrWhiteSpace(query)
-                     || game.GameName.Contains(query, StringComparison.CurrentCultureIgnoreCase)
-                     || game.AppId.Contains(query, StringComparison.OrdinalIgnoreCase)))
+                     GameInstallFiltering.Matches(game, SelectedFilterOption.Value)
+                     && (string.IsNullOrWhiteSpace(query)
+                         || game.GameName.Contains(query, StringComparison.CurrentCultureIgnoreCase)
+                         || game.AppId.Contains(query, StringComparison.OrdinalIgnoreCase))))
         {
             VisibleGames.Add(game);
         }

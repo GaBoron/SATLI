@@ -34,6 +34,9 @@ def command_status(args: argparse.Namespace) -> int:
                 managed.installed_state,
                 "none",
                 managed.installed_variant_id,
+                managed.installed_source,
+                managed.installed_at,
+                managed.installed_sha256,
             )
         else:
             record = {
@@ -47,13 +50,11 @@ def command_status(args: argparse.Namespace) -> int:
                 "action": "none",
                 "error": None,
             }
-        record.update(
-            {
-                "installed_source": managed.installed_source,
-                "installed_at": managed.installed_at,
-                "installed_sha256": managed.installed_sha256,
-            }
-        )
+        record.update({
+            "installed_source": managed.installed_source,
+            "installed_at": managed.installed_at,
+            "installed_sha256": managed.installed_sha256,
+        })
         records.append(record)
     if args.jsonl:
         emit_jsonl("status", "plan", {"count": len(records)})

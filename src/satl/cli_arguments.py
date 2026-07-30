@@ -14,6 +14,11 @@ from satl.schema_command import (
     command_schema_apply,
     command_schema_export,
     command_schema_inspect,
+    command_schema_revisions_activate,
+    command_schema_revisions_export,
+    command_schema_revisions_list,
+    command_schema_revisions_show,
+    command_schema_revisions_verify,
     command_schema_restore,
 )
 from satl.scan_command import command_scan
@@ -170,6 +175,8 @@ def build_parser() -> argparse.ArgumentParser:
     _add_schema_edit_arguments(schema_export)
     schema_export.add_argument("--format", choices=("bin", "zip"), required=True)
     schema_export.add_argument("--output", type=Path, required=True)
+    schema_export.add_argument("--game-name")
+    schema_export.add_argument("--variant-id")
     schema_export.set_defaults(handler=command_schema_export)
 
     schema_apply = schema_subparsers.add_parser("apply", help="安全写回编辑后的本地 schema")
@@ -177,6 +184,7 @@ def build_parser() -> argparse.ArgumentParser:
     _add_steam_dir(schema_apply)
     _add_schema_edit_arguments(schema_apply)
     schema_apply.add_argument("--game-name", help="记录本地编辑对应的游戏名称")
+    schema_apply.add_argument("--variant-id")
     schema_apply.add_argument("--yes", action="store_true")
     schema_apply.set_defaults(handler=command_schema_apply)
 
@@ -188,6 +196,49 @@ def build_parser() -> argparse.ArgumentParser:
     schema_restore.add_argument("--yes", action="store_true")
     schema_restore.add_argument("--jsonl", action="store_true")
     schema_restore.set_defaults(handler=command_schema_restore)
+
+    revisions = schema_subparsers.add_parser("revisions", help="管理本地 Git schema 修订历史")
+    revision_subparsers = revisions.add_subparsers(dest="revision_command", required=True)
+
+    revisions_list = revision_subparsers.add_parser("list", help="列出游戏修订")
+    _add_data_dir(revisions_list)
+    _add_steam_dir(revisions_list)
+    revisions_list.add_argument("app_id", metavar="APP_ID")
+    revisions_list.add_argument("--jsonl", action="store_true")
+    revisions_list.set_defaults(handler=command_schema_revisions_list)
+
+    revisions_show = revision_subparsers.add_parser("show", help="查看一个修订")
+    _add_data_dir(revisions_show)
+    _add_steam_dir(revisions_show)
+    revisions_show.add_argument("app_id", metavar="APP_ID")
+    revisions_show.add_argument("revision", metavar="COMMIT")
+    revisions_show.add_argument("--jsonl", action="store_true")
+    revisions_show.set_defaults(handler=command_schema_revisions_show)
+
+    revisions_export = revision_subparsers.add_parser("export", help="导出一个修订")
+    _add_data_dir(revisions_export)
+    revisions_export.add_argument("app_id", metavar="APP_ID")
+    revisions_export.add_argument("revision", metavar="COMMIT")
+    revisions_export.add_argument("--format", choices=("bin", "zip"), required=True)
+    revisions_export.add_argument("--output", type=Path, required=True)
+    revisions_export.add_argument("--jsonl", action="store_true")
+    revisions_export.set_defaults(handler=command_schema_revisions_export)
+
+    revisions_activate = revision_subparsers.add_parser("activate", help="把一个修订设为当前版本")
+    _add_data_dir(revisions_activate)
+    _add_steam_dir(revisions_activate)
+    revisions_activate.add_argument("app_id", metavar="APP_ID")
+    revisions_activate.add_argument("revision", metavar="COMMIT")
+    revisions_activate.add_argument("--force", action="store_true")
+    revisions_activate.add_argument("--yes", action="store_true")
+    revisions_activate.add_argument("--jsonl", action="store_true")
+    revisions_activate.set_defaults(handler=command_schema_revisions_activate)
+
+    revisions_verify = revision_subparsers.add_parser("verify", help="验证 Git 修订仓库")
+    _add_data_dir(revisions_verify)
+    revisions_verify.add_argument("app_id", metavar="APP_ID", nargs="?")
+    revisions_verify.add_argument("--jsonl", action="store_true")
+    revisions_verify.set_defaults(handler=command_schema_revisions_verify)
     return parser
 
 

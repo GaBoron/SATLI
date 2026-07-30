@@ -28,7 +28,7 @@ from satl.steam_web_api import (
     SteamWebApiError,
     merge_owned_games,
 )
-from satl.transaction import TransactionManager
+from satl.managed_games import ManagedGameRegistry
 
 
 def command_scan(args: argparse.Namespace) -> int:
@@ -46,7 +46,8 @@ def command_scan(args: argparse.Namespace) -> int:
     discovered = {} if steam_dir is None else discover_local_games(steam_dir, args.account)
     if steam_dir is not None and args.include_owned_games:
         _merge_owned_games(args, steam_dir, discovered)
-    manager = TransactionManager(Path(args.data_dir))
+    registry = ManagedGameRegistry(Path(args.data_dir))
+    managed_app_ids = set(registry.managed_app_ids())
     if args.scope == "cloud":
         app_ids = sorted(catalog.entries, key=int)
     elif args.scope == "local":
@@ -115,7 +116,8 @@ def command_scan(args: argparse.Namespace) -> int:
         entry = catalog.entries.get(app_id)
         discovery = discovered.get(app_id)
         sources = sorted(discovery.discovery) if discovery else []
-        installed_state = manager.status(app_id)
+        managed = registry.record(app_id) if app_id in managed_app_ids else None
+        installed_state = managed.installed_state if managed is not None else "unmanaged"
         native_languages = (
             detect_achievement_languages(schema_target(steam_dir, app_id))
             if steam_dir is not None and installed_state in {"unmanaged", "restored"}
@@ -127,7 +129,10 @@ def command_scan(args: argparse.Namespace) -> int:
                 sources,
                 installed_state,
                 "available",
-                manager.installed_variant_id(app_id),
+                managed.installed_variant_id if managed is not None else None,
+                managed.installed_source if managed is not None else None,
+                managed.installed_at if managed is not None else None,
+                managed.installed_sha256 if managed is not None else None,
             )
             record["native_languages"] = list(native_languages)
             records.append(record)
@@ -141,7 +146,10 @@ def command_scan(args: argparse.Namespace) -> int:
                     "catalog_status": "unknown",
                     "variants": [],
                     "installed_state": installed_state,
-                    "installed_variant_id": manager.installed_variant_id(app_id),
+                    "installed_variant_id": managed.installed_variant_id if managed is not None else None,
+                    "installed_source": managed.installed_source if managed is not None else None,
+                    "installed_at": managed.installed_at if managed is not None else None,
+                    "installed_sha256": managed.installed_sha256 if managed is not None else None,
                     "native_languages": list(native_languages),
                     "action": "unavailable",
                     "error": None,

@@ -80,6 +80,22 @@ public sealed partial class ManagedPage : Page
         }
     }
 
+    private void Edit_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button { Tag: GameItem game } && game.CanViewInstalledTranslation)
+        {
+            Frame.Navigate(typeof(AchievementEditorPage), game);
+        }
+    }
+
+    private void History_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button { Tag: GameItem game })
+        {
+            Frame.Navigate(typeof(RevisionHistoryPage), game);
+        }
+    }
+
     private async void RestoreItem_Click(object sender, RoutedEventArgs e)
     {
         if (sender is Button { Tag: GameItem game } && game.CanRestore)

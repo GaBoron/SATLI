@@ -62,7 +62,8 @@ public sealed record SchemaInspection(
     bool CanRestore,
     IReadOnlyList<string> Languages,
     IReadOnlyList<AchievementEditorRow> Rows,
-    string GameName = "");
+    string GameName = "",
+    string VariantId = "");
 
 public sealed record SchemaEditResult(
     string OutputSha256,
@@ -72,4 +73,9 @@ public sealed record SchemaEditResult(
     int MissingDescriptions,
     bool CanRestore,
     string? Output,
-    string? Backup);
+    string? Backup,
+    int ChangedNames = 0,
+    int ChangedDescriptions = 0,
+    IReadOnlyList<string>? CompleteLanguages = null,
+    string RevisionCommit = "",
+    string RevisionWarning = "");

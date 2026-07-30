@@ -16,13 +16,17 @@ public sealed class MainViewModel : ObservableObject
     private string _infoMessage = string.Empty;
     private InfoBarSeverity _infoSeverity = InfoBarSeverity.Informational;
     private Uri? _latestReleasePage;
+    private string _infoActionText = string.Empty;
+    private Action? _infoAction;
+
+    public event Action? ShowUpdatesRequested;
 
     public MainViewModel()
     {
         Translations = new TranslationManagementViewModel(
             () => Settings,
             Operation,
-            ShowInfo);
+            (message, severity) => ShowInfo(message, severity));
         Translations.PropertyChanged += (_, args) =>
         {
             if (args.PropertyName == nameof(TranslationManagementViewModel.DetectedSteamDirectory))
@@ -30,6 +34,17 @@ public sealed class MainViewModel : ObservableObject
                 OnPropertyChanged(nameof(CurrentSteamDirectory));
             }
         };
+        Translations.UpdatesDetected += (count, usedCache) => ShowInfo(
+            usedCache
+                ? $"根据本地目录缓存发现 {count} 个可更新译本。"
+                : $"发现 {count} 个可更新译本。",
+            InfoBarSeverity.Informational,
+            "查看可更新",
+            () =>
+            {
+                Translations.ShowUpdates();
+                ShowUpdatesRequested?.Invoke();
+            });
     }
 
     public ApplicationOperationState Operation { get; } = new();
@@ -67,6 +82,22 @@ public sealed class MainViewModel : ObservableObject
         get => _infoSeverity;
         private set => SetProperty(ref _infoSeverity, value);
     }
+
+    public string InfoActionText
+    {
+        get => _infoActionText;
+        private set
+        {
+            if (SetProperty(ref _infoActionText, value))
+            {
+                OnPropertyChanged(nameof(InfoActionVisibility));
+            }
+        }
+    }
+
+    public Visibility InfoActionVisibility => string.IsNullOrWhiteSpace(InfoActionText)
+        ? Visibility.Collapsed
+        : Visibility.Visible;
 
     public async Task InitializeAsync()
     {
@@ -140,11 +171,17 @@ public sealed class MainViewModel : ObservableObject
         ApplyTheme();
     }
 
-    public void ShowInfo(string message, InfoBarSeverity severity = InfoBarSeverity.Informational)
+    public void ShowInfo(
+        string message,
+        InfoBarSeverity severity = InfoBarSeverity.Informational,
+        string actionText = "",
+        Action? action = null)
     {
         InfoMessage = message;
         InfoSeverity = severity;
         IsInfoOpen = true;
+        InfoActionText = actionText;
+        _infoAction = action;
         _ = App.Logs.WriteAsync(
             "调试",
             "界面",
@@ -157,6 +194,14 @@ public sealed class MainViewModel : ObservableObject
                 "界面",
                 message);
         }
+    }
+
+    public void InvokeInfoAction()
+    {
+        var action = _infoAction;
+        _infoAction = null;
+        InfoActionText = string.Empty;
+        action?.Invoke();
     }
 
     private async Task<UpdateCheckResult?> CheckForUpdatesCoreAsync(bool showCurrentResult)

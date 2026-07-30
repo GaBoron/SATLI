@@ -20,17 +20,31 @@
         </StackPanel>
         <CommandBar Grid.Row="1" DefaultLabelPosition="Right" IsDynamicOverflowEnabled="True">
             <CommandBar.Content>
-                <AutoSuggestBox
-                    x:Name="SearchBox"
-                    Width="300"
-                    PlaceholderText="搜索游戏名称或 App ID"
-                    QueryIcon="Find"
-                    Text="{x:Bind ViewModel.SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                    AutomationProperties.Name="搜索游戏" />
+                <StackPanel Orientation="Horizontal" Spacing="12">
+                    <AutoSuggestBox
+                        x:Name="SearchBox"
+                        Width="300"
+                        PlaceholderText="搜索游戏名称或 App ID"
+                        QueryIcon="Find"
+                        Text="{x:Bind ViewModel.SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                        AutomationProperties.Name="搜索游戏" />
+                    <ComboBox
+                        Width="140"
+                        Header="安装状态"
+                        ItemsSource="{x:Bind ViewModel.FilterOptions}"
+                        SelectedItem="{x:Bind ViewModel.SelectedFilterOption, Mode=TwoWay}"
+                        AutomationProperties.Name="筛选安装状态" />
+                    <TextBlock
+                        VerticalAlignment="Center"
+                        Text="{x:Bind ViewModel.SelectedCountText, Mode=OneWay}"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                </StackPanel>
             </CommandBar.Content>
+            <AppBarButton Icon="SelectAll" Label="全选当前结果" Click="SelectVisible_Click" />
+            <AppBarButton Icon="ClearSelection" Label="清除选择" Click="ClearSelection_Click" />
             <AppBarButton Icon="Help" Label="未找到游戏？" Click="Petition_Click" AutomationProperties.Name="打开翻译请愿" />
             <AppBarButton Icon="Refresh" Label="重新扫描" Click="Refresh_Click" KeyboardAcceleratorTextOverride="F5" />
-            <AppBarButton Icon="Download" Label="安装所选" Click="Install_Click" />
+            <AppBarButton Icon="Download" Label="安装/更新所选" Click="Install_Click" />
         </CommandBar>
         <ListView
             Grid.Row="2"
@@ -69,6 +83,7 @@
                                 <StackPanel Orientation="Horizontal" Spacing="8">
                                     <TextBlock Text="{x:Bind CatalogText}" Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" Style="{StaticResource CaptionTextBlockStyle}" />
                                     <TextBlock Text="{x:Bind StateText}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Style="{StaticResource CaptionTextBlockStyle}" />
+                                    <TextBlock Text="可更新" Visibility="{x:Bind UpdateVisibility}" Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" Style="{StaticResource CaptionTextBlockStyle}" />
                                 </StackPanel>
                                 <InfoBar
                                     IsOpen="{x:Bind HasCatalogWarning}"

@@ -98,11 +98,42 @@ try {
 
     Copy-Item -LiteralPath (Join-Path $ProjectRoot "src\satl") -Destination $CliPayloadRoot -Recurse
     Copy-Item -LiteralPath (Join-Path $ProjectRoot "src\satl\__main__.py") -Destination $CliPayloadRoot
+    & $Python -m pip install `
+        --disable-pip-version-check `
+        --no-compile `
+        --no-deps `
+        --only-binary=:all: `
+        --target $CliPayloadRoot `
+        "dulwich==1.2.12" `
+        "urllib3==2.7.0"
+    if ($LASTEXITCODE -ne 0) {
+        throw "Pinned Python dependencies could not be staged"
+    }
+    Get-ChildItem -LiteralPath $CliPayloadRoot -File -Recurse |
+        Where-Object { $_.Extension -in @(".pyd", ".dll") } |
+        Remove-Item -Force
     Get-ChildItem -LiteralPath $CliPayloadRoot -Directory -Filter "__pycache__" -Recurse |
         Remove-Item -Recurse -Force
     & $Python -m zipapp $CliPayloadRoot -o (Join-Path $EmbeddedRuntimeRoot "satl.pyz")
     if ($LASTEXITCODE -ne 0) {
         throw "SATL Python archive build failed"
+    }
+
+    Add-Type -AssemblyName System.IO.Compression.FileSystem
+    $CliArchive = [System.IO.Compression.ZipFile]::OpenRead((Join-Path $EmbeddedRuntimeRoot "satl.pyz"))
+    try {
+        $NativePythonEntries = @($CliArchive.Entries | Where-Object {
+            [System.IO.Path]::GetExtension($_.FullName) -in @(".pyd", ".dll")
+        })
+        if ($NativePythonEntries.Count -gt 0) {
+            throw "SATL Python archive unexpectedly contains native dependencies"
+        }
+        if (-not ($CliArchive.Entries.FullName -contains "dulwich/__init__.py")) {
+            throw "SATL Python archive does not contain Dulwich"
+        }
+    }
+    finally {
+        $CliArchive.Dispose()
     }
 
     $CliVersion = & (Join-Path $CliRoot "python.exe") (Join-Path $CliRoot "satl.pyz") --version

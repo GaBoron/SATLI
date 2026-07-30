@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Text.Json;
 using CommunityToolkit.Mvvm.ComponentModel;
+using Microsoft.UI.Xaml;
 
 namespace Satl_Gui.Models;
 
@@ -9,6 +10,8 @@ public sealed class SchemaVariantOption
     public required string VariantId { get; init; }
     public bool Primary { get; init; }
     public string Note { get; init; } = string.Empty;
+    public string Sha256 { get; init; } = string.Empty;
+    public long FileSizeBytes { get; init; }
     public string DisplayName => string.IsNullOrWhiteSpace(Note) ? VariantId : $"{VariantId} · {Note}";
     public override string ToString() => DisplayName;
 }
@@ -21,6 +24,8 @@ public sealed class GameItem : ObservableObject
     private string _installedState = "unmanaged";
     private string _installedVariantId = string.Empty;
     private string _installedSource = string.Empty;
+    private string _installedAt = string.Empty;
+    private string _installedSha256 = string.Empty;
 
     public required string AppId { get; init; }
     public required string GameName { get; init; }
@@ -88,6 +93,9 @@ public sealed class GameItem : ObservableObject
                 OnPropertyChanged(nameof(IsModified));
                 OnPropertyChanged(nameof(InstalledVersionText));
                 OnPropertyChanged(nameof(ManagedSummaryText));
+                OnPropertyChanged(nameof(IsUpdateAvailable));
+                OnPropertyChanged(nameof(UpdateVisibility));
+                OnPropertyChanged(nameof(NeedsAttention));
                 OnPropertyChanged(nameof(CanViewInstalledTranslation));
                 OnPropertyChanged(nameof(CanRestore));
                 OnPropertyChanged(nameof(RequiresForceRestore));
@@ -105,6 +113,9 @@ public sealed class GameItem : ObservableObject
             {
                 OnPropertyChanged(nameof(InstalledVersionText));
                 OnPropertyChanged(nameof(ManagedSummaryText));
+                OnPropertyChanged(nameof(IsUpdateAvailable));
+                OnPropertyChanged(nameof(UpdateVisibility));
+                OnPropertyChanged(nameof(NeedsAttention));
             }
         }
     }
@@ -123,12 +134,31 @@ public sealed class GameItem : ObservableObject
                 OnPropertyChanged(nameof(CatalogText));
                 OnPropertyChanged(nameof(HasCatalogWarning));
                 OnPropertyChanged(nameof(CatalogWarningText));
+                OnPropertyChanged(nameof(IsUpdateAvailable));
+                OnPropertyChanged(nameof(UpdateVisibility));
+                OnPropertyChanged(nameof(NeedsAttention));
             }
         }
     }
 
-    public string InstalledAt { get; init; } = string.Empty;
-    public string InstalledSha256 { get; init; } = string.Empty;
+    public string InstalledAt
+    {
+        get => _installedAt;
+        set => SetProperty(ref _installedAt, value);
+    }
+
+    public string InstalledSha256
+    {
+        get => _installedSha256;
+        set
+        {
+            if (SetProperty(ref _installedSha256, value))
+            {
+                OnPropertyChanged(nameof(IsUpdateAvailable));
+                OnPropertyChanged(nameof(UpdateVisibility));
+            }
+        }
+    }
 
     public string StateText => InstalledState switch
     {
@@ -149,6 +179,32 @@ public sealed class GameItem : ObservableObject
     public bool CanViewInstalledTranslation => InstalledState is "installed" or "modified";
     public bool CanRestore => InstalledState is "installed" or "modified" or "missing";
     public bool RequiresForceRestore => InstalledState is "modified" or "missing";
+    public bool IsUpdateAvailable
+    {
+        get
+        {
+            if (InstalledState != "installed"
+                || InstalledSource != "catalog"
+                || string.IsNullOrWhiteSpace(InstalledVariantId)
+                || string.IsNullOrWhiteSpace(InstalledSha256))
+            {
+                return false;
+            }
+            var catalogVariant = Variants.FirstOrDefault(item =>
+                item.VariantId == InstalledVariantId);
+            return catalogVariant is not null
+                && !string.IsNullOrWhiteSpace(catalogVariant.Sha256)
+                && !catalogVariant.Sha256.Equals(
+                    InstalledSha256,
+                    StringComparison.OrdinalIgnoreCase);
+        }
+    }
+    public Visibility UpdateVisibility => IsUpdateAvailable ? Visibility.Visible : Visibility.Collapsed;
+    public bool NeedsAttention => InstalledState is "modified" or "missing" or "unreadable"
+        || (InstalledState == "installed"
+            && InstalledSource == "catalog"
+            && !string.IsNullOrWhiteSpace(InstalledVariantId)
+            && Variants.All(item => item.VariantId != InstalledVariantId));
     public string RestoreActionText => RequiresForceRestore ? "强制恢复" : "恢复";
     public string InstalledSourceText => IsLocalEdit
         ? "来源：本地编辑"
@@ -219,6 +275,11 @@ public sealed class GameItem : ObservableObject
                     VariantId = GetString(variant, "variant_id", "default"),
                     Primary = variant.TryGetProperty("primary", out var primary) && primary.GetBoolean(),
                     Note = GetString(variant, "note_zh", string.Empty),
+                    Sha256 = GetString(variant, "sha256", string.Empty),
+                    FileSizeBytes = variant.TryGetProperty("file_size_bytes", out var size)
+                        && size.TryGetInt64(out var fileSize)
+                            ? fileSize
+                            : 0,
                 });
             }
         }

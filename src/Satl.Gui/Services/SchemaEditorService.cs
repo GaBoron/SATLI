@@ -45,7 +45,8 @@ public sealed class SchemaEditorService
                 .Select(value => value!)
                 .ToArray(),
             rows,
-            game.GameName);
+            game.GameName,
+            game.InstalledVariantId);
     }
 
     public Task<SchemaEditResult> ApplyAsync(
@@ -60,6 +61,7 @@ public sealed class SchemaEditorService
             [
                 "schema", "apply", inspection.AppId,
                 "--game-name", inspection.GameName,
+                "--variant-id", inspection.VariantId,
                 "--yes", "--jsonl",
             ],
             allowIncomplete);
@@ -79,6 +81,8 @@ public sealed class SchemaEditorService
                 "schema", "export", inspection.AppId,
                 "--format", format,
                 "--output", output,
+                "--game-name", inspection.GameName,
+                "--variant-id", inspection.VariantId,
                 "--jsonl",
             ],
             allowIncomplete);
@@ -174,7 +178,24 @@ public sealed class SchemaEditorService
             : 0,
         payload.TryGetProperty("can_restore", out var canRestore) && canRestore.GetBoolean(),
         payload.TryGetProperty("output", out var output) ? output.GetString() : null,
-        payload.TryGetProperty("backup", out var backup) ? backup.GetString() : null);
+        payload.TryGetProperty("backup", out var backup) ? backup.GetString() : null,
+        payload.TryGetProperty("changed_names", out var changedNames) ? changedNames.GetInt32() : 0,
+        payload.TryGetProperty("changed_descriptions", out var changedDescriptions)
+            ? changedDescriptions.GetInt32()
+            : 0,
+        payload.TryGetProperty("complete_languages", out var languages)
+            ? languages.EnumerateArray()
+                .Select(item => item.GetString())
+                .Where(item => !string.IsNullOrWhiteSpace(item))
+                .Select(item => item!)
+                .ToArray()
+            : [],
+        payload.TryGetProperty("revision_commit", out var revision)
+            ? revision.GetString() ?? string.Empty
+            : string.Empty,
+        payload.TryGetProperty("revision_warning", out var warning)
+            ? warning.GetString() ?? string.Empty
+            : string.Empty);
 
     private static void AddConfiguredPaths(List<string> arguments)
     {

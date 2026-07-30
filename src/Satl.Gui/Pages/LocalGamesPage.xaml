@@ -18,12 +18,19 @@
         </StackPanel>
         <CommandBar Grid.Row="1" DefaultLabelPosition="Right" IsDynamicOverflowEnabled="True">
             <CommandBar.Content>
-                <AutoSuggestBox
-                    x:Name="SearchBox"
-                    Width="300"
-                    PlaceholderText="搜索游戏名称或 App ID"
-                    QueryIcon="Find"
-                    Text="{x:Bind ViewModel.SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                <StackPanel Orientation="Horizontal" Spacing="12">
+                    <AutoSuggestBox
+                        x:Name="SearchBox"
+                        Width="300"
+                        PlaceholderText="搜索游戏名称或 App ID"
+                        QueryIcon="Find"
+                        Text="{x:Bind ViewModel.SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                    <ComboBox
+                        Width="140"
+                        Header="安装状态"
+                        ItemsSource="{x:Bind ViewModel.FilterOptions}"
+                        SelectedItem="{x:Bind ViewModel.SelectedFilterOption, Mode=TwoWay}" />
+                </StackPanel>
             </CommandBar.Content>
             <AppBarButton Icon="OpenFile" Label="导入本地翻译" Click="Import_Click" AutomationProperties.Name="导入本地 BIN 或 ZIP" />
             <AppBarButton Icon="Edit" Label="制作翻译" Click="Localizer_Click" AutomationProperties.Name="打开 Steam Achievement Localizer Skill" />
@@ -56,6 +63,7 @@
                                 <TextBlock Text="{x:Bind GameName}" Style="{StaticResource BodyStrongTextBlockStyle}" />
                                 <TextBlock Text="{x:Bind Subtitle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Style="{StaticResource CaptionTextBlockStyle}" />
                                 <TextBlock Text="{x:Bind CatalogText}" Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" Style="{StaticResource CaptionTextBlockStyle}" />
+                                <TextBlock Text="{x:Bind StateText}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Style="{StaticResource CaptionTextBlockStyle}" />
                                 <InfoBar IsOpen="{x:Bind HasCatalogWarning}" IsClosable="False" Severity="Warning" Message="{x:Bind CatalogWarningText}" />
                             </StackPanel>
                             <Button

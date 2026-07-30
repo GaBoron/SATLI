@@ -89,6 +89,20 @@ def test_release_build_has_size_guard_and_cleans_staging_directories() -> None:
     assert "Remove-Item -LiteralPath $Path -Recurse -Force" in build_script
 
 
+def test_release_bundles_pinned_pure_python_git_dependency() -> None:
+    project = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
+    build_script = (ROOT / "scripts" / "build.ps1").read_text(encoding="utf-8")
+    notices = (ROOT / "THIRD_PARTY_NOTICES.md").read_text(encoding="utf-8")
+
+    assert '"dulwich==1.2.12"' in project
+    assert '"dulwich==1.2.12"' in build_script
+    assert '"urllib3==2.7.0"' in build_script
+    assert '.Extension -in @(".pyd", ".dll")' in build_script
+    assert "does not contain Dulwich" in build_script
+    assert "Dulwich" in notices
+    assert "Git for Windows" in notices
+
+
 def test_gui_resolves_the_internal_python_runtime() -> None:
     gui_service = (
         ROOT / "src" / "Satl.Gui" / "Services" / "SatlCliService.cs"

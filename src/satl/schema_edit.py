@@ -92,14 +92,19 @@ def render_schema(
     missing_names = 0
     missing_descriptions = 0
     changed_fields = 0
+    changed_names = 0
+    changed_descriptions = 0
     for api_name, (name_node, desc_node) in by_id.items():
         row = edit_rows[api_name]
         name = _validate_text(row["name"], api_name, "名称")
         description = _validate_text(row["description"], api_name, "说明")
         missing_names += not bool(name)
         missing_descriptions += not bool(description)
-        changed_fields += _set_language_value(name_node, language, name)
-        changed_fields += _set_language_value(desc_node, language, description)
+        name_changed = _set_language_value(name_node, language, name)
+        description_changed = _set_language_value(desc_node, language, description)
+        changed_names += name_changed
+        changed_descriptions += description_changed
+        changed_fields += name_changed + description_changed
 
     if (missing_names or missing_descriptions) and not allow_incomplete:
         raise PreflightError(
@@ -119,10 +124,13 @@ def render_schema(
         "output_sha256": sha256_bytes(localized),
         "achievement_count": len(achievements),
         "changed_fields": changed_fields,
+        "changed_names": changed_names,
+        "changed_descriptions": changed_descriptions,
         "missing_names": missing_names,
         "missing_descriptions": missing_descriptions,
         "incomplete": bool(missing_names or missing_descriptions),
         "roundtrip_equal": True,
+        "complete_languages": _complete_languages(localized_preview),
     }
 
 
@@ -158,6 +166,27 @@ def export_schema(
     else:
         raise UsageError(f"不支持的导出格式：{output_format}")
     return {**report, "output": str(output), "format": output_format}
+
+
+def _complete_languages(preview: dict[str, Any]) -> list[str]:
+    rows = preview.get("rows")
+    languages = preview.get("languages")
+    if not isinstance(rows, list) or not isinstance(languages, list):
+        return []
+    complete: list[str] = []
+    for language in languages:
+        if not isinstance(language, str):
+            continue
+        if rows and all(
+            isinstance(row, dict)
+            and isinstance(row.get("translations"), dict)
+            and isinstance(row["translations"].get(language), dict)
+            and bool(row["translations"][language].get("name"))
+            and bool(row["translations"][language].get("description"))
+            for row in rows
+        ):
+            complete.append(language)
+    return complete
 
 
 class EditHistoryStore:
@@ -253,8 +282,55 @@ def apply_schema(
         edits_path,
         allow_incomplete=allow_incomplete,
     )
-    if report["source_sha256"] == report["output_sha256"]:
-        raise PreflightError("编辑内容与当前文件完全相同，无需写回")
+    return apply_schema_payload(
+        source,
+        app_id,
+        localized,
+        data_dir,
+        game_name=game_name,
+        target_language=target_language,
+        report=report,
+    )
+
+
+def apply_schema_payload(
+    source_path: Path,
+    app_id: str,
+    payload: bytes,
+    data_dir: Path,
+    *,
+    game_name: str | None = None,
+    target_language: str | None = None,
+    report: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    source = _validated_schema_path(source_path, app_id)
+    try:
+        current = source.read_bytes()
+    except OSError as exc:
+        raise PreflightError(f"无法读取本地成就文件：{source}：{exc}") from exc
+    current_sha256 = sha256_bytes(current)
+    output_sha256 = sha256_bytes(payload)
+    if current_sha256 == output_sha256:
+        raise PreflightError("目标版本与当前文件完全相同，无需写回")
+    preview = achievement_preview(payload)
+    effective_report = {
+        "app_id": app_id,
+        "target_language": (target_language or "").strip().lower(),
+        "source_sha256": current_sha256,
+        "output_sha256": output_sha256,
+        "achievement_count": preview["achievement_count"],
+        "changed_fields": 0,
+        "changed_names": 0,
+        "changed_descriptions": 0,
+        "missing_names": 0,
+        "missing_descriptions": 0,
+        "incomplete": False,
+        "roundtrip_equal": True,
+        "complete_languages": _complete_languages(preview),
+        **(report or {}),
+    }
+    effective_report["source_sha256"] = current_sha256
+    effective_report["output_sha256"] = output_sha256
 
     store = EditHistoryStore(data_dir)
     transaction_id = uuid.uuid4().hex
@@ -264,10 +340,10 @@ def apply_schema(
     replaced = False
     try:
         _copy_fsync(source, snapshot)
-        if sha256_path(snapshot) != report["source_sha256"]:
+        if sha256_path(snapshot) != current_sha256:
             raise IntegrityError(f"编辑前备份校验失败：{snapshot}")
-        _write_fsync_new(stage, localized)
-        if sha256_path(stage) != report["output_sha256"]:
+        _write_fsync_new(stage, payload)
+        if sha256_path(stage) != output_sha256:
             raise IntegrityError("编辑暂存文件 SHA-256 校验失败")
         achievement_preview(stage.read_bytes())
         os.replace(stage, source)
@@ -277,9 +353,9 @@ def apply_schema(
             "edited_at": _utc_now(),
             "game_name": game_name.strip() if game_name and game_name.strip() else None,
             "target": str(source),
-            "target_language": report["target_language"],
-            "original_sha256": report["source_sha256"],
-            "edited_sha256": report["output_sha256"],
+            "target_language": (target_language or effective_report["target_language"]),
+            "original_sha256": current_sha256,
+            "edited_sha256": output_sha256,
             "snapshot": snapshot.relative_to(store.data_dir).as_posix(),
         }
         try:
@@ -287,7 +363,7 @@ def apply_schema(
         except TransactionError as exc:
             _copy_fsync(snapshot, source)
             raise TransactionError(f"保存编辑历史失败，已回滚本地文件：{exc}") from exc
-        return {**report, "target": str(source), "backup": str(snapshot)}
+        return {**effective_report, "target": str(source), "backup": str(snapshot)}
     except (OSError, IntegrityError, TransactionError) as exc:
         if isinstance(exc, (IntegrityError, TransactionError)):
             raise

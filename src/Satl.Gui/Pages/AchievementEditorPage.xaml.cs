@@ -13,6 +13,7 @@ public sealed partial class AchievementEditorPage : Page
 {
     private readonly SchemaEditorService _editor = new();
     private readonly SchemaDraftStore _drafts = new();
+    private readonly ContributionWorkflowService _contributions = new();
     private readonly AchievementEditState _editState = new();
     private SchemaInspection? _inspection;
     private GameItem? _game;
@@ -285,8 +286,12 @@ public sealed partial class AchievementEditorPage : Page
             var result = await _editor.ApplyAsync(
                 _inspection!, _targetLanguage, _inspection!.Rows, allowIncomplete: true);
             App.ViewModel.ShowInfo(
-                $"已保存本地编辑：修改 {result.ChangedFields} 个字段；备份位于 {result.Backup}",
-                InfoBarSeverity.Success);
+                string.IsNullOrWhiteSpace(result.RevisionWarning)
+                    ? $"已保存本地编辑并记录 Git 修订：修改 {result.ChangedFields} 个字段；备份位于 {result.Backup}"
+                    : $"已保存本地编辑：修改 {result.ChangedFields} 个字段；{result.RevisionWarning}",
+                string.IsNullOrWhiteSpace(result.RevisionWarning)
+                    ? InfoBarSeverity.Success
+                    : InfoBarSeverity.Warning);
             try
             {
                 _drafts.Delete(_inspection.AppId);
@@ -308,6 +313,14 @@ public sealed partial class AchievementEditorPage : Page
     private async void ExportZip_Click(object sender, RoutedEventArgs e) =>
         await ExportAsync("zip");
 
+    private void History_Click(object sender, RoutedEventArgs e)
+    {
+        if (_game is not null)
+        {
+            Frame.Navigate(typeof(RevisionHistoryPage), _game);
+        }
+    }
+
     private async Task ExportAsync(string format)
     {
         if (!await ConfirmIncompleteAsync(format == "bin" ? "导出 BIN" : "导出投稿 ZIP"))
@@ -323,8 +336,40 @@ public sealed partial class AchievementEditorPage : Page
         {
             var result = await _editor.ExportAsync(
                 _inspection!, _targetLanguage, _inspection!.Rows, true, format, output);
-            App.ViewModel.ShowInfo($"已导出：{result.Output}", InfoBarSeverity.Success);
+            App.ViewModel.ShowInfo(
+                string.IsNullOrWhiteSpace(result.RevisionWarning)
+                    ? $"已导出并记录 Git 修订：{result.Output}"
+                    : $"已导出：{result.Output}；{result.RevisionWarning}",
+                string.IsNullOrWhiteSpace(result.RevisionWarning)
+                    ? InfoBarSeverity.Success
+                    : InfoBarSeverity.Warning);
+            if (format == "zip" && string.IsNullOrWhiteSpace(result.RevisionWarning))
+            {
+                await OfferContributionAsync(result);
+            }
         });
+    }
+
+    private async Task OfferContributionAsync(SchemaEditResult result)
+    {
+        var draft = _contributions.Prepare(_game!, result);
+        var dialog = new ContentDialog
+        {
+            XamlRoot = XamlRoot,
+            Title = "投稿到社区",
+            Content = $"ZIP 已完成结构、语言和 SHA-256 校验。\n\n"
+                + $"类型：{(draft.IsUpdate ? "更新已有译本" : "新译本投稿")}\n"
+                + $"完整语言：{draft.Languages}\n"
+                + $"摘要：{draft.Summary}\n\n"
+                + "打开表单后，请把资源管理器中选中的 ZIP 拖入附件区域，并由你确认提交。",
+            PrimaryButtonText = "打开投稿表单",
+            CloseButtonText = "稍后投稿",
+            DefaultButton = ContentDialogButton.Primary,
+        };
+        if (await dialog.ShowAsync() == ContentDialogResult.Primary)
+        {
+            await _contributions.OpenAsync(draft);
+        }
     }
 
     private async void Restore_Click(object sender, RoutedEventArgs e)
@@ -340,7 +385,8 @@ public sealed partial class AchievementEditorPage : Page
         {
             try
             {
-                await _editor.RestoreAsync(_inspection.AppId, force: false);
+                var result = await _editor.RestoreAsync(_inspection.AppId, force: false);
+                ShowRestoreResult(result);
             }
             catch (InvalidOperationException exception) when (exception.Message.Contains("发生变化"))
             {
@@ -351,12 +397,21 @@ public sealed partial class AchievementEditorPage : Page
                 {
                     return;
                 }
-                await _editor.RestoreAsync(_inspection.AppId, force: true);
+                var result = await _editor.RestoreAsync(_inspection.AppId, force: true);
+                ShowRestoreResult(result);
             }
-            App.ViewModel.ShowInfo("已恢复上一次本地编辑。", InfoBarSeverity.Success);
             await LoadCoreAsync();
         });
     }
+
+    private static void ShowRestoreResult(SchemaEditResult result) =>
+        App.ViewModel.ShowInfo(
+            string.IsNullOrWhiteSpace(result.RevisionWarning)
+                ? "已恢复上一次本地编辑，并记录 Git 修订。"
+                : $"已恢复上一次本地编辑；{result.RevisionWarning}",
+            string.IsNullOrWhiteSpace(result.RevisionWarning)
+                ? InfoBarSeverity.Success
+                : InfoBarSeverity.Warning);
 
     private async void Back_Click(object sender, RoutedEventArgs e)
     {

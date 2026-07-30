@@ -23,6 +23,9 @@ def game_record(
     state: str,
     action: str,
     installed_variant_id: str | None = None,
+    installed_source: str | None = None,
+    installed_at: str | None = None,
+    installed_sha256: str | None = None,
 ) -> dict[str, Any]:
     return {
         "app_id": entry.app_id,
@@ -32,6 +35,9 @@ def game_record(
         "variants": [variant_record(variant) for variant in entry.variants],
         "installed_state": state,
         "installed_variant_id": installed_variant_id,
+        "installed_source": installed_source,
+        "installed_at": installed_at,
+        "installed_sha256": installed_sha256,
         "action": action,
         "error": None,
     }

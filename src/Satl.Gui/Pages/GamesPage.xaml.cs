@@ -38,6 +38,12 @@ public sealed partial class GamesPage : Page
     }
 
     private async void Refresh_Click(object sender, RoutedEventArgs e) => await ViewModel.ScanAsync();
+    private void SelectVisible_Click(object sender, RoutedEventArgs e) => ViewModel.SelectVisible();
+    private void ClearSelection_Click(object sender, RoutedEventArgs e)
+    {
+        ViewModel.ClearSelection();
+        _selectionAnchorIndex = null;
+    }
 
     private async void Petition_Click(object sender, RoutedEventArgs e)
     {
@@ -160,6 +166,7 @@ public sealed partial class GamesPage : Page
             }
         }
         _selectionAnchorIndex = index;
+        ViewModel.RefreshSelectionCount();
     }
 
     private void AddShortcut(
@@ -178,19 +185,13 @@ public sealed partial class GamesPage : Page
         {
             return;
         }
-        foreach (var item in ViewModel.VisibleGames)
-        {
-            item.IsSelected = true;
-        }
+        ViewModel.SelectVisible();
         args.Handled = true;
     }
 
     private void ClearSelection_Invoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
     {
-        foreach (var item in ViewModel.Games)
-        {
-            item.IsSelected = false;
-        }
+        ViewModel.ClearSelection();
         _selectionAnchorIndex = null;
         args.Handled = true;
     }

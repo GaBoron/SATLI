@@ -16,7 +16,19 @@ public sealed partial class MainPage : Page
         Loaded += MainPage_Loaded;
         ContentFrame.Navigate(typeof(GamesPage));
         Navigation.SelectedItem = ManageableGamesItem;
+        ViewModel.ShowUpdatesRequested += ViewModel_ShowUpdatesRequested;
     }
+
+    private void ViewModel_ShowUpdatesRequested()
+    {
+        if (ContentFrame.CurrentSourcePageType != typeof(GamesPage))
+        {
+            ContentFrame.Navigate(typeof(GamesPage));
+        }
+        Navigation.SelectedItem = ManageableGamesItem;
+    }
+
+    private void InfoAction_Click(object sender, RoutedEventArgs e) => ViewModel.InvokeInfoAction();
 
     private async void MainPage_Loaded(object sender, RoutedEventArgs e)
     {
