@@ -1,20 +1,24 @@
 namespace Satl_Gui.Models;
 
-public enum RevisionDiffLineKind
+public enum RevisionDiffKind
 {
-    Removed,
+    Unchanged,
     Added,
+    Removed,
+    Modified,
 }
 
-public sealed record RevisionDiffLine(
+public sealed record RevisionDiffValue(
+    string Previous,
+    string Current,
+    RevisionDiffKind Kind);
+
+public sealed record SchemaRevisionDiffRow(
     int Index,
     string ApiName,
-    string Field,
-    string Text,
-    RevisionDiffLineKind Kind)
-{
-    public string Prefix => Kind == RevisionDiffLineKind.Removed ? "−" : "+";
-}
+    RevisionDiffKind RowKind,
+    RevisionDiffValue Name,
+    RevisionDiffValue Description);
 
 public sealed class SchemaRevisionDiff
 {
@@ -39,15 +43,32 @@ public sealed class SchemaRevisionDiff
         ?? Languages.FirstOrDefault()
         ?? "schinese";
 
-    public IReadOnlyList<RevisionDiffLine> LinesFor(string language)
+    public IReadOnlyList<SchemaRevisionDiffRow> RowsFor(string language)
     {
+        if (_previous is null)
+        {
+            return _current.Rows.Select(row =>
+            {
+                var value = row.TranslationFor(language);
+                return new SchemaRevisionDiffRow(
+                    row.Index,
+                    row.ApiName,
+                    RevisionDiffKind.Unchanged,
+                    Baseline(value.Name),
+                    Baseline(value.Description));
+            }).ToArray();
+        }
+
         var previousRows = (_previous?.Rows ?? [])
             .ToDictionary(row => row.ApiName, StringComparer.Ordinal);
         var currentRows = _current.Rows
             .ToDictionary(row => row.ApiName, StringComparer.Ordinal);
-        var orderedIds = previousRows.Keys
-            .Concat(currentRows.Keys.Where(id => !previousRows.ContainsKey(id)));
-        var lines = new List<RevisionDiffLine>();
+        var orderedIds = currentRows.Keys
+            .Concat(previousRows.Keys.Where(id => !currentRows.ContainsKey(id)))
+            .OrderBy(id => currentRows.TryGetValue(id, out var current)
+                ? current.Index
+                : previousRows[id].Index);
+        var rows = new List<SchemaRevisionDiffRow>();
         foreach (var apiName in orderedIds)
         {
             previousRows.TryGetValue(apiName, out var previousRow);
@@ -56,40 +77,43 @@ public sealed class SchemaRevisionDiff
             var currentHasLanguage = currentRow?.Translations.ContainsKey(language) == true;
             var previous = previousRow?.TranslationFor(language) ?? AchievementTranslation.Empty;
             var current = currentRow?.TranslationFor(language) ?? AchievementTranslation.Empty;
-            AddField(lines, previousRow, currentRow, apiName, "名称", previous.Name, current.Name,
-                previousHasLanguage, currentHasLanguage);
-            AddField(lines, previousRow, currentRow, apiName, "说明", previous.Description,
-                current.Description, previousHasLanguage, currentHasLanguage);
+            rows.Add(new SchemaRevisionDiffRow(
+                currentRow?.Index ?? previousRow!.Index,
+                apiName,
+                previousRow is null
+                    ? RevisionDiffKind.Added
+                    : currentRow is null
+                        ? RevisionDiffKind.Removed
+                        : RevisionDiffKind.Unchanged,
+                Compare(previous.Name, current.Name, previousHasLanguage, currentHasLanguage),
+                Compare(
+                    previous.Description,
+                    current.Description,
+                    previousHasLanguage,
+                    currentHasLanguage)));
         }
-        return lines;
+        return rows;
     }
 
-    private static void AddField(
-        ICollection<RevisionDiffLine> lines,
-        AchievementPreviewRow? previousRow,
-        AchievementPreviewRow? currentRow,
-        string apiName,
-        string field,
+    private static RevisionDiffValue Compare(
         string previous,
         string current,
         bool previousExists,
         bool currentExists)
     {
-        if (previousExists && currentExists && previous == current)
+        var kind = (previousExists, currentExists) switch
         {
-            return;
-        }
-        if (previousExists)
-        {
-            lines.Add(new RevisionDiffLine(
-                previousRow!.Index, apiName, field, DisplayValue(previous), RevisionDiffLineKind.Removed));
-        }
-        if (currentExists)
-        {
-            lines.Add(new RevisionDiffLine(
-                currentRow!.Index, apiName, field, DisplayValue(current), RevisionDiffLineKind.Added));
-        }
+            (true, true) when previous == current => RevisionDiffKind.Unchanged,
+            (true, true) => RevisionDiffKind.Modified,
+            (true, false) => RevisionDiffKind.Removed,
+            (false, true) => RevisionDiffKind.Added,
+            _ => RevisionDiffKind.Unchanged,
+        };
+        return new RevisionDiffValue(DisplayValue(previous), DisplayValue(current), kind);
     }
+
+    private static RevisionDiffValue Baseline(string value) =>
+        new(DisplayValue(value), DisplayValue(value), RevisionDiffKind.Unchanged);
 
     private static string DisplayValue(string value) => string.IsNullOrEmpty(value) ? "（空）" : value;
 }

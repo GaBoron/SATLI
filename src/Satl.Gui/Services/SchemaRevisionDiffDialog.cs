@@ -8,6 +8,9 @@ namespace Satl_Gui.Services;
 
 public static class SchemaRevisionDiffDialog
 {
+    private const double DialogMargin = 48;
+    private const double DialogChromeHeight = 170;
+
     public static async Task ShowAsync(XamlRoot xamlRoot, SchemaRevisionDiff diff, string title)
     {
         var languageBox = new ComboBox
@@ -22,28 +25,26 @@ public static class SchemaRevisionDiffDialog
             TextWrapping = TextWrapping.Wrap,
             Foreground = Resource<Brush>("TextFillColorSecondaryBrush"),
         };
-        var tableHost = new Grid();
+        var tableHost = new Grid { MinHeight = 180 };
 
         void Render()
         {
             var language = languageBox.SelectedItem as string ?? diff.DefaultLanguage;
-            var lines = diff.LinesFor(language);
-            var removed = lines.Count(line => line.Kind == RevisionDiffLineKind.Removed);
-            var added = lines.Count - removed;
+            var rows = diff.RowsFor(language);
+            var values = rows.SelectMany(row => new[] { row.Name, row.Description }).ToArray();
+            var removed = values.Count(value =>
+                value.Kind is RevisionDiffKind.Removed or RevisionDiffKind.Modified);
+            var added = values.Count(value =>
+                value.Kind is RevisionDiffKind.Added or RevisionDiffKind.Modified);
             summary.Text = diff.HasParent
-                ? $"相对上一个 Git 修订：删除 {removed} 行，新增 {added} 行。"
-                : $"这是首个 Git 修订：全部内容视为新增，共 {added} 行。";
+                ? $"完整显示 {rows.Count} 项成就；相对上一个 Git 修订，删除 {removed} 行，新增 {added} 行。"
+                : $"这是首个 Git 修订，没有上一版本可比较；完整显示 {rows.Count} 项成就。";
             tableHost.Children.Clear();
-            tableHost.Children.Add(BuildTable(lines));
+            tableHost.Children.Add(BuildTable(rows));
         }
 
         languageBox.SelectionChanged += (_, _) => Render();
-        var content = new Grid
-        {
-            RowSpacing = 10,
-            Width = Math.Clamp(xamlRoot.Size.Width - 96, 520, 1120),
-            Height = Math.Clamp(xamlRoot.Size.Height - 240, 260, 620),
-        };
+        var content = new Grid { RowSpacing = 10 };
         content.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
         content.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
         content.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
@@ -62,79 +63,179 @@ public static class SchemaRevisionDiffDialog
             CloseButtonText = "关闭",
             DefaultButton = ContentDialogButton.Close,
         };
-        dialog.Resources["ContentDialogMaxWidth"] = content.Width + 48;
-        dialog.Resources["ContentDialogMinWidth"] = Math.Min(640, content.Width + 48);
-        await dialog.ShowAsync();
+
+        void ApplyAdaptiveSize()
+        {
+            var dialogWidth = Math.Clamp(xamlRoot.Size.Width - DialogMargin, 620, 1280);
+            var dialogHeight = Math.Clamp(xamlRoot.Size.Height - DialogMargin, 480, 840);
+            content.Width = dialogWidth - DialogMargin;
+            content.Height = dialogHeight - DialogChromeHeight;
+            dialog.Resources["ContentDialogMaxWidth"] = dialogWidth;
+            dialog.Resources["ContentDialogMinWidth"] = Math.Min(720, dialogWidth);
+            dialog.Resources["ContentDialogMaxHeight"] = dialogHeight;
+        }
+
+        void RootChanged(XamlRoot sender, XamlRootChangedEventArgs args) => ApplyAdaptiveSize();
+        ApplyAdaptiveSize();
+        xamlRoot.Changed += RootChanged;
+        try
+        {
+            await dialog.ShowAsync();
+        }
+        finally
+        {
+            xamlRoot.Changed -= RootChanged;
+        }
     }
 
-    private static UIElement BuildTable(IReadOnlyList<RevisionDiffLine> lines)
+    private static UIElement BuildTable(IReadOnlyList<SchemaRevisionDiffRow> rows)
     {
-        if (lines.Count == 0)
+        if (rows.Count == 0)
         {
             return new InfoBar
             {
                 IsOpen = true,
                 IsClosable = false,
                 Severity = InfoBarSeverity.Informational,
-                Title = "所选语言没有变化",
-                Message = "此修订可能修改了其他语言，或内容与父修订一致。",
+                Title = "没有成就内容",
+                Message = "此修订中没有识别到成就记录。",
             };
         }
 
-        var rows = new StackPanel { Spacing = 1 };
-        foreach (var line in lines)
+        var table = new Grid { RowSpacing = 1 };
+        table.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+        table.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+        table.Children.Add(BuildHeader());
+        var body = new StackPanel { Spacing = 1 };
+        foreach (var row in rows)
         {
-            rows.Children.Add(BuildLine(line));
+            body.Children.Add(BuildRow(row));
         }
-        return new ScrollViewer
+        var scrollViewer = new ScrollViewer
         {
-            Content = rows,
+            Content = body,
+            Padding = new Thickness(0, 0, 8, 8),
             VerticalAlignment = VerticalAlignment.Stretch,
-            VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+            VerticalScrollBarVisibility = ScrollBarVisibility.Visible,
             VerticalScrollMode = ScrollMode.Enabled,
             HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
             HorizontalScrollMode = ScrollMode.Disabled,
         };
+        Grid.SetRow(scrollViewer, 1);
+        table.Children.Add(scrollViewer);
+        return table;
     }
 
-    private static Grid BuildLine(RevisionDiffLine line)
+    private static Grid BuildHeader()
     {
-        var removed = line.Kind == RevisionDiffLineKind.Removed;
-        var foreground = Resource<Brush>(removed
-            ? "SystemFillColorCriticalBrush"
-            : "SystemFillColorSuccessBrush");
+        var grid = CreateGrid();
+        grid.Background = Resource<Brush>("SubtleFillColorSecondaryBrush");
+        AddText(grid, 0, "#", FontWeights.SemiBold);
+        AddText(grid, 1, "成就 ID", FontWeights.SemiBold);
+        AddText(grid, 2, "名称", FontWeights.SemiBold);
+        AddText(grid, 3, "说明", FontWeights.SemiBold);
+        return grid;
+    }
+
+    private static Grid BuildRow(SchemaRevisionDiffRow row)
+    {
+        var grid = CreateGrid();
+        AddText(grid, 0, row.Index.ToString(), FontWeights.Normal);
+        grid.Children.Add(BuildIdentity(row));
+        var name = BuildValue(row.Name);
+        Grid.SetColumn(name, 2);
+        grid.Children.Add(name);
+        var description = BuildValue(row.Description);
+        Grid.SetColumn(description, 3);
+        grid.Children.Add(description);
+        return grid;
+    }
+
+    private static Grid CreateGrid()
+    {
         var grid = new Grid
         {
             Padding = new Thickness(8, 7, 8, 7),
             ColumnSpacing = 8,
+            Background = Resource<Brush>("LayerFillColorDefaultBrush"),
+        };
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(42) });
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.3, GridUnitType.Star) });
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.7, GridUnitType.Star) });
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(3, GridUnitType.Star) });
+        return grid;
+    }
+
+    private static UIElement BuildIdentity(SchemaRevisionDiffRow row)
+    {
+        var prefix = row.RowKind switch
+        {
+            RevisionDiffKind.Added => "+ ",
+            RevisionDiffKind.Removed => "− ",
+            _ => string.Empty,
+        };
+        var content = new TextBlock { Text = prefix + row.ApiName, TextWrapping = TextWrapping.Wrap };
+        FrameworkElement element = row.RowKind switch
+        {
+            RevisionDiffKind.Added => DiffBorder(content, removed: false),
+            RevisionDiffKind.Removed => DiffBorder(content, removed: true),
+            _ => content,
+        };
+        Grid.SetColumn(element, 1);
+        return element;
+    }
+
+    private static FrameworkElement BuildValue(RevisionDiffValue value)
+    {
+        if (value.Kind == RevisionDiffKind.Unchanged)
+        {
+            return new TextBlock { Text = value.Current, TextWrapping = TextWrapping.Wrap };
+        }
+        var panel = new StackPanel { Spacing = 1 };
+        if (value.Kind is RevisionDiffKind.Removed or RevisionDiffKind.Modified)
+        {
+            panel.Children.Add(DiffBorder(
+                new TextBlock { Text = "− " + value.Previous, TextWrapping = TextWrapping.Wrap },
+                removed: true));
+        }
+        if (value.Kind is RevisionDiffKind.Added or RevisionDiffKind.Modified)
+        {
+            panel.Children.Add(DiffBorder(
+                new TextBlock { Text = "+ " + value.Current, TextWrapping = TextWrapping.Wrap },
+                removed: false));
+        }
+        return panel;
+    }
+
+    private static Border DiffBorder(TextBlock text, bool removed)
+    {
+        text.Foreground = Resource<Brush>(removed
+            ? "SystemFillColorCriticalBrush"
+            : "SystemFillColorSuccessBrush");
+        return new Border
+        {
+            Padding = new Thickness(4, 2, 4, 2),
             Background = Resource<Brush>(removed
                 ? "SystemFillColorCriticalBackgroundBrush"
                 : "SystemFillColorSuccessBackgroundBrush"),
+            Child = text,
         };
-        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(28) });
-        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(56) });
-        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(150) });
-        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-        var values = new[]
+    }
+
+    private static void AddText(
+        Grid grid,
+        int column,
+        string value,
+        Windows.UI.Text.FontWeight fontWeight)
+    {
+        var text = new TextBlock
         {
-            line.Prefix,
-            line.Field,
-            $"#{line.Index} · {line.ApiName}",
-            line.Text,
+            Text = value,
+            TextWrapping = TextWrapping.Wrap,
+            FontWeight = fontWeight,
         };
-        for (var column = 0; column < values.Length; column++)
-        {
-            var text = new TextBlock
-            {
-                Text = values[column],
-                TextWrapping = TextWrapping.Wrap,
-                Foreground = foreground,
-                FontWeight = column == 0 ? FontWeights.Bold : FontWeights.Normal,
-            };
-            Grid.SetColumn(text, column);
-            grid.Children.Add(text);
-        }
-        return grid;
+        Grid.SetColumn(text, column);
+        grid.Children.Add(text);
     }
 
     private static T? Resource<T>(string key) where T : class =>
