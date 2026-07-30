@@ -46,7 +46,7 @@ jobs:
             throw 'Installer executable was not produced.'
           }
 
-          $target = Join-Path $source.DirectoryName 'SATLInstaller-Setup-v0.11.0fix.exe'
+          $target = Join-Path $source.DirectoryName "$($source.BaseName)-test$($source.Extension)"
           Move-Item -LiteralPath $source.FullName -Destination $target
 
           $hash = (Get-FileHash -Algorithm SHA256 -LiteralPath $target).Hash.ToLowerInvariant()
