@@ -8,6 +8,7 @@ $GuiPublishRoot = Join-Path $DistRoot "gui-win-x64"
 $ReleaseRoot = Join-Path $DistRoot "release"
 $GuiBuildRoot = Join-Path $ProjectRoot "build\gui-publish-intermediate"
 $CliPayloadRoot = Join-Path $ProjectRoot "build\cli-payload"
+$CliOfflineSmokeRoot = Join-Path $ProjectRoot "build\cli-offline-smoke"
 $DownloadRoot = Join-Path $ProjectRoot "build\downloads"
 $VenvPython = Join-Path $ProjectRoot ".venv\Scripts\python.exe"
 $Python = if (Test-Path $VenvPython) { $VenvPython } else { "python" }
@@ -50,7 +51,7 @@ function Find-InnoCompiler {
 }
 
 @($DistRoot, $CliRoot, $PackageRoot, $PackageRuntimeRoot, $GuiPublishRoot, $ReleaseRoot, $GuiBuildRoot,
-    $CliPayloadRoot, $DownloadRoot) |
+    $CliPayloadRoot, $CliOfflineSmokeRoot, $DownloadRoot) |
     ForEach-Object { Assert-WithinProject $_ }
 
 Push-Location $ProjectRoot
@@ -139,6 +140,29 @@ try {
     $CliVersion = & (Join-Path $CliRoot "python.exe") (Join-Path $CliRoot "satl.pyz") --version
     if ($LASTEXITCODE -ne 0 -or $CliVersion -ne "satl $Version") {
         throw "Built SATL Python payload has unexpected version: $CliVersion"
+    }
+
+    if (Test-Path -LiteralPath $CliOfflineSmokeRoot) {
+        Remove-Item -LiteralPath $CliOfflineSmokeRoot -Recurse -Force
+    }
+    $PreviousProcessPath = $env:PATH
+    try {
+        $env:PATH = ""
+        $SmokeOutput = & (Join-Path $CliRoot "python.exe") `
+            (Join-Path $CliRoot "satl.pyz") `
+            schema revisions verify `
+            --data-dir $CliOfflineSmokeRoot `
+            --jsonl
+        $SmokeExitCode = $LASTEXITCODE
+    }
+    finally {
+        $env:PATH = $PreviousProcessPath
+        if (Test-Path -LiteralPath $CliOfflineSmokeRoot) {
+            Remove-Item -LiteralPath $CliOfflineSmokeRoot -Recurse -Force
+        }
+    }
+    if ($SmokeExitCode -ne 0 -or $SmokeOutput -notmatch '"operation":"schema-revisions-verify"') {
+        throw "Embedded SATL revision history failed without system PATH"
     }
 
     foreach ($Path in @($PackageRoot, $ReleaseRoot)) {

@@ -99,6 +99,9 @@ def test_release_bundles_pinned_pure_python_git_dependency() -> None:
     assert '"urllib3==2.7.0"' in build_script
     assert '.Extension -in @(".pyd", ".dll")' in build_script
     assert "does not contain Dulwich" in build_script
+    assert '$env:PATH = ""' in build_script
+    assert "schema revisions verify" in build_script
+    assert "failed without system PATH" in build_script
     assert "Dulwich" in notices
     assert "Git for Windows" in notices
 
