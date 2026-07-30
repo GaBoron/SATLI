@@ -15,11 +15,30 @@ public sealed class SchemaRevisionService
             .ToArray();
     }
 
-    public async Task<ReplacementPreview> PreviewAsync(GameItem game, SchemaRevisionItem revision)
+    public async Task<SchemaRevisionDiff> PreviewDiffAsync(
+        GameItem game,
+        SchemaRevisionItem revision)
     {
         var payload = await ShowPayloadAsync(game, revision);
-        var previewPayload = payload.GetProperty("preview");
-        return RevisionPreview(previewPayload, game, revision);
+        var current = RevisionPreview(payload.GetProperty("preview"), game, revision);
+        if (string.IsNullOrWhiteSpace(revision.ParentSchemaSha256))
+        {
+            return new SchemaRevisionDiff(null, current);
+        }
+
+        var parent = (await ListAsync(game)).FirstOrDefault(item =>
+            item.IsAvailable
+            && item.SchemaSha256.Equals(
+                revision.ParentSchemaSha256,
+                StringComparison.OrdinalIgnoreCase));
+        if (parent is null)
+        {
+            throw new InvalidDataException("找不到此修订记录的父内容，无法生成 Git 差异预览。");
+        }
+        var parentPayload = await ShowPayloadAsync(game, parent);
+        return new SchemaRevisionDiff(
+            RevisionPreview(parentPayload.GetProperty("preview"), game, parent),
+            current);
     }
 
     public async Task<IReadOnlyList<ReplacementPreview>> CompareAsync(

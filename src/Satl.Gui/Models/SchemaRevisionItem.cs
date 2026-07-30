@@ -14,6 +14,7 @@ public sealed class SchemaRevisionItem
     public string Action { get; set; } = string.Empty;
     public string CreatedAt { get; set; } = string.Empty;
     public string SchemaSha256 { get; set; } = string.Empty;
+    public string ParentSchemaSha256 { get; set; } = string.Empty;
     public int AchievementCount { get; set; }
     public int ChangedNames { get; set; }
     public int ChangedDescriptions { get; set; }
@@ -69,6 +70,7 @@ public sealed class SchemaRevisionItem
         Action = GetString(payload, "action"),
         CreatedAt = GetString(payload, "created_at"),
         SchemaSha256 = GetString(payload, "schema_sha256"),
+        ParentSchemaSha256 = GetString(payload, "parent_schema_sha256"),
         AchievementCount = GetInt(payload, "achievement_count"),
         ChangedNames = GetInt(payload, "changed_names"),
         ChangedDescriptions = GetInt(payload, "changed_descriptions"),

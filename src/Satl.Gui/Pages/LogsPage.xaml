@@ -18,6 +18,7 @@
                 <AutoSuggestBox
                     x:Name="SearchBox"
                     Width="300"
+                    Style="{StaticResource SearchBoxStyle}"
                     PlaceholderText="筛选日志"
                     QueryIcon="Find"
                     TextChanged="SearchBox_TextChanged"

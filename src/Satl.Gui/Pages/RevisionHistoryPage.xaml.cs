@@ -59,11 +59,11 @@ public sealed partial class RevisionHistoryPage : Page
         }
         await RunBusyAsync(async () =>
         {
-            var preview = await _revisions.PreviewAsync(_game, revision);
-            await ReplacementConfirmationDialog.ShowReadOnlyAsync(
+            var diff = await _revisions.PreviewDiffAsync(_game, revision);
+            await SchemaRevisionDiffDialog.ShowAsync(
                 XamlRoot,
-                [preview],
-                $"修订预览 · {revision.ShortCommit}");
+                diff,
+                $"Git 差异 · {revision.TitleText} · {revision.ShortCommit}");
         });
     }
 
