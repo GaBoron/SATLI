@@ -12,6 +12,7 @@ from satl.petition_command import command_petition_export
 from satl.restore_command import command_restore
 from satl.schema_command import (
     command_schema_apply,
+    command_schema_draft,
     command_schema_export,
     command_schema_inspect,
     command_schema_revisions_activate,
@@ -187,6 +188,14 @@ def build_parser() -> argparse.ArgumentParser:
     schema_apply.add_argument("--variant-id")
     schema_apply.add_argument("--yes", action="store_true")
     schema_apply.set_defaults(handler=command_schema_apply)
+
+    schema_draft = schema_subparsers.add_parser("draft", help="把编辑草稿记录到本地 Git 修订历史")
+    _add_data_dir(schema_draft)
+    _add_steam_dir(schema_draft)
+    _add_schema_edit_arguments(schema_draft)
+    schema_draft.add_argument("--game-name", help="记录草稿对应的游戏名称")
+    schema_draft.add_argument("--variant-id")
+    schema_draft.set_defaults(handler=command_schema_draft)
 
     schema_restore = schema_subparsers.add_parser("restore", help="恢复上一次本地 schema 编辑")
     _add_data_dir(schema_restore)

@@ -1,4 +1,3 @@
-using Microsoft.UI.Input;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
@@ -7,44 +6,19 @@ using Satl_Gui.Services;
 using Satl_Gui.ViewModels;
 using Windows.Foundation;
 using Windows.System;
-using Windows.UI.Core;
 
 namespace Satl_Gui.Pages;
 
 public sealed partial class ManagedPage : Page
 {
-    private int? _selectionAnchorIndex;
     public TranslationManagementViewModel ViewModel => App.ViewModel.Translations;
     public ManagedPage()
     {
         InitializeComponent();
-        AddShortcut(VirtualKey.A, VirtualKeyModifiers.Control, SelectAll_Invoked);
-        AddShortcut(
-            VirtualKey.A,
-            VirtualKeyModifiers.Control | VirtualKeyModifiers.Shift,
-            ClearSelection_Invoked);
         AddShortcut(VirtualKey.F5, VirtualKeyModifiers.None, Refresh_Invoked);
     }
 
     private async void Refresh_Click(object sender, RoutedEventArgs e) => await ViewModel.ScanAsync();
-    private async void Restore_Click(object sender, RoutedEventArgs e) => await ConfirmRestoreAsync(force: false);
-    private async void ForceRestore_Click(object sender, RoutedEventArgs e) => await ConfirmRestoreAsync(force: true);
-
-    private async Task ConfirmRestoreAsync(bool force)
-    {
-        var selected = ViewModel.ManagedGames
-            .Where(item => item.IsSelected
-                && item.CanRestore
-                && (force ? item.RequiresForceRestore : !item.RequiresForceRestore))
-            .ToList();
-        if (selected.Count == 0)
-        {
-            ViewModel.ShowInfo(force ? "强制恢复仅适用于状态为“已被修改”或“文件缺失”的所选条目。" : "请先选择至少一个可恢复的游戏。", InfoBarSeverity.Warning);
-            return;
-        }
-        await ConfirmRestoreAsync(selected, force);
-    }
-
     private async Task ConfirmRestoreAsync(IReadOnlyList<GameItem> selected, bool force)
     {
         var previews = await ViewModel.PreviewRestoreAsync(selected, force);
@@ -66,7 +40,7 @@ public sealed partial class ManagedPage : Page
 
     private async void ViewCurrent_Click(object sender, RoutedEventArgs e)
     {
-        if (sender is not Button { Tag: GameItem game } || !game.CanViewInstalledTranslation)
+        if (sender is not FrameworkElement { Tag: GameItem game } || !game.CanViewInstalledTranslation)
         {
             return;
         }
@@ -90,7 +64,7 @@ public sealed partial class ManagedPage : Page
 
     private void History_Click(object sender, RoutedEventArgs e)
     {
-        if (sender is Button { Tag: GameItem game })
+        if (sender is FrameworkElement { Tag: GameItem game })
         {
             Frame.Navigate(typeof(RevisionHistoryPage), game);
         }
@@ -98,37 +72,10 @@ public sealed partial class ManagedPage : Page
 
     private async void RestoreItem_Click(object sender, RoutedEventArgs e)
     {
-        if (sender is Button { Tag: GameItem game } && game.CanRestore)
+        if (sender is FrameworkElement { Tag: GameItem game } && game.CanRestore)
         {
             await ConfirmRestoreAsync([game], force: game.RequiresForceRestore);
         }
-    }
-
-    private void GameSelection_Click(object sender, RoutedEventArgs e)
-    {
-        if (sender is not CheckBox checkBox || checkBox.DataContext is not GameItem item)
-        {
-            return;
-        }
-        var index = ViewModel.ManagedGames.IndexOf(item);
-        if (index < 0)
-        {
-            return;
-        }
-        var shiftPressed = InputKeyboardSource.GetKeyStateForCurrentThread(VirtualKey.Shift)
-            .HasFlag(CoreVirtualKeyStates.Down);
-        if (shiftPressed
-            && _selectionAnchorIndex is int anchor
-            && anchor >= 0
-            && anchor < ViewModel.ManagedGames.Count)
-        {
-            var selected = checkBox.IsChecked == true;
-            for (var position = Math.Min(anchor, index); position <= Math.Max(anchor, index); position++)
-            {
-                ViewModel.ManagedGames[position].IsSelected = selected;
-            }
-        }
-        _selectionAnchorIndex = index;
     }
 
     private void AddShortcut(
@@ -139,25 +86,6 @@ public sealed partial class ManagedPage : Page
         var accelerator = new KeyboardAccelerator { Key = key, Modifiers = modifiers };
         accelerator.Invoked += handler;
         KeyboardAccelerators.Add(accelerator);
-    }
-
-    private void SelectAll_Invoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
-    {
-        foreach (var item in ViewModel.ManagedGames)
-        {
-            item.IsSelected = true;
-        }
-        args.Handled = true;
-    }
-
-    private void ClearSelection_Invoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
-    {
-        foreach (var item in ViewModel.ManagedGames)
-        {
-            item.IsSelected = false;
-        }
-        _selectionAnchorIndex = null;
-        args.Handled = true;
     }
 
     private async void Refresh_Invoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)

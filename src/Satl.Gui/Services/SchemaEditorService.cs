@@ -87,6 +87,22 @@ public sealed class SchemaEditorService
             ],
             allowIncomplete);
 
+    public Task<SchemaEditResult> RecordDraftAsync(
+        SchemaInspection inspection,
+        string targetLanguage,
+        IReadOnlyList<AchievementEditorRow> rows) =>
+        RunEditCommandAsync(
+            inspection,
+            targetLanguage,
+            rows,
+            [
+                "schema", "draft", inspection.AppId,
+                "--game-name", inspection.GameName,
+                "--variant-id", inspection.VariantId,
+                "--jsonl",
+            ],
+            allowIncomplete: true);
+
     public async Task<SchemaEditResult> RestoreAsync(string appId, bool force)
     {
         var arguments = new List<string> { "schema", "restore", appId, "--yes", "--jsonl" };

@@ -25,10 +25,42 @@ public static class GameInstallFiltering
         new(GameInstallFilter.Attention, "需处理"),
     ];
 
+    private static IReadOnlyList<GameInstallFilterOption> LocalOptions { get; } =
+    [
+        Options[0],
+        Options[1],
+        Options[2],
+        Options[4],
+    ];
+
+    private static IReadOnlyList<GameInstallFilterOption> CloudOptions { get; } =
+    [
+        Options[1],
+        Options[2],
+    ];
+
     public static GameInstallFilterOption UpdateOption => Options[3];
 
     public static int CountUpdates(IEnumerable<GameItem> games) =>
         games.Count(game => game.IsUpdateAvailable);
+
+    public static IReadOnlyList<GameInstallFilterOption> OptionsFor(GameInventoryScope scope) =>
+        scope == GameInventoryScope.Cloud ? CloudOptions : LocalOptions;
+
+    public static bool Matches(
+        GameItem game,
+        GameInstallFilter filter,
+        GameInventoryScope scope)
+    {
+        if (scope == GameInventoryScope.Cloud)
+        {
+            return filter == GameInstallFilter.Installed
+                ? game.CanViewInstalledTranslation
+                : !game.CanViewInstalledTranslation;
+        }
+
+        return Matches(game, filter);
+    }
 
     public static bool Matches(GameItem game, GameInstallFilter filter) => filter switch
     {

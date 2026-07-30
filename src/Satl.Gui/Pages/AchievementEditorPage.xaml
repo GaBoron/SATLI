@@ -37,6 +37,7 @@
                         x:Name="SearchBox"
                         Width="240"
                         Header="搜索"
+                        Style="{StaticResource ToolbarSearchBoxStyle}"
                         PlaceholderText="成就 ID 或文本"
                         QueryIcon="Find"
                         TextChanged="SearchBox_TextChanged" />
@@ -44,22 +45,22 @@
                         x:Name="ReferenceLanguageBox"
                         Width="170"
                         Header="对照语言"
+                        Style="{StaticResource ToolbarComboBoxStyle}"
                         SelectionChanged="ReferenceLanguageBox_SelectionChanged" />
                     <ComboBox
                         x:Name="TargetLanguageBox"
                         Width="170"
                         Header="目标语言"
+                        Style="{StaticResource ToolbarComboBoxStyle}"
                         IsEditable="True"
                         SelectionChanged="TargetLanguageBox_SelectionChanged"
                         LostFocus="TargetLanguageBox_LostFocus" />
                 </StackPanel>
             </CommandBar.Content>
-            <AppBarButton Icon="Page" Label="保存草稿" Click="SaveDraft_Click" />
             <AppBarButton Icon="Save" Label="保存到本机" Click="Save_Click" />
             <AppBarButton Icon="Download" Label="导出 BIN" Click="ExportBin_Click" />
             <AppBarButton Icon="Folder" Label="导出投稿 ZIP" Click="ExportZip_Click" />
-            <AppBarButton Icon="Library" Label="修订历史" Click="History_Click" />
-            <AppBarButton x:Name="RestoreButton" Icon="Undo" Label="恢复上次编辑" Click="Restore_Click" IsEnabled="False" />
+            <AppBarButton Icon="Clock" Label="修订历史" Click="History_Click" />
         </CommandBar>
 
         <ProgressBar Grid.Row="2" x:Name="BusyProgress" IsIndeterminate="True" Visibility="Collapsed" />

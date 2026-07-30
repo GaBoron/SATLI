@@ -15,6 +15,7 @@ from satl.schema_edit import (
     apply_schema_payload,
     export_schema,
     inspect_schema,
+    render_schema,
     restore_schema,
 )
 from satl.schema_revisions import SchemaRevisionRepository
@@ -103,6 +104,35 @@ def command_schema_apply(args: argparse.Namespace) -> int:
         emit_jsonl("schema-apply", "completed", {"count": 1, "exit_code": 0})
     else:
         print(f"已写回：{report['target']}；备份：{report['backup']}")
+    return 0
+
+
+def command_schema_draft(args: argparse.Namespace) -> int:
+    steam_dir = find_steam_dir(args.steam_dir)
+    repository = SchemaRevisionRepository(Path(args.data_dir))
+    _migrate_legacy_edit_history(repository, args.app_id)
+    payload, report = render_schema(
+        schema_target(steam_dir, args.app_id),
+        args.app_id,
+        args.target_language,
+        Path(args.edits_file),
+        allow_incomplete=args.allow_incomplete,
+    )
+    _capture_revision(
+        report,
+        Path(args.data_dir),
+        args.app_id,
+        payload,
+        action="draft",
+        game_name=getattr(args, "game_name", None),
+        target_language=args.target_language,
+        variant_id=getattr(args, "variant_id", None),
+    )
+    if args.jsonl:
+        emit_jsonl("schema-draft", "item-succeeded", report)
+        emit_jsonl("schema-draft", "completed", {"count": 1, "exit_code": 0})
+    else:
+        print(f"已记录 App ID {args.app_id} 的草稿修订。")
     return 0
 
 

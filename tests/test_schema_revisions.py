@@ -200,3 +200,55 @@ def test_show_reports_target_and_current_previews(tmp_path: Path, capsys) -> Non
     payload = next(event["payload"] for event in events if event["event"] == "item-succeeded")
     assert payload["preview"]["rows"][0]["translations"]["schinese"]["name"] == "Target"
     assert payload["current_preview"]["rows"][0]["translations"]["schinese"]["name"] == "Current"
+
+
+def test_draft_records_rendered_content_without_writing_steam_file(
+    tmp_path: Path, capsys
+) -> None:
+    steam = tmp_path / "Steam"
+    steam.mkdir()
+    (steam / "steam.exe").touch()
+    target = steam / "appcache" / "stats" / "UserGameStatsSchema_123.bin"
+    target.parent.mkdir(parents=True)
+    original = _schema("Original")
+    target.write_bytes(original)
+    edits = tmp_path / "edits.json"
+    edits.write_text(
+        json.dumps(
+            {
+                "version": 1,
+                "app_id": "123",
+                "source_sha256": hashlib.sha256(original).hexdigest(),
+                "target_language": "schinese",
+                "rows": [
+                    {
+                        "api_name": "ACH_FIRST",
+                        "name": "Draft",
+                        "description": "完成目标",
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    data_dir = tmp_path / "data"
+
+    assert main(
+        [
+            "schema", "draft", "123",
+            "--steam-dir", str(steam),
+            "--data-dir", str(data_dir),
+            "--target-language", "schinese",
+            "--edits-file", str(edits),
+            "--game-name", "Draft Game",
+            "--jsonl",
+        ]
+    ) == 0
+
+    events = [json.loads(line) for line in capsys.readouterr().out.splitlines()]
+    payload = next(event["payload"] for event in events if event["event"] == "item-succeeded")
+    revisions = SchemaRevisionRepository(data_dir).list("123")
+    assert payload["revision_commit"] == revisions[0].commit_id
+    assert revisions[0].action == "draft"
+    assert revisions[0].schema != original
+    assert target.read_bytes() == original

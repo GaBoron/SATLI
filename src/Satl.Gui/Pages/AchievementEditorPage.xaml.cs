@@ -85,7 +85,6 @@ public sealed partial class AchievementEditorPage : Page
         }
         await RestoreDraftAsync();
         ApplyFilter();
-        RestoreButton.IsEnabled = _inspection.CanRestore;
         _editState.Accept(_targetLanguage, _inspection.Rows);
         UpdateStatus();
     }
@@ -247,26 +246,6 @@ public sealed partial class AchievementEditorPage : Page
         await SaveChangesAsync();
     }
 
-    private async void SaveDraft_Click(object sender, RoutedEventArgs e)
-    {
-        if (_inspection is null)
-        {
-            return;
-        }
-        await RunBusyAsync(async () =>
-        {
-            var draft = await _drafts.SaveAsync(
-                _inspection,
-                _targetLanguage,
-                _inspection.Rows);
-            _editState.Accept(_targetLanguage, _inspection.Rows);
-            UpdateStatus();
-            App.ViewModel.ShowInfo(
-                $"已保存 {_targetLanguage} 草稿（{draft.Rows.Count} 个成就）。",
-                InfoBarSeverity.Success);
-        });
-    }
-
     private async Task<bool> SaveChangesAsync()
     {
         if (!await ConfirmIncompleteAsync("保存到本机"))
@@ -372,50 +351,9 @@ public sealed partial class AchievementEditorPage : Page
         }
     }
 
-    private async void Restore_Click(object sender, RoutedEventArgs e)
-    {
-        if (_inspection is null || !await ConfirmAsync(
-                "恢复上次编辑",
-                "应用将恢复最近一次编辑前的校验备份。请先退出 Steam。",
-                "恢复"))
-        {
-            return;
-        }
-        await RunBusyAsync(async () =>
-        {
-            try
-            {
-                var result = await _editor.RestoreAsync(_inspection.AppId, force: false);
-                ShowRestoreResult(result);
-            }
-            catch (InvalidOperationException exception) when (exception.Message.Contains("发生变化"))
-            {
-                if (!await ConfirmAsync(
-                        "当前文件已变化",
-                        exception.Message + Environment.NewLine + "强制恢复会先归档当前文件。是否继续？",
-                        "强制恢复"))
-                {
-                    return;
-                }
-                var result = await _editor.RestoreAsync(_inspection.AppId, force: true);
-                ShowRestoreResult(result);
-            }
-            await LoadCoreAsync();
-        });
-    }
-
-    private static void ShowRestoreResult(SchemaEditResult result) =>
-        App.ViewModel.ShowInfo(
-            string.IsNullOrWhiteSpace(result.RevisionWarning)
-                ? "已恢复上一次本地编辑，并记录 Git 修订。"
-                : $"已恢复上一次本地编辑；{result.RevisionWarning}",
-            string.IsNullOrWhiteSpace(result.RevisionWarning)
-                ? InfoBarSeverity.Success
-                : InfoBarSeverity.Warning);
-
     private async void Back_Click(object sender, RoutedEventArgs e)
     {
-        if (HasUnsavedChanges && !await ResolveUnsavedChangesAsync("返回本地游戏页"))
+        if (!await SaveDraftCheckpointAsync())
         {
             return;
         }
@@ -433,7 +371,7 @@ public sealed partial class AchievementEditorPage : Page
             return;
         }
         e.Cancel = true;
-        if (!await ResolveUnsavedChangesAsync("离开成就编辑器"))
+        if (!await SaveDraftCheckpointAsync())
         {
             return;
         }
@@ -455,7 +393,7 @@ public sealed partial class AchievementEditorPage : Page
             return;
         }
         args.Cancel = true;
-        if (!await ResolveUnsavedChangesAsync("关闭应用"))
+        if (!await SaveDraftCheckpointAsync())
         {
             return;
         }
@@ -463,28 +401,40 @@ public sealed partial class AchievementEditorPage : Page
         App.Window.Close();
     }
 
-    private async Task<bool> ResolveUnsavedChangesAsync(string destination)
+    private async Task<bool> SaveDraftCheckpointAsync()
     {
-        var dialog = new ContentDialog
+        if (!HasUnsavedChanges)
         {
-            XamlRoot = XamlRoot,
-            Title = "未保存的修改",
-            Content = new TextBlock
-            {
-                Text = $"仍有未保存的成就修改。要先保存、放弃修改并{destination}，还是取消？",
-                TextWrapping = TextWrapping.Wrap,
-            },
-            PrimaryButtonText = "保存",
-            SecondaryButtonText = "放弃",
-            CloseButtonText = "取消",
-            DefaultButton = ContentDialogButton.Primary,
-        };
-        return await dialog.ShowAsync() switch
+            return true;
+        }
+        if (_inspection is null)
         {
-            ContentDialogResult.Primary => await SaveChangesAsync(),
-            ContentDialogResult.Secondary => true,
-            _ => false,
-        };
+            return false;
+        }
+
+        var saved = false;
+        await RunBusyAsync(async () =>
+        {
+            var draft = await _drafts.SaveAsync(
+                _inspection,
+                _targetLanguage,
+                _inspection.Rows);
+            var result = await _editor.RecordDraftAsync(
+                _inspection,
+                _targetLanguage,
+                _inspection.Rows);
+            _editState.Accept(_targetLanguage, _inspection.Rows);
+            UpdateStatus();
+            saved = true;
+            App.ViewModel.ShowInfo(
+                string.IsNullOrWhiteSpace(result.RevisionWarning)
+                    ? $"已自动保存 {_targetLanguage} 草稿并记录修改历史（{draft.Rows.Count} 个成就）。"
+                    : $"已自动保存 {_targetLanguage} 草稿；{result.RevisionWarning}",
+                string.IsNullOrWhiteSpace(result.RevisionWarning)
+                    ? InfoBarSeverity.Success
+                    : InfoBarSeverity.Warning);
+        });
+        return saved;
     }
 
     private async Task<bool> ConfirmIncompleteAsync(string action)

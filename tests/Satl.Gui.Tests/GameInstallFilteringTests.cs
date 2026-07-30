@@ -16,6 +16,37 @@ public sealed class GameInstallFilteringTests
     }
 
     [Fact]
+    public void InventoryScopesExposeOnlyMeaningfulFilters()
+    {
+        Assert.Equal(
+            ["全部", "未安装", "已安装", "需处理"],
+            GameInstallFiltering.OptionsFor(GameInventoryScope.Local).Select(item => item.Label));
+        Assert.Equal(
+            ["未安装", "已安装"],
+            GameInstallFiltering.OptionsFor(GameInventoryScope.Cloud).Select(item => item.Label));
+    }
+
+    [Theory]
+    [InlineData("installed", true)]
+    [InlineData("modified", true)]
+    [InlineData("unmanaged", false)]
+    [InlineData("restored", false)]
+    [InlineData("missing", false)]
+    [InlineData("unreadable", false)]
+    public void CloudFiltersPartitionEveryEntryByInstalledAvailability(string state, bool installed)
+    {
+        var game = CatalogGame();
+        game.InstalledState = state;
+
+        Assert.Equal(
+            installed,
+            GameInstallFiltering.Matches(game, GameInstallFilter.Installed, GameInventoryScope.Cloud));
+        Assert.Equal(
+            !installed,
+            GameInstallFiltering.Matches(game, GameInstallFilter.Uninstalled, GameInventoryScope.Cloud));
+    }
+
+    [Fact]
     public void CatalogInstallIsUpdateOnlyWhenSameVariantHashChanged()
     {
         var game = CatalogGame();

@@ -13,10 +13,9 @@
         </StackPanel>
         <CommandBar Grid.Row="1" DefaultLabelPosition="Right">
             <AppBarButton Icon="Refresh" Label="刷新状态" Click="Refresh_Click" KeyboardAcceleratorTextOverride="F5" />
-            <AppBarButton Icon="Undo" Label="恢复所选" Click="Restore_Click" />
-            <AppBarButton Icon="ReportHacked" Label="强制恢复" Click="ForceRestore_Click" />
         </CommandBar>
-        <ListView Grid.Row="2" ItemsSource="{x:Bind ViewModel.ManagedGames, Mode=OneWay}" SelectionMode="None">
+        <Grid Grid.Row="2">
+        <ListView ItemsSource="{x:Bind ViewModel.ManagedGames, Mode=OneWay}" SelectionMode="None">
             <ListView.ItemContainerStyle>
                 <Style TargetType="ListViewItem">
                     <Setter Property="HorizontalContentAlignment" Value="Stretch" /><Setter Property="Padding" Value="0" /><Setter Property="Margin" Value="0,0,0,8" />
@@ -24,26 +23,48 @@
             </ListView.ItemContainerStyle>
             <ListView.ItemTemplate>
                 <DataTemplate x:DataType="models:GameItem">
-                    <Border Padding="12" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="8">
+                    <Border Style="{StaticResource GameCardStyle}">
                         <Grid ColumnSpacing="16">
-                            <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                            <CheckBox VerticalAlignment="Center" IsChecked="{x:Bind IsSelected, Mode=TwoWay}" IsEnabled="{x:Bind CanRestore}" Click="GameSelection_Click" AutomationProperties.Name="{x:Bind GameName}" />
-                            <StackPanel Grid.Column="1" Spacing="2">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                            <StackPanel Spacing="4">
                                 <TextBlock Text="{x:Bind GameName}" Style="{StaticResource BodyStrongTextBlockStyle}" />
                                 <TextBlock Text="{x:Bind Subtitle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Style="{StaticResource CaptionTextBlockStyle}" />
                                 <TextBlock Text="{x:Bind ManagedSummaryText, Mode=OneWay}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Style="{StaticResource CaptionTextBlockStyle}" TextTrimming="CharacterEllipsis" />
                             </StackPanel>
-                            <TextBlock Grid.Column="2" VerticalAlignment="Center" Text="{x:Bind StateText}" Style="{StaticResource BodyStrongTextBlockStyle}" />
-                            <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                                <Button Width="80" HorizontalContentAlignment="Center" Content="查看" Click="ViewCurrent_Click" Tag="{x:Bind}" IsEnabled="{x:Bind CanViewInstalledTranslation}" AutomationProperties.Name="查看当前安装的成就翻译" AutomationProperties.HelpText="{x:Bind GameName}" />
+                            <TextBlock Grid.Column="1" VerticalAlignment="Center" Text="{x:Bind StateText}" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
                                 <Button Width="80" HorizontalContentAlignment="Center" Content="编辑" Click="Edit_Click" Tag="{x:Bind}" IsEnabled="{x:Bind CanViewInstalledTranslation}" AutomationProperties.Name="编辑当前翻译" />
-                                <Button Width="80" HorizontalContentAlignment="Center" Content="历史" Click="History_Click" Tag="{x:Bind}" AutomationProperties.Name="查看 Git 修订历史" />
-                                <Button Width="80" HorizontalContentAlignment="Center" Content="{x:Bind RestoreActionText}" Click="RestoreItem_Click" Tag="{x:Bind}" IsEnabled="{x:Bind CanRestore}" AutomationProperties.Name="恢复安装前文件" AutomationProperties.HelpText="{x:Bind GameName}" />
+                                <Button Width="80" HorizontalContentAlignment="Center" Content="更多" AutomationProperties.Name="更多操作">
+                                    <Button.Flyout>
+                                        <MenuFlyout>
+                                            <MenuFlyoutItem Text="查看当前" Click="ViewCurrent_Click" Tag="{x:Bind}" IsEnabled="{x:Bind CanViewInstalledTranslation}">
+                                                <MenuFlyoutItem.Icon><SymbolIcon Symbol="View" /></MenuFlyoutItem.Icon>
+                                            </MenuFlyoutItem>
+                                            <MenuFlyoutItem Text="修改历史" Click="History_Click" Tag="{x:Bind}">
+                                                <MenuFlyoutItem.Icon><SymbolIcon Symbol="Clock" /></MenuFlyoutItem.Icon>
+                                            </MenuFlyoutItem>
+                                            <MenuFlyoutSeparator />
+                                            <MenuFlyoutItem Text="恢复安装前文件" Click="RestoreItem_Click" Tag="{x:Bind}" IsEnabled="{x:Bind CanRestore}">
+                                                <MenuFlyoutItem.Icon><SymbolIcon Symbol="Undo" /></MenuFlyoutItem.Icon>
+                                            </MenuFlyoutItem>
+                                        </MenuFlyout>
+                                    </Button.Flyout>
+                                </Button>
                             </StackPanel>
                         </Grid>
                     </Border>
                 </DataTemplate>
             </ListView.ItemTemplate>
         </ListView>
+            <StackPanel
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Spacing="8"
+                Visibility="{x:Bind ViewModel.ManagedGames.Count, Mode=OneWay, Converter={StaticResource ZeroCountToVisibilityConverter}}">
+                <FontIcon Glyph="&#xE8FD;" FontSize="32" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                <TextBlock Text="暂无已管理的游戏" Style="{StaticResource SubtitleTextBlockStyle}" />
+                <TextBlock Text="安装、导入或保存本地编辑后会显示在这里。" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+            </StackPanel>
+        </Grid>
     </Grid>
 </Page>

@@ -40,7 +40,7 @@
                             <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                             <StackPanel Spacing="4">
                                 <StackPanel Orientation="Horizontal" Spacing="8">
-                                    <TextBlock Text="{x:Bind ActionText}" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                                    <TextBlock Text="{Binding TitleText}" Style="{StaticResource BodyStrongTextBlockStyle}" />
                                     <TextBlock Text="当前版本" Visibility="{x:Bind CurrentVisibility}" Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" />
                                 </StackPanel>
                                 <TextBlock Text="{x:Bind SummaryText}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />

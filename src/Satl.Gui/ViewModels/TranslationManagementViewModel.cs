@@ -39,6 +39,8 @@ public sealed class TranslationManagementViewModel : ObservableObject
     public IReadOnlyList<GameInstallFilterOption> FilterOptions => GameInstallFiltering.Options;
     public int SelectedCount => Games.Count(item => item.IsSelected);
     public string SelectedCountText => $"已选 {SelectedCount} 项";
+    public string SelectionActionText =>
+        GameSelectionOperations.AreAllSelected(VisibleGames) ? "取消全选" : "全选";
     public int UpdateAvailableCount
     {
         get => _updateAvailableCount;
@@ -550,23 +552,18 @@ public sealed class TranslationManagementViewModel : ObservableObject
         {
             VisibleGames.Add(game);
         }
+        OnPropertyChanged(nameof(SelectionActionText));
     }
 
-    public void SelectVisible()
+    public void ToggleVisibleSelection()
     {
-        foreach (var game in VisibleGames)
-        {
-            game.IsSelected = true;
-        }
+        GameSelectionOperations.ToggleVisible(VisibleGames);
         RefreshSelectionCount();
     }
 
     public void ClearSelection()
     {
-        foreach (var game in Games)
-        {
-            game.IsSelected = false;
-        }
+        GameSelectionOperations.ClearAll(Games);
         RefreshSelectionCount();
     }
 
@@ -574,6 +571,7 @@ public sealed class TranslationManagementViewModel : ObservableObject
     {
         OnPropertyChanged(nameof(SelectedCount));
         OnPropertyChanged(nameof(SelectedCountText));
+        OnPropertyChanged(nameof(SelectionActionText));
     }
 
     public void ShowUpdates() => SelectedFilterOption = GameInstallFiltering.UpdateOption;

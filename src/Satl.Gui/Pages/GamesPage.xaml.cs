@@ -28,20 +28,15 @@ public sealed partial class GamesPage : Page
     public GamesPage()
     {
         InitializeComponent();
-        AddShortcut(VirtualKey.A, VirtualKeyModifiers.Control, SelectAll_Invoked);
-        AddShortcut(
-            VirtualKey.A,
-            VirtualKeyModifiers.Control | VirtualKeyModifiers.Shift,
-            ClearSelection_Invoked);
+        AddShortcut(VirtualKey.A, VirtualKeyModifiers.Control, ToggleSelection_Invoked);
         AddShortcut(VirtualKey.F, VirtualKeyModifiers.Control, FocusSearch_Invoked);
         AddShortcut(VirtualKey.F5, VirtualKeyModifiers.None, Refresh_Invoked);
     }
 
     private async void Refresh_Click(object sender, RoutedEventArgs e) => await ViewModel.ScanAsync();
-    private void SelectVisible_Click(object sender, RoutedEventArgs e) => ViewModel.SelectVisible();
-    private void ClearSelection_Click(object sender, RoutedEventArgs e)
+    private void ToggleSelection_Click(object sender, RoutedEventArgs e)
     {
-        ViewModel.ClearSelection();
+        ViewModel.ToggleVisibleSelection();
         _selectionAnchorIndex = null;
     }
 
@@ -179,19 +174,13 @@ public sealed partial class GamesPage : Page
         KeyboardAccelerators.Add(accelerator);
     }
 
-    private void SelectAll_Invoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
+    private void ToggleSelection_Invoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
     {
         if (FocusManager.GetFocusedElement(XamlRoot) is TextBox or AutoSuggestBox)
         {
             return;
         }
-        ViewModel.SelectVisible();
-        args.Handled = true;
-    }
-
-    private void ClearSelection_Invoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
-    {
-        ViewModel.ClearSelection();
+        ViewModel.ToggleVisibleSelection();
         _selectionAnchorIndex = null;
         args.Handled = true;
     }

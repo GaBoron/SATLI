@@ -13,12 +13,12 @@ public sealed class GameInventoryViewModel(GameInventoryScope scope) : Observabl
     private string _statusMessage = "准备就绪";
     private bool _isBusy;
     private bool _initialized;
-    private GameInstallFilterOption _selectedFilterOption = GameInstallFiltering.Options[0];
+    private GameInstallFilterOption _selectedFilterOption = GameInstallFiltering.OptionsFor(scope)[0];
 
     public ObservableCollection<GameItem> Games { get; } = [];
     public ObservableCollection<GameItem> VisibleGames { get; } = [];
     public GameLoadingProgress Loading { get; } = new();
-    public IReadOnlyList<GameInstallFilterOption> FilterOptions => GameInstallFiltering.Options;
+    public IReadOnlyList<GameInstallFilterOption> FilterOptions => GameInstallFiltering.OptionsFor(scope);
 
     public GameInstallFilterOption SelectedFilterOption
     {
@@ -182,7 +182,7 @@ public sealed class GameInventoryViewModel(GameInventoryScope scope) : Observabl
         VisibleGames.Clear();
         var query = SearchText.Trim();
         foreach (var game in Games.Where(game =>
-                     GameInstallFiltering.Matches(game, SelectedFilterOption.Value)
+                     GameInstallFiltering.Matches(game, SelectedFilterOption.Value, scope)
                      && (string.IsNullOrWhiteSpace(query)
                          || game.GameName.Contains(query, StringComparison.CurrentCultureIgnoreCase)
                          || game.AppId.Contains(query, StringComparison.OrdinalIgnoreCase))))

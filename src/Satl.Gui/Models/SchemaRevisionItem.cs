@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.Json;
 using Microsoft.UI.Xaml;
 
@@ -22,6 +23,7 @@ public sealed class SchemaRevisionItem
 
     public string ActionText => Action switch
     {
+        "draft" => "自动保存草稿",
         "apply" => "保存到本机",
         "export" => "导出",
         "restore" => "恢复编辑",
@@ -31,8 +33,24 @@ public sealed class SchemaRevisionItem
         _ => Action,
     };
 
+    public string TitleText
+    {
+        get
+        {
+            if (DateTimeOffset.TryParse(
+                    CreatedAt,
+                    CultureInfo.InvariantCulture,
+                    DateTimeStyles.AssumeUniversal,
+                    out var created))
+            {
+                return created.ToLocalTime().ToString("yyyy年M月d日 HH:mm:ss", CultureInfo.CurrentCulture);
+            }
+            return string.IsNullOrWhiteSpace(CreatedAt) ? "未知时间" : CreatedAt;
+        }
+    }
+
     public string SummaryText =>
-        $"{CreatedAt} · {ActionText} · {TargetLanguage} · {AchievementCount} 个成就";
+        $"{ActionText} · {TargetLanguage} · {AchievementCount} 个成就";
 
     public string HashText => IsAvailable
         ? $"commit {ShortCommit} · SHA-256 {SchemaSha256}"

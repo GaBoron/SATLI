@@ -22,12 +22,15 @@
                     <AutoSuggestBox
                         x:Name="SearchBox"
                         Width="300"
+                        Header="搜索"
+                        Style="{StaticResource ToolbarSearchBoxStyle}"
                         PlaceholderText="搜索游戏名称或 App ID"
                         QueryIcon="Find"
                         Text="{x:Bind ViewModel.SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                     <ComboBox
                         Width="140"
                         Header="安装状态"
+                        Style="{StaticResource ToolbarComboBoxStyle}"
                         ItemsSource="{x:Bind ViewModel.FilterOptions}"
                         SelectedItem="{x:Bind ViewModel.SelectedFilterOption, Mode=TwoWay}" />
                 </StackPanel>
@@ -41,7 +44,8 @@
             Maximum="{x:Bind ViewModel.Loading.Maximum, Mode=OneWay}"
             Value="{x:Bind ViewModel.Loading.Value, Mode=OneWay}"
             AutomationProperties.Name="云端游戏加载进度" />
-        <ListView Grid.Row="3" ItemsSource="{x:Bind ViewModel.VisibleGames, Mode=OneWay}" SelectionMode="None">
+        <Grid Grid.Row="3">
+        <ListView ItemsSource="{x:Bind ViewModel.VisibleGames, Mode=OneWay}" SelectionMode="None">
             <ListView.ItemContainerStyle>
                 <Style TargetType="ListViewItem">
                     <Setter Property="HorizontalContentAlignment" Value="Stretch" />
@@ -51,7 +55,7 @@
             </ListView.ItemContainerStyle>
             <ListView.ItemTemplate>
                 <DataTemplate x:DataType="models:GameItem">
-                    <Border Padding="16" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="8">
+                    <Border Style="{StaticResource GameCardStyle}">
                         <Grid ColumnSpacing="16">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
@@ -81,6 +85,16 @@
                 </DataTemplate>
             </ListView.ItemTemplate>
         </ListView>
+            <StackPanel
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Spacing="8"
+                Visibility="{x:Bind ViewModel.VisibleGames.Count, Mode=OneWay, Converter={StaticResource ZeroCountToVisibilityConverter}}">
+                <FontIcon Glyph="&#xE8FD;" FontSize="32" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                <TextBlock Text="当前分类或搜索条件下没有云端游戏" Style="{StaticResource SubtitleTextBlockStyle}" />
+                <TextBlock Text="可切换已安装或未安装分类，也可修改搜索条件。" HorizontalAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+            </StackPanel>
+        </Grid>
         <TextBlock Grid.Row="4" Text="{x:Bind ViewModel.StatusMessage, Mode=OneWay}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Style="{StaticResource CaptionTextBlockStyle}" />
     </Grid>
 </Page>

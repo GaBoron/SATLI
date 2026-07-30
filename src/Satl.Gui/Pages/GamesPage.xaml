@@ -24,6 +24,8 @@
                     <AutoSuggestBox
                         x:Name="SearchBox"
                         Width="300"
+                        Header="搜索"
+                        Style="{StaticResource ToolbarSearchBoxStyle}"
                         PlaceholderText="搜索游戏名称或 App ID"
                         QueryIcon="Find"
                         Text="{x:Bind ViewModel.SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
@@ -31,6 +33,7 @@
                     <ComboBox
                         Width="140"
                         Header="安装状态"
+                        Style="{StaticResource ToolbarComboBoxStyle}"
                         ItemsSource="{x:Bind ViewModel.FilterOptions}"
                         SelectedItem="{x:Bind ViewModel.SelectedFilterOption, Mode=TwoWay}"
                         AutomationProperties.Name="筛选安装状态" />
@@ -40,17 +43,16 @@
                         Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                 </StackPanel>
             </CommandBar.Content>
-            <AppBarButton Icon="SelectAll" Label="全选当前结果" Click="SelectVisible_Click" />
-            <AppBarButton Icon="ClearSelection" Label="清除选择" Click="ClearSelection_Click" />
+            <AppBarButton Icon="SelectAll" Label="{x:Bind ViewModel.SelectionActionText, Mode=OneWay}" Click="ToggleSelection_Click" />
             <AppBarButton Icon="Help" Label="未找到游戏？" Click="Petition_Click" AutomationProperties.Name="打开翻译请愿" />
             <AppBarButton Icon="Refresh" Label="重新扫描" Click="Refresh_Click" KeyboardAcceleratorTextOverride="F5" />
             <AppBarButton Icon="Download" Label="安装/更新所选" Click="Install_Click" />
         </CommandBar>
-        <ListView
-            Grid.Row="2"
-            ItemsSource="{x:Bind ViewModel.VisibleGames, Mode=OneWay}"
-            SelectionMode="None"
-            IsItemClickEnabled="False">
+        <Grid Grid.Row="2">
+            <ListView
+                ItemsSource="{x:Bind ViewModel.VisibleGames, Mode=OneWay}"
+                SelectionMode="None"
+                IsItemClickEnabled="False">
             <ListView.ItemContainerStyle>
                 <Style TargetType="ListViewItem">
                     <Setter Property="HorizontalContentAlignment" Value="Stretch" />
@@ -60,12 +62,7 @@
             </ListView.ItemContainerStyle>
             <ListView.ItemTemplate>
                 <DataTemplate x:DataType="models:GameItem">
-                    <Border
-                        Padding="16"
-                        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                        BorderThickness="1"
-                        CornerRadius="8">
+                    <Border Style="{StaticResource GameCardStyle}">
                         <Grid ColumnSpacing="16">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto" />
@@ -105,7 +102,17 @@
                     </Border>
                 </DataTemplate>
             </ListView.ItemTemplate>
-        </ListView>
+            </ListView>
+            <StackPanel
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Spacing="8"
+                Visibility="{x:Bind ViewModel.VisibleGames.Count, Mode=OneWay, Converter={StaticResource ZeroCountToVisibilityConverter}}">
+                <FontIcon Glyph="&#xE8FD;" FontSize="32" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                <TextBlock Text="当前分类或搜索条件下没有游戏" Style="{StaticResource SubtitleTextBlockStyle}" />
+                <TextBlock Text="可调整安装状态或搜索条件。" HorizontalAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+            </StackPanel>
+        </Grid>
         <VisualStateManager.VisualStateGroups>
             <VisualStateGroup>
                 <VisualState x:Name="Wide" />
