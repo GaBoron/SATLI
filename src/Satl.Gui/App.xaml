@@ -22,15 +22,19 @@
             </Style>
             <Style x:Key="LeftAlignedSearchTextBoxStyle" TargetType="TextBox" BasedOn="{StaticResource AutoSuggestBoxTextBoxStyle}">
                 <Setter Property="TextAlignment" Value="Left" />
+                <Setter Property="HorizontalContentAlignment" Value="Left" />
             </Style>
             <Style x:Key="SearchBoxStyle" TargetType="AutoSuggestBox">
                 <Setter Property="TextBoxStyle" Value="{StaticResource LeftAlignedSearchTextBoxStyle}" />
+                <Setter Property="CornerRadius" Value="{ThemeResource ControlCornerRadius}" />
             </Style>
             <Style x:Key="ToolbarSearchBoxStyle" TargetType="AutoSuggestBox" BasedOn="{StaticResource SearchBoxStyle}">
                 <Setter Property="Height" Value="64" />
             </Style>
             <Style x:Key="ToolbarComboBoxStyle" TargetType="ComboBox">
                 <Setter Property="Height" Value="64" />
+                <Setter Property="HorizontalContentAlignment" Value="Left" />
+                <Setter Property="CornerRadius" Value="{ThemeResource ControlCornerRadius}" />
             </Style>
             <Style x:Key="SettingsCardStyle" TargetType="Border">
                 <Setter Property="Background" Value="{ThemeResource CardBackgroundFillColorDefaultBrush}" />

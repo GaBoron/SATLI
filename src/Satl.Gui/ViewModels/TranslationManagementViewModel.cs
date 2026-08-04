@@ -255,33 +255,6 @@ public sealed class TranslationManagementViewModel : ObservableObject
         }
     }
 
-    public async Task RefreshCacheAsync()
-    {
-        if (!_operation.TryBegin())
-        {
-            return;
-        }
-        try
-        {
-            var result = await RunCliAsync(_arguments.CacheRefresh(), "正在刷新翻译目录…");
-            if (!result.IsSuccess)
-            {
-                ShowResultError(result);
-                return;
-            }
-            await ReloadAfterMutationAsync();
-            ShowInfo("翻译目录缓存已刷新。", InfoBarSeverity.Success);
-        }
-        catch (Exception exception)
-        {
-            ShowException("刷新缓存", exception);
-        }
-        finally
-        {
-            _operation.Complete();
-        }
-    }
-
     public async Task ExportPetitionAsync(string appId, string outputPath)
     {
         if (!_operation.TryBegin())

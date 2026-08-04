@@ -88,9 +88,6 @@ public sealed partial class SettingsPage : Page
         }
     }
 
-    private async void RefreshCache_Click(object sender, RoutedEventArgs e) =>
-        await ViewModel.Translations.RefreshCacheAsync();
-
     private async void CheckForUpdates_Click(object sender, RoutedEventArgs e)
     {
         var result = await ViewModel.CheckForUpdatesAsync();

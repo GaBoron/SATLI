@@ -259,21 +259,6 @@
                 </Border>
             </StackPanel>
 
-            <TextBlock Text="维护" Style="{StaticResource SubtitleTextBlockStyle}" Margin="0,12,0,0" />
-            <Border Style="{StaticResource SettingsCardStyle}">
-                <Grid Style="{StaticResource SettingsRowStyle}">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
-                    <StackPanel VerticalAlignment="Center" Spacing="3">
-                        <TextBlock Text="翻译目录缓存" Style="{StaticResource BodyStrongTextBlockStyle}" />
-                        <TextBlock Text="从数据源重新获取可用翻译和版本信息。" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
-                    </StackPanel>
-                    <Button Grid.Column="1" Content="立即刷新" VerticalAlignment="Center" Click="RefreshCache_Click" />
-                </Grid>
-            </Border>
-
             <TextBlock Text="关于" Style="{StaticResource SubtitleTextBlockStyle}" Margin="0,12,0,0" />
             <Border Style="{StaticResource SettingsCardStyle}">
                 <Grid Style="{StaticResource SettingsRowStyle}">

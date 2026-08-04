@@ -22,14 +22,16 @@
                     <AutoSuggestBox
                         x:Name="SearchBox"
                         Width="300"
-                        Header="搜索"
+                        Height="40"
+                        VerticalAlignment="Center"
                         Style="{StaticResource ToolbarSearchBoxStyle}"
                         PlaceholderText="搜索游戏名称或 App ID"
                         QueryIcon="Find"
                         Text="{x:Bind ViewModel.SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                     <ComboBox
                         Width="140"
-                        Header="安装状态"
+                        Height="40"
+                        VerticalAlignment="Center"
                         Style="{StaticResource ToolbarComboBoxStyle}"
                         ItemsSource="{x:Bind ViewModel.FilterOptions}"
                         SelectedItem="{x:Bind ViewModel.SelectedFilterOption, Mode=TwoWay}" />
