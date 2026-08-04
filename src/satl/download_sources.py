@@ -38,8 +38,8 @@ SOURCES = {
 }
 
 DEFAULT_INDEX_SOURCE_IDS = (
-    "jsdelivr",
     "github",
+    "jsdelivr",
     "jsdelivr-fastly",
     "staticdelivr",
 )

@@ -20,7 +20,7 @@ public static class DownloadSourceCatalog
         new(
             "jsdelivr",
             "jsDelivr",
-            "多 CDN 分发；推荐作为首选。",
+            "多 CDN 分发；GitHub Raw 不可用时备用。",
             $"https://cdn.jsdelivr.net/gh/{Repository}@main"),
         new(
             "github",

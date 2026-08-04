@@ -3,7 +3,7 @@ namespace Satl_Gui.Models;
 public static class DownloadSourceDefaults
 {
     public static readonly IReadOnlyList<string> IndexOrder =
-        ["jsdelivr", "github", "jsdelivr-fastly", "staticdelivr"];
+        ["github", "jsdelivr", "jsdelivr-fastly", "staticdelivr"];
 
     public static readonly IReadOnlyList<string> FileOrder =
         ["jsdelivr", "jsdelivr-fastly", "github"];

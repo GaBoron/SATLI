@@ -7,18 +7,18 @@ namespace Satl_Gui.Tests;
 public sealed class DownloadSourceSettingsTests
 {
     [Fact]
-    public void DefaultsPrioritizeJsdelivrAndSeparateFallbackOrders()
+    public void DefaultsPrioritizeGitHubRawAndSeparateFallbackOrders()
     {
         var settings = DownloadSourceCatalog.Normalize(new DownloadSourceSettings());
 
         Assert.Equal(
-            ["jsdelivr", "github", "jsdelivr-fastly", "staticdelivr"],
+            ["github", "jsdelivr", "jsdelivr-fastly", "staticdelivr"],
             settings.IndexSourceOrder);
         Assert.Equal(
             ["jsdelivr", "jsdelivr-fastly", "github"],
             settings.FileSourceOrder);
         Assert.StartsWith(
-            "https://cdn.jsdelivr.net/",
+            "https://raw.githubusercontent.com/",
             DownloadSourceCatalog.CatalogEndpoints(settings)[0].AbsoluteUri);
         Assert.Equal(
             "jsdelivr;jsdelivr-fastly;github",

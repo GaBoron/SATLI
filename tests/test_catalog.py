@@ -17,8 +17,8 @@ def test_user_agent_uses_package_version() -> None:
     assert USER_AGENT.startswith(f"satl/{__version__} ")
 
 
-def test_default_sources_prioritize_jsdelivr() -> None:
-    assert CATALOG_URLS[0].startswith("https://cdn.jsdelivr.net/")
+def test_default_sources_prioritize_github_raw() -> None:
+    assert CATALOG_URLS[0].startswith("https://raw.githubusercontent.com/")
     assert DEFAULT_FILE_ROOTS[0].startswith("https://cdn.jsdelivr.net/")
 
 

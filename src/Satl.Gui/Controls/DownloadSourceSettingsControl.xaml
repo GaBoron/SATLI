@@ -23,7 +23,7 @@
                     <StackPanel Spacing="3">
                         <TextBlock Text="索引下载顺序" Style="{StaticResource BodyStrongTextBlockStyle}" />
                         <TextBlock
-                            Text="拖动调整顺序；获取 index.json 时从上到下尝试，默认优先 jsDelivr。"
+                            Text="拖动调整顺序；获取 index.json 时从上到下尝试，默认优先 GitHub Raw。"
                             Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                             TextWrapping="Wrap" />
                     </StackPanel>
