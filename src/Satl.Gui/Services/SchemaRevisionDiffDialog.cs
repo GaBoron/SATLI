@@ -13,6 +13,24 @@ public static class SchemaRevisionDiffDialog
 
     public static async Task ShowAsync(XamlRoot xamlRoot, SchemaRevisionDiff diff, string title)
     {
+        await ShowCoreAsync(xamlRoot, diff, title, "上一个 Git 修订", confirmText: null);
+    }
+
+    public static Task<bool> ConfirmAsync(
+        XamlRoot xamlRoot,
+        SchemaRevisionDiff diff,
+        string title,
+        string comparisonBaseline,
+        string confirmText) =>
+        ShowCoreAsync(xamlRoot, diff, title, comparisonBaseline, confirmText);
+
+    private static async Task<bool> ShowCoreAsync(
+        XamlRoot xamlRoot,
+        SchemaRevisionDiff diff,
+        string title,
+        string comparisonBaseline,
+        string? confirmText)
+    {
         var languageBox = new ComboBox
         {
             Header = "显示语言",
@@ -37,8 +55,8 @@ public static class SchemaRevisionDiffDialog
             var added = values.Count(value =>
                 value.Kind is RevisionDiffKind.Added or RevisionDiffKind.Modified);
             summary.Text = diff.HasParent
-                ? $"完整显示 {rows.Count} 项成就；相对上一个 Git 修订，删除 {removed} 行，新增 {added} 行。"
-                : $"这是首个 Git 修订，没有上一版本可比较；完整显示 {rows.Count} 项成就。";
+                ? $"完整显示 {rows.Count} 项成就；相对{comparisonBaseline}，删除 {removed} 行，新增 {added} 行。"
+                : $"没有{comparisonBaseline}可比较；完整显示 {rows.Count} 项成就。";
             tableHost.Children.Clear();
             tableHost.Children.Add(BuildTable(rows));
         }
@@ -60,9 +78,15 @@ public static class SchemaRevisionDiffDialog
             XamlRoot = xamlRoot,
             Title = title,
             Content = content,
-            CloseButtonText = "关闭",
-            DefaultButton = ContentDialogButton.Close,
+            CloseButtonText = confirmText is null ? "关闭" : "取消",
+            DefaultButton = confirmText is null
+                ? ContentDialogButton.Close
+                : ContentDialogButton.Primary,
         };
+        if (confirmText is not null)
+        {
+            dialog.PrimaryButtonText = confirmText;
+        }
 
         void ApplyAdaptiveSize()
         {
@@ -80,7 +104,8 @@ public static class SchemaRevisionDiffDialog
         xamlRoot.Changed += RootChanged;
         try
         {
-            await dialog.ShowAsync();
+            var result = await dialog.ShowAsync();
+            return confirmText is null || result == ContentDialogResult.Primary;
         }
         finally
         {

@@ -21,6 +21,7 @@ public sealed partial class GamesPage : Page
     private const string ContributionUrl =
         "https://github.com/GaBoron/steam-achievement-translation-library/issues/new?template=translation_contribution_zh.yml";
 
+    private readonly TranslationUpdateDiffService _updateDiffs = new();
     private int? _selectionAnchorIndex;
 
     public TranslationManagementViewModel ViewModel => App.ViewModel.Translations;
@@ -122,18 +123,72 @@ public sealed partial class GamesPage : Page
         {
             return;
         }
-        var outdated = selected.Count(item => !item.IsCurrent);
-        var title = outdated == 0
-            ? $"确认安装 {selected.Count} 个翻译"
-            : $"确认安装 {selected.Count} 个翻译（{outdated} 个可能已过期）";
-        if (await ReplacementConfirmationDialog.ShowAsync(
-                XamlRoot,
-                previews,
-                title,
-                "确认安装"))
+
+        IReadOnlyList<TranslationUpdateDiff>? updateDiffs;
+        try
         {
-            await ViewModel.InstallAsync(selected);
+            updateDiffs = await _updateDiffs.CreateAsync(
+                selected,
+                previews,
+                ViewModel.PreviewCurrentAsync);
         }
+        catch (Exception exception)
+        {
+            ViewModel.ShowInfo($"无法生成更新差异：{exception.Message}", InfoBarSeverity.Error);
+            await App.Logs.WriteExceptionDetailsAsync("更新差异", exception);
+            return;
+        }
+        if (updateDiffs is null)
+        {
+            return;
+        }
+
+        var updateAppIds = updateDiffs
+            .Select(update => update.Game.AppId)
+            .ToHashSet(StringComparer.Ordinal);
+        var remainingPreviews = previews
+            .Where(preview => !updateAppIds.Contains(preview.AppId))
+            .ToArray();
+        for (var index = 0; index < updateDiffs.Count; index++)
+        {
+            var update = updateDiffs[index];
+            var title = updateDiffs.Count == 1
+                ? $"确认更新 · {update.Game.GameName}"
+                : $"确认更新 {index + 1}/{updateDiffs.Count} · {update.Game.GameName}";
+            var confirmText = index + 1 == updateDiffs.Count && remainingPreviews.Length == 0
+                ? "确认更新"
+                : "确认并继续";
+            if (!await SchemaRevisionDiffDialog.ConfirmAsync(
+                    XamlRoot,
+                    update.Diff,
+                    title,
+                    "当前已安装版本",
+                    confirmText))
+            {
+                return;
+            }
+        }
+
+        if (remainingPreviews.Length > 0)
+        {
+            var remainingGames = selected
+                .Where(game => !updateAppIds.Contains(game.AppId))
+                .ToArray();
+            var outdated = remainingGames.Count(item => !item.IsCurrent);
+            var title = outdated == 0
+                ? $"确认安装 {remainingPreviews.Length} 个翻译"
+                : $"确认安装 {remainingPreviews.Length} 个翻译（{outdated} 个可能已过期）";
+            if (!await ReplacementConfirmationDialog.ShowAsync(
+                    XamlRoot,
+                    remainingPreviews,
+                    title,
+                    "确认安装"))
+            {
+                return;
+            }
+        }
+
+        await ViewModel.InstallAsync(selected);
     }
 
     private void GameSelection_Click(object sender, RoutedEventArgs e)
