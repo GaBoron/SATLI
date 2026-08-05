@@ -157,9 +157,10 @@ def test_user_documentation_separates_installation_channels() -> None:
     for document in (readme, usage):
         assert "Microsoft Store 版" in document
         assert "独立安装版" in document
-    assert "由 Microsoft Store 检查、下载和安装" in usage
+        assert "即将推出" in document
+    assert "上架后将由 Microsoft Store 检查、下载和安装" in usage
     assert "GitHub Releases" in usage
-    assert "Microsoft Store 版不使用 GitHub 安装程序更新" in privacy
+    assert "即将推出的 Microsoft Store 版不使用 GitHub 安装程序更新" in privacy
     assert "docs/DEVELOPMENT.md" not in readme
     assert "docs/MICROSOFT_STORE.md" not in readme
     assert not (ROOT / "docs" / "DEVELOPMENT.md").exists()

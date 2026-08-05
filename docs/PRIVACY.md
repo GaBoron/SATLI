@@ -33,7 +33,7 @@ Steam 成就翻译管理器以本地处理为主。扫描、编辑、备份和�
 根据使用的功能，应用可能连接：
 
 - jsDelivr（含 Fastly 域名）、GitHub Raw、StaticDelivr 或用户调整后的来源：获取翻译目录和译本
-- GitHub：独立安装版获取软件更新信息和发布包；Microsoft Store 版不使用 GitHub 安装程序更新
+- GitHub：独立安装版获取软件更新信息和发布包；即将推出的 Microsoft Store 版不使用 GitHub 安装程序更新
 - Steam Web API：在用户主动配置凭据后补全账号游戏库
 - 游戏名称数据源：补全 App ID 对应的游戏名称
 - GitHub 授权与 Issue 接口：绑定账号或提交云端文件报告

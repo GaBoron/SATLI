@@ -24,11 +24,11 @@
 
 ## 🚀 快速开始
 
-1. 选择一种安装渠道：在 Microsoft Store 搜索 `SATLI`，或从 [GitHub Releases](https://github.com/GaBoron/steam-achievement-translation-installer/releases/latest) 下载独立安装版。
+1. 目前请从 [GitHub Releases](https://github.com/GaBoron/steam-achievement-translation-installer/releases/latest) 下载独立安装版；Microsoft Store 版即将推出。
 2. 打开应用，等待它扫描本机 Steam 游戏。
 3. 选择游戏和译本，预览成就文本后点击“安装所选”。
 
-Microsoft Store 版与独立安装版提供相同的翻译管理功能，并使用相同的数据格式。通常只需安装其中一种：Microsoft Store 版由 Store 更新，独立安装版通过应用内的 GitHub Releases 更新。两个版本各自只接收所属渠道的软件更新，不会交叉更新。
+Microsoft Store 版即将推出。推出后，它将与独立安装版提供相同的翻译管理功能并使用相同的数据格式；Microsoft Store 版由 Store 更新，独立安装版通过应用内的 GitHub Releases 更新。通常只需选择其中一种，两个版本不会交叉安装更新。
 
 安装翻译前会自动校验并备份原文件；之后可在“已管理”页查看状态或恢复。浏览、扫描和编辑草稿不会请求管理员权限；确认安装、恢复或写回本地编辑时，Windows 才会显示 UAC。独立安装版首次运行若遇到 Windows SmartScreen 提示，请核对下载来源及 Release 中的 SHA-256。
 
