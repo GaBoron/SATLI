@@ -15,27 +15,34 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/GaBoron/steam-achievement-translation-installer/releases/latest">⬇️ 下载独立安装版</a>
+  <a href="https://apps.microsoft.com/detail/9PB7V9S03K80">⬇️ 从 Microsoft Store 获取</a>
   ·
   <a href="docs/USAGE.md">📖 使用指南</a>
   ·
   <a href="https://github.com/GaBoron/steam-achievement-translation-installer/issues/new/choose">💬 反馈问题</a>
 </p>
 
-## 🚀 快速开始
+## 下载与安装
 
-1. 目前请从 [GitHub Releases](https://github.com/GaBoron/steam-achievement-translation-installer/releases/latest) 下载独立安装版；Microsoft Store 版即将推出。
-2. 打开应用，等待它扫描本机 Steam 游戏。
-3. 选择游戏和译本，预览成就文本后点击“安装所选”。
+> [!TIP]
+> **推荐从 [Microsoft Store](https://apps.microsoft.com/detail/9PB7V9S03K80) 安装。** Microsoft Store 会负责安装并自动提供软件更新。
 
-Microsoft Store 版即将推出。推出后，它将与独立安装版提供相同的翻译管理功能并使用相同的数据格式；Microsoft Store 版由 Store 更新，独立安装版通过应用内的 GitHub Releases 更新。通常只需选择其中一种，两个版本不会交叉安装更新。
+Microsoft Store 的产品可用性可能因市场而异。产品页面在当前市场不可用、无法使用 Microsoft Store，或希望手动管理安装程序时，可从 [GitHub Releases](https://github.com/GaBoron/steam-achievement-translation-installer/releases/latest) 获取独立安装版。独立安装版通过应用内的 GitHub Releases 更新功能获取新版。
 
-安装翻译前会自动校验并备份原文件；之后可在“已管理”页查看状态或恢复。浏览、扫描和编辑草稿不会请求管理员权限；确认安装、恢复或写回本地编辑时，Windows 才会显示 UAC。独立安装版首次运行若遇到 Windows SmartScreen 提示，请核对下载来源及 Release 中的 SHA-256。
+两个渠道提供相同的翻译管理功能并使用相同的数据格式，但不会相互安装对方的更新包。通常只需安装其中一个版本；切换渠道前请先退出并卸载当前版本。更多安装与更新说明见 [使用指南](docs/USAGE.md#安装与首次运行)。
+
+## 快速开始
+
+1. 打开应用，等待它扫描本机 Steam 游戏。
+2. 在“云端”页选择游戏和译本，预览目标语言与成就文本。
+3. 点击“安装所选”，关闭 Steam，并确认管理员权限请求。
+
+安装前，应用会校验译本并备份原文件。安装后可在“已管理”页检查状态、获取译本更新或恢复原文件。扫描、浏览和编辑草稿不需要管理员权限；只有安装、恢复或写回本地编辑等操作才会显示 UAC。
 
 > [!TIP]
 > 找不到游戏时，请先启动一次游戏，让 Steam 生成成就缓存，再返回应用重新扫描。
 
-## ✨ 核心能力
+## 核心能力
 
 | | 能力 | 说明 |
 | --- | --- | --- |
@@ -45,13 +52,27 @@ Microsoft Store 版即将推出。推出后，它将与独立安装版提供相�
 | ☁️ | 社区协作 | 获取社区译本、请求新翻译、贡献成果，并报告过期或无效文件 |
 | 🌐 | 稳定连接 | 支持离线缓存、系统代理、HTTP/SOCKS 代理、自定义 DNS 与镜像 |
 
-社区译本和本地导入使用同一套校验、备份与恢复流程。更完整的操作说明见 [使用指南](docs/USAGE.md)。
+社区译本和本地导入使用同一套校验、备份与恢复流程。详细操作见 [使用指南](docs/USAGE.md)。
 
-## 🧩 项目生态
+## 系统要求
 
-三个项目共同覆盖 Steam 成就翻译的完整流程：
+- Windows 10 版本 2004（Build 19041）或更高版本，推荐 Windows 11
+- x64 处理器
+- 已安装 Steam；使用离线缓存时可暂时不联网
 
-**制作与审核译本** → **社区收录与分发** → **安装、编辑与恢复**
+发布包已包含所需运行组件，无需另外安装 .NET、Windows App SDK 或 Python。
+
+## 请求或贡献翻译
+
+- **没有现成译本：** 在应用中点击“未找到游戏？”，导出原始 schema ZIP，并前往翻译库提交翻译请愿。
+- **已经完成翻译：** 从编辑页导出标准投稿 ZIP，再通过翻译库的投稿入口提交。
+- **希望使用 Codex 制作：** 打开 [Steam Achievement Localizer Skill](https://github.com/GaBoron/steam-achievement-localizer-skill)，完成翻译后将其 `final/` 目录导入管理器。
+
+详细流程和文件要求见 [制作、导入与贡献翻译](docs/USAGE.md#制作导入与贡献翻译)。
+
+## 项目生态
+
+三个项目共同覆盖 Steam 成就译本的制作、分发和使用：
 
 | 项目 | 定位 | 适合场景 |
 | --- | --- | --- |
@@ -61,30 +82,14 @@ Microsoft Store 版即将推出。推出后，它将与独立安装版提供相�
 
 Localizer Skill 生成的标准 BIN/ZIP 可直接导入管理器，也可提交到翻译库供社区使用。偏好独立桌面编辑器时，可了解第三方项目 [SteamAchievementLocalizer](https://github.com/PanVena/SteamAchievementLocalizer)。
 
-## 🤝 请求或贡献翻译
-
-- **没有现成译本：** 在应用中点击“未找到游戏？”，导出原始 schema ZIP，并前往翻译库提交翻译请愿。
-- **已经完成翻译：** 从编辑页导出标准投稿 ZIP，再通过翻译库的投稿入口提交。
-- **希望使用 Codex 制作：** 打开 [Localizer Skill](https://github.com/GaBoron/steam-achievement-localizer-skill)，完成翻译后将其 `final/` 目录导入管理器。
-
-详细流程和文件要求见 [制作、导入与贡献翻译](docs/USAGE.md#制作导入与贡献翻译)。
-
-## 📚 文档
+## 文档
 
 | 文档 | 内容 |
 | --- | --- |
-| [📖 使用指南](docs/USAGE.md) | 安装、编辑、恢复、投稿、网络设置与常见问题 |
-| [🔐 数据与隐私](docs/PRIVACY.md) | 本地数据、凭据、日志和网络请求说明 |
-| [📦 第三方声明](THIRD_PARTY_NOTICES.md) | 随软件分发的第三方组件和权利说明 |
+| [使用指南](docs/USAGE.md) | 安装、编辑、恢复、投稿、网络设置与常见问题 |
+| [数据与隐私](docs/PRIVACY.md) | 本地数据、凭据、日志和网络请求说明 |
+| [第三方声明](THIRD_PARTY_NOTICES.md) | 随软件分发的第三方组件和权利说明 |
 
-## 🖥️ 系统要求
+## 许可证
 
-- Windows 10 版本 2004（Build 19041）或更高版本，推荐 Windows 11
-- x64 处理器
-- 已安装 Steam；使用离线缓存时可暂时不联网
-
-发布包已包含所需运行组件，无需另外安装 .NET、Windows App SDK 或 Python。
-
-## 📄 许可证
-
-程序代码采用 [MIT License](LICENSE)。第三方组件和翻译数据的权利说明见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
+程序代码采用 [MIT License](LICENSE)。第三方组件和翻译数据的权利说明见 [第三方声明](THIRD_PARTY_NOTICES.md)。
