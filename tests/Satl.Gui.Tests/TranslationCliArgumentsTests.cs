@@ -46,4 +46,22 @@ public sealed class TranslationCliArgumentsTests
         Assert.Contains("--jsonl", arguments);
         Assert.DoesNotContain("--yes", arguments);
     }
+
+    [Fact]
+    public void DefaultPathsPreserveOriginalUserContextForElevatedOperations()
+    {
+        var builder = new TranslationCliArguments(
+            () => new GuiSettings(),
+            () => @"D:\DetectedSteam");
+        var game = new GameItem { AppId = "123", GameName = "Local Game" };
+
+        var arguments = builder.Install(
+            [game],
+            dryRun: false,
+            yes: true,
+            previewContent: false);
+
+        Assert.Contains(@"D:\DetectedSteam", arguments);
+        Assert.Contains(SettingsService.DefaultDataDirectory, arguments);
+    }
 }

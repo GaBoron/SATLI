@@ -70,6 +70,12 @@ public partial class App : Application
         try
         {
             DispatcherQueue = Microsoft.UI.Dispatching.DispatcherQueue.GetForCurrentThread();
+            if (ElevatedCliWorker.TryGetPipeName(Environment.GetCommandLineArgs(), out var pipeName))
+            {
+                await ElevatedCliWorker.RunAsync(pipeName);
+                Exit();
+                return;
+            }
             var current = AppInstance.GetCurrent();
             var activation = current.GetActivatedEventArgs();
             _mainInstance = AppInstance.FindOrRegisterForKey("SATLInstaller.MainWindow");

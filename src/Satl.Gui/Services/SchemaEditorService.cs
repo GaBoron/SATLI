@@ -216,13 +216,10 @@ public sealed class SchemaEditorService
     private static void AddConfiguredPaths(List<string> arguments)
     {
         var settings = App.ViewModel.Settings;
-        if (!string.IsNullOrWhiteSpace(settings.SteamDirectory))
-        {
-            arguments.AddRange(["--steam-dir", settings.SteamDirectory]);
-        }
-        if (!string.IsNullOrWhiteSpace(settings.DataDirectory))
-        {
-            arguments.AddRange(["--data-dir", settings.DataDirectory]);
-        }
+        CliConfiguredPaths.AppendSteamDirectory(
+            arguments,
+            settings,
+            App.ViewModel.Translations.DetectedSteamDirectory);
+        CliConfiguredPaths.AppendDataDirectory(arguments, settings);
     }
 }

@@ -7,6 +7,8 @@ namespace Satl_Gui.Serialization;
 [JsonSourceGenerationOptions(WriteIndented = true)]
 [JsonSerializable(typeof(GuiSettings))]
 [JsonSerializable(typeof(SatlEvent))]
+[JsonSerializable(typeof(CliInvocation))]
+[JsonSerializable(typeof(ElevatedCliResponse))]
 [JsonSerializable(typeof(WindowPlacement))]
 [JsonSerializable(typeof(string))]
 internal sealed partial class SatlJsonSerializerContext : JsonSerializerContext;

@@ -1,13 +1,12 @@
-using System.Diagnostics;
-using System.Text;
-using System.Text.Json;
 using Satl_Gui.Models;
-using Satl_Gui.Serialization;
 
 namespace Satl_Gui.Services;
 
 public sealed class SatlCliService
 {
+    private readonly CliProcessRunner _processRunner = new();
+    private readonly ElevatedCliRunner _elevatedRunner = new();
+
     public async Task<CliRunResult> RunAsync(
         IEnumerable<string> arguments,
         Action<SatlEvent>? onEvent = null,
@@ -17,212 +16,61 @@ public sealed class SatlCliService
         DownloadSourceSettings? downloadSourceSettings = null)
     {
         var argumentList = arguments.ToList();
-        onDiagnostic?.Invoke($"步骤 1：解析 CLI 启动目标。请求参数={FormatArguments(argumentList)}");
-        var launch = ResolveLaunch();
-        onDiagnostic?.Invoke(
-            $"步骤 2：启动目标已解析。可执行文件={launch.FileName}；工作目录={launch.WorkingDirectory}；" +
-            $"前置参数={FormatArguments(launch.PrefixArguments)}；附加环境变量={string.Join(",", launch.Environment.Keys)}");
-        var startInfo = new ProcessStartInfo
+        onDiagnostic?.Invoke($"请求参数={FormatArguments(argumentList)}");
+        var invocation = new CliInvocation(
+            argumentList,
+            BuildEnvironment(
+                argumentList,
+                networkSettings,
+                steamLibrarySettings,
+                downloadSourceSettings));
+
+        if (CliElevationPolicy.RequiresElevation(argumentList)
+            && !ElevatedCliRunner.IsCurrentProcessElevated())
         {
-            FileName = launch.FileName,
-            WorkingDirectory = launch.WorkingDirectory,
-            UseShellExecute = false,
-            CreateNoWindow = true,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            StandardOutputEncoding = Encoding.UTF8,
-            StandardErrorEncoding = Encoding.UTF8,
+            return await _elevatedRunner.RunAsync(invocation, onEvent, onDiagnostic);
+        }
+
+        return await _processRunner.RunAsync(invocation, onEvent, onDiagnostic);
+    }
+
+    public static SatlEvent ParseEvent(string line) => CliProcessRunner.ParseEvent(line);
+
+    private static Dictionary<string, string> BuildEnvironment(
+        IReadOnlyList<string> arguments,
+        NetworkSettings? rawNetworkSettings,
+        SteamLibrarySettings? rawSteamLibrarySettings,
+        DownloadSourceSettings? rawDownloadSourceSettings)
+    {
+        var network = NetworkSettingsValidator.Normalize(rawNetworkSettings);
+        var downloads = DownloadSourceCatalog.Normalize(rawDownloadSourceSettings);
+        var environment = new Dictionary<string, string>
+        {
+            ["PYTHONUTF8"] = "1",
+            ["PYTHONIOENCODING"] = "utf-8",
+            ["SATL_DNS_MODE"] = network.DnsMode,
+            ["SATL_DNS_SERVERS"] = network.DnsServers,
+            ["SATL_PROXY_MODE"] = network.ProxyMode,
+            ["SATL_PROXY_ADDRESS"] = network.ProxyAddress,
+            ["SATL_PROXY_USERNAME"] = network.ProxyUsername,
+            ["SATL_PROXY_PASSWORD"] = network.ProxyPassword,
+            ["SATL_INDEX_SOURCES"] = DownloadSourceCatalog.EnvironmentOrder(downloads.IndexSourceOrder),
+            ["SATL_FILE_SOURCES"] = DownloadSourceCatalog.EnvironmentOrder(downloads.FileSourceOrder),
         };
-        foreach (var prefix in launch.PrefixArguments)
-        {
-            startInfo.ArgumentList.Add(prefix);
-        }
-        foreach (var argument in argumentList)
-        {
-            startInfo.ArgumentList.Add(argument);
-        }
-        foreach (var environment in launch.Environment)
-        {
-            startInfo.Environment[environment.Key] = environment.Value;
-        }
-        startInfo.Environment["PYTHONUTF8"] = "1";
-        startInfo.Environment["PYTHONIOENCODING"] = "utf-8";
-        ApplyNetworkEnvironment(startInfo, networkSettings);
-        ApplyDownloadSourceEnvironment(startInfo, downloadSourceSettings);
-        if (argumentList.Contains("--include-owned-games", StringComparer.Ordinal))
-        {
-            ApplySteamLibraryEnvironment(startInfo, steamLibrarySettings);
-        }
-        onDiagnostic?.Invoke(
-            $"步骤 3：进程启动信息已组装。完整参数={FormatArguments(startInfo.ArgumentList)}；" +
-            "标准输出/标准错误=UTF-8 重定向；隐藏控制台窗口=True。");
 
-        using var process = new Process { StartInfo = startInfo };
-        onDiagnostic?.Invoke("步骤 4：正在启动 satl 命令行核心。");
-        if (!process.Start())
+        if (arguments.Contains("--include-owned-games", StringComparer.Ordinal))
         {
-            throw new InvalidOperationException("无法启动 satl 命令行核心。");
-        }
-        onDiagnostic?.Invoke($"步骤 5：satl 进程已启动。PID={process.Id}。");
-
-        var stderrTask = process.StandardError.ReadToEndAsync();
-        var events = new List<SatlEvent>();
-        var outputLine = 0;
-        while (await process.StandardOutput.ReadLineAsync() is { } line)
-        {
-            outputLine++;
-            onDiagnostic?.Invoke($"步骤 6.{outputLine}：收到 stdout 原始行：{line}");
-            if (string.IsNullOrWhiteSpace(line))
+            var steamLibrary = SteamLibrarySettingsValidator.Normalize(rawSteamLibrarySettings);
+            if (steamLibrary.Enabled && !string.IsNullOrEmpty(steamLibrary.ApiKey))
             {
-                onDiagnostic?.Invoke($"步骤 6.{outputLine}：该行为空，已跳过。");
-                continue;
-            }
-            var parsed = ParseEvent(line);
-            events.Add(parsed);
-            onDiagnostic?.Invoke(
-                $"步骤 6.{outputLine}：事件解析完成。operation={parsed.Operation}；event={parsed.Event}；payload={parsed.Payload.GetRawText()}");
-            onEvent?.Invoke(parsed);
-        }
-
-        onDiagnostic?.Invoke("步骤 7：stdout 已关闭，等待 CLI 进程退出。");
-        await process.WaitForExitAsync();
-        var standardError = (await stderrTask).Trim();
-        onDiagnostic?.Invoke(
-            $"步骤 8：CLI 进程已退出。PID={process.Id}；退出码={process.ExitCode}；事件数={events.Count}；" +
-            $"stderr={(string.IsNullOrEmpty(standardError) ? "<空>" : standardError)}");
-        return new CliRunResult(process.ExitCode, events, standardError);
-    }
-
-    public static SatlEvent ParseEvent(string line)
-    {
-        SatlEvent parsed;
-        try
-        {
-            parsed = JsonSerializer.Deserialize(
-                line,
-                SatlJsonSerializerContext.Default.SatlEvent)
-                ?? throw new InvalidDataException("SATL 返回了空事件。");
-        }
-        catch (JsonException exception)
-        {
-            throw new InvalidDataException($"SATL 返回了无效事件：{line}", exception);
-        }
-        if (parsed.ProtocolVersion != 1)
-        {
-            throw new InvalidDataException($"不支持的 SATL GUI 协议版本：{parsed.ProtocolVersion}");
-        }
-        return parsed;
-    }
-
-    private static LaunchInfo ResolveLaunch()
-    {
-        var overridePath = Environment.GetEnvironmentVariable("SATL_CLI_PATH");
-        if (!string.IsNullOrWhiteSpace(overridePath) && File.Exists(overridePath))
-        {
-            return new LaunchInfo(
-                overridePath,
-                Path.GetDirectoryName(overridePath)!,
-                [],
-                new Dictionary<string, string>());
-        }
-
-        var applicationDirectory = ResolveApplicationDirectory();
-        var runtimeDirectory = Path.Combine(applicationDirectory, "_runtime");
-        var embeddedPython = Path.Combine(runtimeDirectory, "python.exe");
-        var applicationArchive = Path.Combine(runtimeDirectory, "satl.pyz");
-        if (File.Exists(embeddedPython) && File.Exists(applicationArchive))
-        {
-            return new LaunchInfo(
-                embeddedPython,
-                applicationDirectory,
-                [applicationArchive],
-                new Dictionary<string, string>
-                {
-                    ["PYTHONUTF8"] = "1",
-                    ["PYTHONIOENCODING"] = "utf-8",
-                });
-        }
-
-        for (var directory = new DirectoryInfo(applicationDirectory); directory is not null; directory = directory.Parent)
-        {
-            if (!File.Exists(Path.Combine(directory.FullName, "pyproject.toml")))
-            {
-                continue;
-            }
-            var python = Path.Combine(directory.FullName, ".venv", "Scripts", "python.exe");
-            if (File.Exists(python))
-            {
-                return new LaunchInfo(
-                    python,
-                    directory.FullName,
-                    ["-m", "satl"],
-                    new Dictionary<string, string>
-                    {
-                        ["PYTHONPATH"] = Path.Combine(directory.FullName, "src"),
-                    });
+                environment["SATL_STEAM_WEB_API_KEY"] = steamLibrary.ApiKey;
             }
         }
-
-        throw new FileNotFoundException("SATL 运行文件不完整，请重新安装此软件。", applicationArchive);
-    }
-
-    private static string ResolveApplicationDirectory()
-    {
-        var processPath = Environment.ProcessPath;
-        if (!string.IsNullOrWhiteSpace(processPath) &&
-            Path.GetDirectoryName(processPath) is { Length: > 0 } processDirectory)
-        {
-            return processDirectory;
-        }
-
-        return AppContext.BaseDirectory;
+        return environment;
     }
 
     private static string FormatArguments(IEnumerable<string> arguments) =>
         string.Join(
             " ",
-            arguments.Select(argument => JsonSerializer.Serialize(
-                argument,
-                SatlJsonSerializerContext.Default.String)));
-
-    private static void ApplyNetworkEnvironment(
-        ProcessStartInfo startInfo,
-        NetworkSettings? rawSettings)
-    {
-        var settings = NetworkSettingsValidator.Normalize(rawSettings);
-        startInfo.Environment["SATL_DNS_MODE"] = settings.DnsMode;
-        startInfo.Environment["SATL_DNS_SERVERS"] = settings.DnsServers;
-        startInfo.Environment["SATL_PROXY_MODE"] = settings.ProxyMode;
-        startInfo.Environment["SATL_PROXY_ADDRESS"] = settings.ProxyAddress;
-        startInfo.Environment["SATL_PROXY_USERNAME"] = settings.ProxyUsername;
-        startInfo.Environment["SATL_PROXY_PASSWORD"] = settings.ProxyPassword;
-    }
-
-    private static void ApplyDownloadSourceEnvironment(
-        ProcessStartInfo startInfo,
-        DownloadSourceSettings? rawSettings)
-    {
-        var settings = DownloadSourceCatalog.Normalize(rawSettings);
-        startInfo.Environment["SATL_INDEX_SOURCES"] =
-            DownloadSourceCatalog.EnvironmentOrder(settings.IndexSourceOrder);
-        startInfo.Environment["SATL_FILE_SOURCES"] =
-            DownloadSourceCatalog.EnvironmentOrder(settings.FileSourceOrder);
-    }
-
-    private static void ApplySteamLibraryEnvironment(
-        ProcessStartInfo startInfo,
-        SteamLibrarySettings? rawSettings)
-    {
-        var settings = SteamLibrarySettingsValidator.Normalize(rawSettings);
-        if (settings.Enabled && !string.IsNullOrEmpty(settings.ApiKey))
-        {
-            startInfo.Environment["SATL_STEAM_WEB_API_KEY"] = settings.ApiKey;
-        }
-    }
-
-    private sealed record LaunchInfo(
-        string FileName,
-        string WorkingDirectory,
-        IReadOnlyList<string> PrefixArguments,
-        IReadOnlyDictionary<string, string> Environment);
+            arguments.Select(argument => System.Text.Json.JsonSerializer.Serialize(argument)));
 }

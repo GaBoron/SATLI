@@ -14,12 +14,13 @@ public sealed class SettingsService
         Encoding.UTF8.GetBytes("SATLInstaller.SteamApiKey.v1");
     private readonly string _path;
 
+    public static string DefaultDataDirectory => Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+        "SteamAchievementTranslationInstaller");
+
     public SettingsService(string? path = null)
     {
-        _path = path ?? Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "SteamAchievementTranslationInstaller",
-            "gui-settings.json");
+        _path = path ?? Path.Combine(DefaultDataDirectory, "gui-settings.json");
     }
 
     public string SettingsPath => _path;

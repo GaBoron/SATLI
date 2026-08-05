@@ -98,14 +98,11 @@ public sealed class LocalImportService
             arguments.AddRange(["--expected-sha256", expectedSha256!]);
         }
         arguments.Add("--jsonl");
-        if (!string.IsNullOrWhiteSpace(settings.DataDirectory))
-        {
-            arguments.AddRange(["--data-dir", settings.DataDirectory]);
-        }
-        if (!string.IsNullOrWhiteSpace(settings.SteamDirectory))
-        {
-            arguments.AddRange(["--steam-dir", settings.SteamDirectory]);
-        }
+        CliConfiguredPaths.AppendDataDirectory(arguments, settings);
+        CliConfiguredPaths.AppendSteamDirectory(
+            arguments,
+            settings,
+            App.ViewModel.Translations.DetectedSteamDirectory);
         return arguments;
     }
 

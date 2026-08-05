@@ -30,7 +30,7 @@ public sealed class TranslationManagementViewModel : ObservableObject
         _settings = settings;
         _operation = operation;
         _showInfo = showInfo;
-        _arguments = new TranslationCliArguments(settings);
+        _arguments = new TranslationCliArguments(settings, () => DetectedSteamDirectory);
     }
 
     public ObservableCollection<GameItem> Games { get; } = [];

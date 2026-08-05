@@ -74,7 +74,11 @@ public static class UpdateDialogService
                     reporter,
                     cancellation.Token);
                 status.Text = "校验完成，正在打开安装界面…";
-                Process.Start(new ProcessStartInfo(installer) { UseShellExecute = true });
+                Process.Start(new ProcessStartInfo(installer)
+                {
+                    UseShellExecute = true,
+                    Verb = "runas",
+                });
                 await App.Logs.WriteAsync("信息", "更新", $"已启动新版安装程序：{installer}");
                 dialog.Hide();
                 App.Window.Close();

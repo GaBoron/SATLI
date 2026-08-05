@@ -2,7 +2,9 @@ using Satl_Gui.Models;
 
 namespace Satl_Gui.Services;
 
-public sealed class TranslationCliArguments(Func<GuiSettings> settings)
+public sealed class TranslationCliArguments(
+    Func<GuiSettings> settings,
+    Func<string?>? detectedSteamDirectory = null)
 {
     public List<string> Install(
         IReadOnlyList<GameItem> selected,
@@ -129,19 +131,14 @@ public sealed class TranslationCliArguments(Func<GuiSettings> settings)
 
     private void AddDataDirectory(List<string> arguments)
     {
-        var value = settings().DataDirectory;
-        if (!string.IsNullOrWhiteSpace(value))
-        {
-            arguments.AddRange(["--data-dir", value]);
-        }
+        CliConfiguredPaths.AppendDataDirectory(arguments, settings());
     }
 
     private void AddSteamDirectory(List<string> arguments)
     {
-        var value = settings().SteamDirectory;
-        if (!string.IsNullOrWhiteSpace(value))
-        {
-            arguments.AddRange(["--steam-dir", value]);
-        }
+        CliConfiguredPaths.AppendSteamDirectory(
+            arguments,
+            settings(),
+            detectedSteamDirectory?.Invoke());
     }
 }

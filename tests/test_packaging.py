@@ -6,16 +6,27 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def test_gui_and_installer_request_administrator_privileges() -> None:
+def test_gui_uses_on_demand_elevation_while_installer_stays_administrative() -> None:
     manifest = (ROOT / "src" / "Satl.Gui" / "app.manifest").read_text(encoding="utf-8")
     installer = (ROOT / "installer" / "SATLInstaller.iss").read_text(encoding="utf-8")
+    cli_service = (
+        ROOT / "src" / "Satl.Gui" / "Services" / "SatlCliService.cs"
+    ).read_text(encoding="utf-8")
+    elevated_runner = (
+        ROOT / "src" / "Satl.Gui" / "Services" / "ElevatedCliRunner.cs"
+    ).read_text(encoding="utf-8")
 
-    assert 'requestedExecutionLevel level="requireAdministrator"' in manifest
+    assert 'requestedExecutionLevel level="asInvoker"' in manifest
+    assert 'requestedExecutionLevel level="requireAdministrator"' not in manifest
+    assert "CliElevationPolicy.RequiresElevation" in cli_service
+    assert 'Verb = "runas"' in elevated_runner
+    assert "PipeSecurity" in elevated_runner
+    assert "WellKnownSidType.BuiltinAdministratorsSid" in elevated_runner
     assert "PrivilegesRequired=admin" in installer
     assert "UsedUserAreasWarning=no" in installer
     assert "DefaultDirName={autopf}" in installer
-    assert "runascurrentuser" in installer
-    assert "runasoriginaluser" not in installer
+    assert "runasoriginaluser" in installer
+    assert "runascurrentuser" not in installer
 
 
 def test_installed_app_name_does_not_include_the_version() -> None:
@@ -107,15 +118,15 @@ def test_release_bundles_pinned_pure_python_git_dependency() -> None:
 
 
 def test_gui_resolves_the_internal_python_runtime() -> None:
-    gui_service = (
-        ROOT / "src" / "Satl.Gui" / "Services" / "SatlCliService.cs"
+    process_runner = (
+        ROOT / "src" / "Satl.Gui" / "Services" / "CliProcessRunner.cs"
     ).read_text(encoding="utf-8")
 
-    assert "var processPath = Environment.ProcessPath;" in gui_service
-    assert "var applicationDirectory = ResolveApplicationDirectory();" in gui_service
-    assert 'Path.Combine(applicationDirectory, "_runtime")' in gui_service
-    assert 'Path.Combine(runtimeDirectory, "python.exe")' in gui_service
-    assert 'Path.Combine(runtimeDirectory, "satl.pyz")' in gui_service
+    assert "var processPath = Environment.ProcessPath;" in process_runner
+    assert "var applicationDirectory = ResolveApplicationDirectory();" in process_runner
+    assert 'Path.Combine(applicationDirectory, "_runtime")' in process_runner
+    assert 'Path.Combine(runtimeDirectory, "python.exe")' in process_runner
+    assert 'Path.Combine(runtimeDirectory, "satl.pyz")' in process_runner
 
 
 def test_main_view_model_delegates_translation_workflows() -> None:
