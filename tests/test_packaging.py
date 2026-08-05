@@ -136,11 +136,39 @@ def test_main_view_model_delegates_translation_workflows() -> None:
     translation_view_model = (
         ROOT / "src" / "Satl.Gui" / "ViewModels" / "TranslationManagementViewModel.cs"
     ).read_text(encoding="utf-8")
+    translation_operations = (
+        ROOT
+        / "src"
+        / "Satl.Gui"
+        / "ViewModels"
+        / "TranslationManagementViewModel.Operations.cs"
+    ).read_text(encoding="utf-8")
 
     assert "TranslationManagementViewModel Translations" in main_view_model
     assert "SatlCliService" not in main_view_model
-    assert "PreviewCurrentAsync" in translation_view_model
+    assert "PreviewCurrentAsync" in translation_operations
     assert len(main_view_model.splitlines()) < 400
+    assert len(translation_view_model.splitlines()) < 200
+    assert len(translation_operations.splitlines()) < 400
+
+
+def test_achievement_editor_page_is_split_by_ui_responsibility() -> None:
+    page_root = ROOT / "src" / "Satl.Gui" / "Pages"
+    files = {
+        "lifecycle": page_root / "AchievementEditorPage.xaml.cs",
+        "editing": page_root / "AchievementEditorPage.Editing.cs",
+        "persistence": page_root / "AchievementEditorPage.Persistence.cs",
+        "navigation": page_root / "AchievementEditorPage.Navigation.cs",
+    }
+
+    for path in files.values():
+        assert path.is_file()
+        assert len(path.read_text(encoding="utf-8").splitlines()) < 250
+
+    assert "OnNavigatedTo" in files["lifecycle"].read_text(encoding="utf-8")
+    assert "SelectTargetLanguageAsync" in files["editing"].read_text(encoding="utf-8")
+    assert "SaveChangesAsync" in files["persistence"].read_text(encoding="utf-8")
+    assert "Frame_Navigating" in files["navigation"].read_text(encoding="utf-8")
 
 
 def test_release_surfaces_installable_artifacts_only() -> None:

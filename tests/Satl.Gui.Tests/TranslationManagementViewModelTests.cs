@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Satl_Gui.Models;
+using Satl_Gui.Services;
 using Satl_Gui.ViewModels;
 using Xunit;
 
@@ -91,5 +92,26 @@ public sealed class TranslationManagementViewModelTests
 
         Assert.Throws<InvalidDataException>(
             () => TranslationManagementViewModel.ParseCurrentPreview(result, game));
+    }
+
+    [Fact]
+    public void BatchPreviewParserRejectsIncompleteResponse()
+    {
+        using var document = JsonDocument.Parse(
+            """{"app_id":"123","achievement_count":0,"languages":[],"rows":[]}""");
+        var result = new CliRunResult(
+            0,
+            [new SatlEvent(1, "install", "item-preview", document.RootElement.Clone())],
+            string.Empty);
+        var selected = new[]
+        {
+            new GameItem { AppId = "123", GameName = "First" },
+            new GameItem { AppId = "456", GameName = "Second" },
+        };
+
+        var exception = Assert.Throws<InvalidDataException>(
+            () => TranslationPreviewParser.ParseBatch(result, selected));
+
+        Assert.Contains("请求 2 个，收到 1 个", exception.Message);
     }
 }
