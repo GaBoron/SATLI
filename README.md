@@ -85,16 +85,6 @@ Localizer Skill 生成的标准 BIN/ZIP 可直接导入管理器，也可提交�
 
 发布包已包含所需运行组件，无需另外安装 .NET、Windows App SDK 或 Python。
 
-## 🛠️ 本地构建
-
-正式发布包只在本地生成，GitHub Actions 仅运行测试。准备 Python 3.13、.NET 10 SDK、Inno Setup 6 和 Windows SDK 后：
-
-1. 将 `store/identity.example.json` 复制为被 Git 忽略的 `store/identity.json`，填入 Partner Center 产品身份。
-2. 运行 `./scripts/build.ps1 -Target All`。
-3. 从 `dist/release/` 获取 GitHub 安装器 EXE 和商店 MSIX，并分别手动上传。
-
-也可使用 `-Target Installer` 或 `-Target StoreMsix` 单独验证某个发布渠道。构建会在打包前后自动检查本机路径和私人邮箱泄露。
-
 ## 📄 许可证
 
 程序代码采用 [MIT License](LICENSE)。第三方组件和翻译数据的权利说明见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
