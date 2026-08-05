@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 
@@ -108,6 +109,7 @@ def test_store_msix_is_a_full_trust_desktop_package() -> None:
     package_module = (
         ROOT / "scripts" / "StoreMsixPackage.psm1"
     ).read_text(encoding="utf-8")
+    identity = json.loads((ROOT / "store" / "identity.json").read_text(encoding="utf-8"))
 
     assert 'EntryPoint="Windows.FullTrustApplication"' in manifest
     assert '<rescap:Capability Name="runFullTrust" />' in manifest
@@ -115,7 +117,15 @@ def test_store_msix_is_a_full_trust_desktop_package() -> None:
     assert 'ProcessorArchitecture="x64"' in manifest
     assert "{{PACKAGE_IDENTITY_NAME}}" in manifest
     assert "{{PACKAGE_PUBLISHER}}" in manifest
+    assert "{{PACKAGE_DISPLAY_NAME}}" in manifest
     assert '[ValidateSet("Installer", "StoreMsix")]' in build_script
+    assert identity == {
+        "packageIdentityName": "GaBoron.SATLI",
+        "packagePublisher": "CN=1D797E8D-B698-4922-B05F-9651C7AA6F0A",
+        "packageDisplayName": "SATLI",
+        "publisherDisplayName": "GaBoron",
+    }
+    assert 'Get-Content -LiteralPath $StoreIdentityPath' in build_script
     assert "New-SatlStoreMsix" in build_script
     assert 'return "$($parsed.Major).$($parsed.Minor).$($parsed.Build).0"' in package_module
     assert "makeappx.exe" in package_module

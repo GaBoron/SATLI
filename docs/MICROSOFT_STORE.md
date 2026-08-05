@@ -10,22 +10,19 @@ MSIX 与现有 Inno Setup 安装程序复用相同的 WinUI 单文件程序和�
 
 ## Partner Center 准备
 
-先在 Partner Center 中创建应用并保留名称，然后从“产品标识”页面取得以下三个值：
+Partner Center 的正式产品标识保存在 `store/identity.json`，当前值为：
 
-- Package/Identity/Name
-- Package/Identity/Publisher（通常以 `CN=` 开头）
-- Package/Properties/PublisherDisplayName
+- Package/Identity/Name：`GaBoron.SATLI`
+- Package/Identity/Publisher：`CN=1D797E8D-B698-4922-B05F-9651C7AA6F0A`
+- Package/Properties/DisplayName：`SATLI`
+- Package/Properties/PublisherDisplayName：`GaBoron`
 
-仓库中的默认值只用于本地打包验证，不能代替 Partner Center 分配的正式标识。正式提交时，清单标识必须与 Partner Center 完全一致。
+这些值必须与 Partner Center 的“产品标识”和已保留名称完全一致。若以后关联到另一个 Store 产品，应先更新该配置；正常构建不应在命令行重复输入或临时覆盖正式标识。
 
 ## 构建 Store MSIX
 
 ```powershell
-.\scripts\build.ps1 `
-  -Target StoreMsix `
-  -PackageIdentityName '<Partner Center Identity Name>' `
-  -PackagePublisher '<Partner Center Publisher>' `
-  -PublisherDisplayName '<Partner Center Publisher Display Name>'
+.\scripts\build.ps1 -Target StoreMsix
 ```
 
 产物位于 `dist\release\`：
@@ -39,7 +36,7 @@ MSIX 与现有 Inno Setup 安装程序复用相同的 WinUI 单文件程序和�
 
 ## 提交前检查
 
-1. 使用正式 Partner Center 标识重新构建。
+1. 核对 `store/identity.json` 与 Partner Center 当前产品标识完全一致。
 2. 运行 Python 与 C# 测试，并在未打包和本地签名的 MSIX 环境分别验证启动。
 3. 验证 Steam 扫描、文件选择器、安装、恢复、按需 UAC 和单实例激活。
 4. 使用 Windows App Certification Kit 检查最终包。

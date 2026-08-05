@@ -2,19 +2,6 @@ name: Build Microsoft Store MSIX
 
 on:
   workflow_dispatch:
-    inputs:
-      package_identity_name:
-        description: Partner Center Package/Identity/Name
-        required: true
-        type: string
-      package_publisher:
-        description: Partner Center Package/Identity/Publisher
-        required: true
-        type: string
-      publisher_display_name:
-        description: Partner Center PublisherDisplayName
-        required: true
-        type: string
 
 permissions:
   contents: read
@@ -22,10 +9,6 @@ permissions:
 jobs:
   build-store-msix:
     runs-on: windows-latest
-    env:
-      STORE_PACKAGE_IDENTITY_NAME: ${{ inputs.package_identity_name }}
-      STORE_PACKAGE_PUBLISHER: ${{ inputs.package_publisher }}
-      STORE_PUBLISHER_DISPLAY_NAME: ${{ inputs.publisher_display_name }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -37,12 +20,7 @@ jobs:
       - run: dotnet test ./tests/Satl.Gui.Tests/Satl.Gui.Tests.csproj -c Release -p:Platform=x64
       - name: Build unsigned Store package
         shell: powershell
-        run: |
-          ./scripts/build.ps1 `
-            -Target StoreMsix `
-            -PackageIdentityName $env:STORE_PACKAGE_IDENTITY_NAME `
-            -PackagePublisher $env:STORE_PACKAGE_PUBLISHER `
-            -PublisherDisplayName $env:STORE_PUBLISHER_DISPLAY_NAME
+        run: ./scripts/build.ps1 -Target StoreMsix
       - uses: actions/upload-artifact@v4
         with:
           name: satl-microsoft-store-msix

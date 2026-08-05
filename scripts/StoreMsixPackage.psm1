@@ -19,6 +19,7 @@ function Assert-SatlPackageIdentity {
     param(
         [Parameter(Mandatory)][string] $Name,
         [Parameter(Mandatory)][string] $Publisher,
+        [Parameter(Mandatory)][string] $DisplayName,
         [Parameter(Mandatory)][string] $PublisherDisplayName
     )
 
@@ -27,6 +28,9 @@ function Assert-SatlPackageIdentity {
     }
     if ($Publisher -notmatch '^CN=.+') {
         throw "Package publisher must be the Partner Center subject, normally beginning with CN=."
+    }
+    if ([string]::IsNullOrWhiteSpace($DisplayName) -or $DisplayName.Length -gt 256) {
+        throw "Package display name must be the reserved Partner Center name and no more than 256 characters."
     }
     if ([string]::IsNullOrWhiteSpace($PublisherDisplayName)) {
         throw "Publisher display name must not be empty."
@@ -112,10 +116,15 @@ function New-SatlStoreMsix {
         [Parameter(Mandatory)][string] $Version,
         [Parameter(Mandatory)][string] $PackageIdentityName,
         [Parameter(Mandatory)][string] $PackagePublisher,
+        [Parameter(Mandatory)][string] $PackageDisplayName,
         [Parameter(Mandatory)][string] $PublisherDisplayName
     )
 
-    Assert-SatlPackageIdentity $PackageIdentityName $PackagePublisher $PublisherDisplayName
+    Assert-SatlPackageIdentity `
+        $PackageIdentityName `
+        $PackagePublisher `
+        $PackageDisplayName `
+        $PublisherDisplayName
     $packageVersion = ConvertTo-SatlMsixVersion $Version
     $manifestPath = Join-Path $PayloadRoot 'AppxManifest.xml'
     $assetRoot = Join-Path $PayloadRoot 'Assets'
@@ -128,6 +137,9 @@ function New-SatlStoreMsix {
     $manifest = $manifest.Replace(
         '{{PACKAGE_PUBLISHER}}',
         [System.Security.SecurityElement]::Escape($PackagePublisher))
+    $manifest = $manifest.Replace(
+        '{{PACKAGE_DISPLAY_NAME}}',
+        [System.Security.SecurityElement]::Escape($PackageDisplayName))
     $manifest = $manifest.Replace(
         '{{PUBLISHER_DISPLAY_NAME}}',
         [System.Security.SecurityElement]::Escape($PublisherDisplayName))

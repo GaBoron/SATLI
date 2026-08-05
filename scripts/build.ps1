@@ -2,9 +2,10 @@
 param(
     [ValidateSet("Installer", "StoreMsix")]
     [string] $Target = "Installer",
-    [string] $PackageIdentityName = "GaBoron.SteamAchievementTranslationManager",
-    [string] $PackagePublisher = "CN=GaBoron",
-    [string] $PublisherDisplayName = "GaBoron"
+    [string] $PackageIdentityName,
+    [string] $PackagePublisher,
+    [string] $PackageDisplayName,
+    [string] $PublisherDisplayName
 )
 
 $ErrorActionPreference = "Stop"
@@ -26,6 +27,7 @@ $InstallerScript = Join-Path $ProjectRoot "installer\SATLInstaller.iss"
 $IconPath = Join-Path $ProjectRoot "src\Satl.Gui\Assets\AppIcon.ico"
 $IconSourcePath = Join-Path $ProjectRoot "src\Satl.Gui\Assets\AppIcon.source.png"
 $StoreManifestTemplate = Join-Path $ProjectRoot "store\Package.appxmanifest.template"
+$StoreIdentityPath = Join-Path $ProjectRoot "store\identity.json"
 $StorePackageModule = Join-Path $PSScriptRoot "StoreMsixPackage.psm1"
 $EmbeddedPythonVersion = "3.13.13"
 $EmbeddedPythonArchiveName = "python-$EmbeddedPythonVersion-embed-amd64.zip"
@@ -39,6 +41,22 @@ $MaximumPackageSizeBytes = 140MB
 $Version = @($GuiProjectXml.Project.PropertyGroup.Version | Where-Object { $_ })[0]
 if ([string]::IsNullOrWhiteSpace($Version)) {
     throw "The WinUI project does not define a release version"
+}
+if ($Target -eq "StoreMsix") {
+    $StoreIdentity = Get-Content -LiteralPath $StoreIdentityPath -Raw -Encoding UTF8 |
+        ConvertFrom-Json
+    if ([string]::IsNullOrWhiteSpace($PackageIdentityName)) {
+        $PackageIdentityName = $StoreIdentity.packageIdentityName
+    }
+    if ([string]::IsNullOrWhiteSpace($PackagePublisher)) {
+        $PackagePublisher = $StoreIdentity.packagePublisher
+    }
+    if ([string]::IsNullOrWhiteSpace($PackageDisplayName)) {
+        $PackageDisplayName = $StoreIdentity.packageDisplayName
+    }
+    if ([string]::IsNullOrWhiteSpace($PublisherDisplayName)) {
+        $PublisherDisplayName = $StoreIdentity.publisherDisplayName
+    }
 }
 $SetupName = "SATLInstaller-Setup-v$Version.exe"
 $SetupExecutable = Join-Path $ReleaseRoot $SetupName
@@ -279,6 +297,7 @@ try {
             -Version $Version `
             -PackageIdentityName $PackageIdentityName `
             -PackagePublisher $PackagePublisher `
+            -PackageDisplayName $PackageDisplayName `
             -PublisherDisplayName $PublisherDisplayName
     }
     else {
