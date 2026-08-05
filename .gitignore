@@ -90,7 +90,12 @@ secrets.json
 appsettings.Development.json
 appsettings.Local.json
 **/Properties/launchSettings.json
-store/identity.json
+
+# Local release packaging
+store/
+scripts/build.ps1
+scripts/StoreMsixPackage.psm1
+tests/test_packaging.py
 
 # Logs, crash dumps, and temporary files
 *.log
