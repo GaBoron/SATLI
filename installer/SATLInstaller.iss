@@ -44,10 +44,6 @@ WizardStyle=modern
 ChangesEnvironment=no
 CloseApplications=yes
 RestartApplications=no
-#ifdef SignToolName
-SignTool={#SignToolName}
-SignedUninstaller=yes
-#endif
 
 [Languages]
 Name: "chinesesimp"; MessagesFile: "{#SourcePath}\ChineseSimplified.isl"

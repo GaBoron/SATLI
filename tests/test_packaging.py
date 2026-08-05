@@ -89,28 +89,6 @@ def test_release_build_has_size_guard_and_cleans_staging_directories() -> None:
     assert "Remove-Item -LiteralPath $Path -Recurse -Force" in build_script
 
 
-def test_release_build_supports_publicly_trusted_authenticode_signing() -> None:
-    build_script = (ROOT / "scripts" / "build.ps1").read_text(encoding="utf-8")
-    signing_module = (ROOT / "scripts" / "CodeSigning.psm1").read_text(encoding="utf-8")
-    installer = (ROOT / "installer" / "SATLInstaller.iss").read_text(encoding="utf-8")
-    workflow = (ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
-
-    assert "SATL_SIGNING_CERTIFICATE_SHA1" in build_script
-    assert "-RequirePublicTrust:$RequireCodeSigning" in build_script
-    assert "Invoke-AuthenticodeSign -Context $CodeSigningContext -Path $GuiExecutable" in (
-        build_script
-    )
-    assert "Assert-AuthenticodeSignature -Context $CodeSigningContext -Path $SetupExecutable" in (
-        build_script
-    )
-    assert '"/fd", "SHA256"' in signing_module
-    assert '"/td", "SHA256"' in signing_module
-    assert "A self-signed certificate cannot be used" in signing_module
-    assert "SignTool={#SignToolName}" in installer
-    assert "SignedUninstaller=yes" in installer
-    assert "./scripts/build.ps1 -RequireCodeSigning" in workflow
-
-
 def test_release_bundles_pinned_pure_python_git_dependency() -> None:
     project = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
     build_script = (ROOT / "scripts" / "build.ps1").read_text(encoding="utf-8")

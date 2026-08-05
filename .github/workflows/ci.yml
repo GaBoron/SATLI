@@ -34,17 +34,8 @@ jobs:
           python-version: "3.13"
           cache: pip
       - run: python -m pip install -e ".[dev]"
-      - name: Build release package
-        shell: powershell
-        env:
-          SATL_SIGNING_CERTIFICATE_SHA1: ${{ vars.SATL_SIGNING_CERTIFICATE_SHA1 }}
-        run: |
-          if ('${{ startsWith(github.ref, 'refs/tags/v') }}' -eq 'true') {
-            ./scripts/build.ps1 -RequireCodeSigning
-          }
-          else {
-            ./scripts/build.ps1
-          }
+      - shell: powershell
+        run: ./scripts/build.ps1
       - name: Rename manual test build
         if: github.event_name == 'workflow_dispatch'
         shell: powershell
