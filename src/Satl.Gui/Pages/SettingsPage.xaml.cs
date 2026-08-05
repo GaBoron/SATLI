@@ -46,6 +46,12 @@ public sealed partial class SettingsPage : Page
         UpdateStatusText.Text = $"当前版本 v{UpdateService.CurrentVersionText}。";
         AboutVersionText.Text = $"版本 {UpdateService.CurrentVersionText} · Windows 10/11 x64";
         OpenReleaseButton.Visibility = ViewModel.LatestReleasePage is null ? Visibility.Collapsed : Visibility.Visible;
+        StoreUpdateNotice.Visibility = ViewModel.UsesStoreManagedUpdates
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+        GitHubUpdateSettings.Visibility = ViewModel.UsesStoreManagedUpdates
+            ? Visibility.Collapsed
+            : Visibility.Visible;
         RefreshDirectoryLabels();
         _isInitializing = false;
     }

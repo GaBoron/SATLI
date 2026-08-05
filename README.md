@@ -74,6 +74,7 @@ Localizer Skill 生成的标准 BIN/ZIP 可直接导入管理器，也可提交�
 | [📖 使用指南](docs/USAGE.md) | 安装、编辑、恢复、投稿、网络设置与常见问题 |
 | [🔐 数据与隐私](docs/PRIVACY.md) | 本地数据、凭据、日志和网络请求说明 |
 | [🛠️ 开发与构建](docs/DEVELOPMENT.md) | 开发环境、测试、构建流程与项目结构 |
+| [🏪 Microsoft Store 发布](docs/MICROSOFT_STORE.md) | MSIX 打包模型、Partner Center 标识与提交检查 |
 | [📦 第三方声明](THIRD_PARTY_NOTICES.md) | 随软件分发的第三方组件和权利说明 |
 
 ## 🖥️ 系统要求

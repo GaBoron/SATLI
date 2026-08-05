@@ -220,7 +220,15 @@
             </StackPanel>
 
             <TextBlock Text="软件更新" Style="{StaticResource SubtitleTextBlockStyle}" Margin="0,12,0,0" />
-            <StackPanel Spacing="8">
+            <Border x:Name="StoreUpdateNotice" Style="{StaticResource SettingsCardStyle}" Visibility="Collapsed">
+                <Grid Style="{StaticResource SettingsRowStyle}">
+                    <StackPanel VerticalAlignment="Center" Spacing="3">
+                        <TextBlock Text="Microsoft Store 更新" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                        <TextBlock Text="此安装版本由 Microsoft Store 自动检查、下载和安装软件更新。" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+            <StackPanel x:Name="GitHubUpdateSettings" Spacing="8">
                 <Border Style="{StaticResource SettingsCardStyle}">
                     <Grid Style="{StaticResource SettingsRowStyle}">
                         <Grid.ColumnDefinitions>

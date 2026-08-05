@@ -100,6 +100,45 @@ def test_release_build_has_size_guard_and_cleans_staging_directories() -> None:
     assert "Remove-Item -LiteralPath $Path -Recurse -Force" in build_script
 
 
+def test_store_msix_is_a_full_trust_desktop_package() -> None:
+    manifest = (
+        ROOT / "store" / "Package.appxmanifest.template"
+    ).read_text(encoding="utf-8")
+    build_script = (ROOT / "scripts" / "build.ps1").read_text(encoding="utf-8")
+    package_module = (
+        ROOT / "scripts" / "StoreMsixPackage.psm1"
+    ).read_text(encoding="utf-8")
+
+    assert 'EntryPoint="Windows.FullTrustApplication"' in manifest
+    assert '<rescap:Capability Name="runFullTrust" />' in manifest
+    assert '<Capability Name="internetClient" />' in manifest
+    assert 'ProcessorArchitecture="x64"' in manifest
+    assert "{{PACKAGE_IDENTITY_NAME}}" in manifest
+    assert "{{PACKAGE_PUBLISHER}}" in manifest
+    assert '[ValidateSet("Installer", "StoreMsix")]' in build_script
+    assert "New-SatlStoreMsix" in build_script
+    assert 'return "$($parsed.Major).$($parsed.Minor).$($parsed.Build).0"' in package_module
+    assert "makeappx.exe" in package_module
+
+
+def test_store_install_uses_store_managed_updates() -> None:
+    distribution_service = (
+        ROOT / "src" / "Satl.Gui" / "Services" / "ApplicationDistributionService.cs"
+    ).read_text(encoding="utf-8")
+    main_view_model = (
+        ROOT / "src" / "Satl.Gui" / "ViewModels" / "MainViewModel.cs"
+    ).read_text(encoding="utf-8")
+    settings_page = (
+        ROOT / "src" / "Satl.Gui" / "Pages" / "SettingsPage.xaml"
+    ).read_text(encoding="utf-8")
+
+    assert "GetCurrentPackageFullName" in distribution_service
+    assert "UsesStoreManagedUpdates" in distribution_service
+    assert "Settings.CheckForUpdatesOnStartup && !UsesStoreManagedUpdates" in main_view_model
+    assert "此版本由 Microsoft Store 管理软件更新" in main_view_model
+    assert 'x:Name="StoreUpdateNotice"' in settings_page
+
+
 def test_release_bundles_pinned_pure_python_git_dependency() -> None:
     project = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
     build_script = (ROOT / "scripts" / "build.ps1").read_text(encoding="utf-8")

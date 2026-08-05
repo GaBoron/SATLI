@@ -12,6 +12,7 @@ public sealed class MainViewModel : ObservableObject
     private readonly SettingsService _settingsService = new();
     private readonly UpdateService _updateService = new();
     private readonly NetworkProbeService _networkProbeService = new();
+    private readonly ApplicationDistributionService _distributionService;
     private bool _isInfoOpen;
     private string _infoMessage = string.Empty;
     private InfoBarSeverity _infoSeverity = InfoBarSeverity.Informational;
@@ -22,7 +23,13 @@ public sealed class MainViewModel : ObservableObject
     public event Action? ShowUpdatesRequested;
 
     public MainViewModel()
+        : this(new ApplicationDistributionService())
     {
+    }
+
+    internal MainViewModel(ApplicationDistributionService distributionService)
+    {
+        _distributionService = distributionService;
         Translations = new TranslationManagementViewModel(
             () => Settings,
             Operation,
@@ -59,6 +66,7 @@ public sealed class MainViewModel : ObservableObject
     public string CurrentDataDirectory => !string.IsNullOrWhiteSpace(Settings.DataDirectory)
         ? Settings.DataDirectory
         : Path.GetDirectoryName(SettingsPath)!;
+    public bool UsesStoreManagedUpdates => _distributionService.UsesStoreManagedUpdates;
     public Uri? LatestReleasePage
     {
         get => _latestReleasePage;
@@ -108,14 +116,21 @@ public sealed class MainViewModel : ObservableObject
         await App.Logs.WriteAsync("信息", "应用", "设置已加载，开始初始化。");
         ApplyTheme();
         await Translations.ScanAsync(refreshCatalog: true);
-        if (Settings.CheckForUpdatesOnStartup)
+        if (Settings.CheckForUpdatesOnStartup && !UsesStoreManagedUpdates)
         {
             await CheckForUpdatesCoreAsync(showCurrentResult: false);
         }
     }
 
-    public Task<UpdateCheckResult?> CheckForUpdatesAsync() =>
-        CheckForUpdatesCoreAsync(showCurrentResult: true);
+    public Task<UpdateCheckResult?> CheckForUpdatesAsync()
+    {
+        if (UsesStoreManagedUpdates)
+        {
+            ShowInfo("此版本由 Microsoft Store 管理软件更新。", InfoBarSeverity.Informational);
+            return Task.FromResult<UpdateCheckResult?>(null);
+        }
+        return CheckForUpdatesCoreAsync(showCurrentResult: true);
+    }
 
     public async Task<NetworkProbeResult> TestNetworkAsync(
         NetworkSettings settings,

@@ -1,3 +1,12 @@
+[CmdletBinding()]
+param(
+    [ValidateSet("Installer", "StoreMsix")]
+    [string] $Target = "Installer",
+    [string] $PackageIdentityName = "GaBoron.SteamAchievementTranslationManager",
+    [string] $PackagePublisher = "CN=GaBoron",
+    [string] $PublisherDisplayName = "GaBoron"
+)
+
 $ErrorActionPreference = "Stop"
 $ProjectRoot = Split-Path -Parent $PSScriptRoot
 $DistRoot = Join-Path $ProjectRoot "dist"
@@ -15,6 +24,9 @@ $Python = if (Test-Path $VenvPython) { $VenvPython } else { "python" }
 $GuiProject = Join-Path $ProjectRoot "src\Satl.Gui\Satl.Gui.csproj"
 $InstallerScript = Join-Path $ProjectRoot "installer\SATLInstaller.iss"
 $IconPath = Join-Path $ProjectRoot "src\Satl.Gui\Assets\AppIcon.ico"
+$IconSourcePath = Join-Path $ProjectRoot "src\Satl.Gui\Assets\AppIcon.source.png"
+$StoreManifestTemplate = Join-Path $ProjectRoot "store\Package.appxmanifest.template"
+$StorePackageModule = Join-Path $PSScriptRoot "StoreMsixPackage.psm1"
 $EmbeddedPythonVersion = "3.13.13"
 $EmbeddedPythonArchiveName = "python-$EmbeddedPythonVersion-embed-amd64.zip"
 $EmbeddedPythonArchive = Join-Path $DownloadRoot $EmbeddedPythonArchiveName
@@ -30,6 +42,8 @@ if ([string]::IsNullOrWhiteSpace($Version)) {
 }
 $SetupName = "SATLInstaller-Setup-v$Version.exe"
 $SetupExecutable = Join-Path $ReleaseRoot $SetupName
+$StorePackageName = "SATLInstaller-Store-v$Version.msix"
+$StorePackage = Join-Path $ReleaseRoot $StorePackageName
 $Checksums = Join-Path $ReleaseRoot "SHA256SUMS.txt"
 
 function Assert-WithinProject([string] $Path) {
@@ -255,24 +269,39 @@ try {
             "(limit: $([math]::Round($MaximumPackageSizeBytes / 1MB, 2)) MiB)"
         )
     }
-    $InnoCompiler = Find-InnoCompiler
-    if (-not $InnoCompiler) {
-        throw "Inno Setup 6 is required to build the installable release"
+    if ($Target -eq "StoreMsix") {
+        Import-Module $StorePackageModule -Force
+        $ReleaseArtifact = New-SatlStoreMsix `
+            -PayloadRoot $PackageRoot `
+            -OutputPath $StorePackage `
+            -ManifestTemplatePath $StoreManifestTemplate `
+            -AssetSourcePath $IconSourcePath `
+            -Version $Version `
+            -PackageIdentityName $PackageIdentityName `
+            -PackagePublisher $PackagePublisher `
+            -PublisherDisplayName $PublisherDisplayName
     }
-    & $InnoCompiler `
-        "/DSourceRoot=$PackageRoot" `
-        "/DOutputRoot=$ReleaseRoot" `
-        "/DMyAppVersion=$Version" `
-        "/DMyAppIcon=$IconPath" `
-        $InstallerScript
-    if ($LASTEXITCODE -ne 0 -or -not (Test-Path $SetupExecutable)) {
-        throw "Inno Setup did not produce $SetupName"
+    else {
+        $InnoCompiler = Find-InnoCompiler
+        if (-not $InnoCompiler) {
+            throw "Inno Setup 6 is required to build the installable release"
+        }
+        & $InnoCompiler `
+            "/DSourceRoot=$PackageRoot" `
+            "/DOutputRoot=$ReleaseRoot" `
+            "/DMyAppVersion=$Version" `
+            "/DMyAppIcon=$IconPath" `
+            $InstallerScript
+        if ($LASTEXITCODE -ne 0 -or -not (Test-Path $SetupExecutable)) {
+            throw "Inno Setup did not produce $SetupName"
+        }
+        $ReleaseArtifact = $SetupExecutable
     }
 
-    $SetupHash = (Get-FileHash -LiteralPath $SetupExecutable -Algorithm SHA256).Hash.ToLowerInvariant()
+    $ReleaseHash = (Get-FileHash -LiteralPath $ReleaseArtifact -Algorithm SHA256).Hash.ToLowerInvariant()
     Set-Content `
         -LiteralPath $Checksums `
-        -Value "$SetupHash  $([System.IO.Path]::GetFileName($SetupExecutable))" `
+        -Value "$ReleaseHash  $([System.IO.Path]::GetFileName($ReleaseArtifact))" `
         -Encoding ascii
     foreach ($Path in @(
         $CliRoot,
@@ -286,7 +315,7 @@ try {
         }
     }
     Write-Host "Uncompressed release payload: $([math]::Round($PackageSizeBytes / 1MB, 2)) MiB"
-    Write-Host "Built release assets in $ReleaseRoot"
+    Write-Host "Built $Target release assets in $ReleaseRoot"
 }
 finally {
     Pop-Location

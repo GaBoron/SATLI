@@ -9,6 +9,7 @@
 - `tests/Satl.Gui.Tests/`：GUI 与服务层测试
 - `tests/`：Python 核心测试
 - `installer/`：Inno Setup 安装程序配置
+- `store/`：Microsoft Store MSIX 清单模板
 - `scripts/build.ps1`：完整发布构建脚本
 
 ## 📋 开发环境
@@ -35,6 +36,8 @@ powershell -ExecutionPolicy Bypass -File .\scripts\build.ps1
 ```
 
 构建脚本会发布自包含的 WinUI 应用、打包 Python 运行环境、生成 Inno Setup 安装程序，并计算 SHA-256。最终文件位于 `dist\release\`。
+
+构建 Microsoft Store MSIX 时使用 `-Target StoreMsix` 并传入 Partner Center 产品标识。完整流程见 [Microsoft Store 发布](MICROSOFT_STORE.md)。
 
 ## 🧭 单独运行项目
 
