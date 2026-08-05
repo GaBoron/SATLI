@@ -10,6 +10,7 @@ public sealed class ApplicationDistributionServiceTests
     {
         var service = new ApplicationDistributionService(() => true);
 
+        Assert.Equal(ApplicationDistributionChannel.MicrosoftStore, service.Channel);
         Assert.True(service.UsesStoreManagedUpdates);
     }
 
@@ -18,6 +19,7 @@ public sealed class ApplicationDistributionServiceTests
     {
         var service = new ApplicationDistributionService(() => false);
 
+        Assert.Equal(ApplicationDistributionChannel.Standalone, service.Channel);
         Assert.False(service.UsesStoreManagedUpdates);
     }
 
@@ -31,8 +33,8 @@ public sealed class ApplicationDistributionServiceTests
             return true;
         });
 
-        _ = service.UsesStoreManagedUpdates;
-        _ = service.UsesStoreManagedUpdates;
+        _ = service.Channel;
+        _ = service.Channel;
 
         Assert.Equal(1, calls);
     }

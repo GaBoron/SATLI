@@ -15,7 +15,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/GaBoron/steam-achievement-translation-installer/releases/latest">⬇️ 下载最新版</a>
+  <a href="https://github.com/GaBoron/steam-achievement-translation-installer/releases/latest">⬇️ 下载独立安装版</a>
   ·
   <a href="docs/USAGE.md">📖 使用指南</a>
   ·
@@ -24,11 +24,13 @@
 
 ## 🚀 快速开始
 
-1. 从 [GitHub Releases](https://github.com/GaBoron/steam-achievement-translation-installer/releases/latest) 下载安装程序。
+1. 选择一种安装渠道：在 Microsoft Store 搜索 `SATLI`，或从 [GitHub Releases](https://github.com/GaBoron/steam-achievement-translation-installer/releases/latest) 下载独立安装版。
 2. 打开应用，等待它扫描本机 Steam 游戏。
 3. 选择游戏和译本，预览成就文本后点击“安装所选”。
 
-安装前会自动校验并备份原文件；之后可在“已管理”页查看状态或恢复。浏览、扫描和编辑草稿不会请求管理员权限；只有确认安装、恢复、写回本地编辑或安装软件更新时，Windows 才会显示 UAC。首次运行若遇到 Windows SmartScreen 提示，请核对下载来源及 Release 中的 SHA-256。项目暂未提供代码签名。
+Microsoft Store 版与独立安装版提供相同的翻译管理功能，并使用相同的数据格式。通常只需安装其中一种：Microsoft Store 版由 Store 更新，独立安装版通过应用内的 GitHub Releases 更新。两个版本各自只接收所属渠道的软件更新，不会交叉更新。
+
+安装翻译前会自动校验并备份原文件；之后可在“已管理”页查看状态或恢复。浏览、扫描和编辑草稿不会请求管理员权限；确认安装、恢复或写回本地编辑时，Windows 才会显示 UAC。独立安装版首次运行若遇到 Windows SmartScreen 提示，请核对下载来源及 Release 中的 SHA-256。
 
 > [!TIP]
 > 找不到游戏时，请先启动一次游戏，让 Steam 生成成就缓存，再返回应用重新扫描。
@@ -73,8 +75,6 @@ Localizer Skill 生成的标准 BIN/ZIP 可直接导入管理器，也可提交�
 | --- | --- |
 | [📖 使用指南](docs/USAGE.md) | 安装、编辑、恢复、投稿、网络设置与常见问题 |
 | [🔐 数据与隐私](docs/PRIVACY.md) | 本地数据、凭据、日志和网络请求说明 |
-| [🛠️ 开发与构建](docs/DEVELOPMENT.md) | 开发环境、测试、构建流程与项目结构 |
-| [🏪 Microsoft Store 发布](docs/MICROSOFT_STORE.md) | MSIX 打包模型、Partner Center 标识与提交检查 |
 | [📦 第三方声明](THIRD_PARTY_NOTICES.md) | 随软件分发的第三方组件和权利说明 |
 
 ## 🖥️ 系统要求

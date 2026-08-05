@@ -67,6 +67,11 @@ public sealed class MainViewModel : ObservableObject
         ? Settings.DataDirectory
         : Path.GetDirectoryName(SettingsPath)!;
     public bool UsesStoreManagedUpdates => _distributionService.UsesStoreManagedUpdates;
+    public string DistributionChannelName => _distributionService.Channel switch
+    {
+        ApplicationDistributionChannel.MicrosoftStore => "Microsoft Store 版",
+        _ => "独立安装版",
+    };
     public Uri? LatestReleasePage
     {
         get => _latestReleasePage;

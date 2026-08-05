@@ -149,6 +149,23 @@ def test_store_install_uses_store_managed_updates() -> None:
     assert 'x:Name="StoreUpdateNotice"' in settings_page
 
 
+def test_user_documentation_separates_installation_channels() -> None:
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    usage = (ROOT / "docs" / "USAGE.md").read_text(encoding="utf-8")
+    privacy = (ROOT / "docs" / "PRIVACY.md").read_text(encoding="utf-8")
+
+    for document in (readme, usage):
+        assert "Microsoft Store 版" in document
+        assert "独立安装版" in document
+    assert "由 Microsoft Store 检查、下载和安装" in usage
+    assert "GitHub Releases" in usage
+    assert "Microsoft Store 版不使用 GitHub 安装程序更新" in privacy
+    assert "docs/DEVELOPMENT.md" not in readme
+    assert "docs/MICROSOFT_STORE.md" not in readme
+    assert not (ROOT / "docs" / "DEVELOPMENT.md").exists()
+    assert not (ROOT / "docs" / "MICROSOFT_STORE.md").exists()
+
+
 def test_release_bundles_pinned_pure_python_git_dependency() -> None:
     project = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
     build_script = (ROOT / "scripts" / "build.ps1").read_text(encoding="utf-8")

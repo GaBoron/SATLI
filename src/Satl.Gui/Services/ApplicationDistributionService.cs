@@ -3,6 +3,12 @@ using System.Text;
 
 namespace Satl_Gui.Services;
 
+internal enum ApplicationDistributionChannel
+{
+    Standalone,
+    MicrosoftStore,
+}
+
 internal sealed class ApplicationDistributionService
 {
     private const int ErrorInsufficientBuffer = 122;
@@ -15,7 +21,11 @@ internal sealed class ApplicationDistributionService
             LazyThreadSafetyMode.ExecutionAndPublication);
     }
 
-    public bool UsesStoreManagedUpdates => _hasPackageIdentity.Value;
+    public ApplicationDistributionChannel Channel => _hasPackageIdentity.Value
+        ? ApplicationDistributionChannel.MicrosoftStore
+        : ApplicationDistributionChannel.Standalone;
+
+    public bool UsesStoreManagedUpdates => Channel == ApplicationDistributionChannel.MicrosoftStore;
 
     private static bool DetectPackageIdentity()
     {

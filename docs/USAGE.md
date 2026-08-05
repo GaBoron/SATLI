@@ -15,13 +15,18 @@
 
 ## ⬇️ 安装与首次使用
 
-从 [GitHub Releases](https://github.com/GaBoron/steam-achievement-translation-installer/releases/latest) 下载安装程序。直接覆盖安装新版即可；安装程序会在复制新文件前清理旧版遗留的运行组件。
+应用提供两个安装渠道：
 
-本项目暂未提供代码签名。Windows SmartScreen 可能首次显示安全提醒，请核对下载来源和 Release 中的 SHA-256 后再运行。
+- **Microsoft Store 版：** 在 Microsoft Store 中搜索 `SATLI`。适合希望由系统统一安装和更新的用户。
+- **独立安装版：** 从 [GitHub Releases](https://github.com/GaBoron/steam-achievement-translation-installer/releases/latest) 下载安装程序。适合不能使用 Microsoft Store，或习惯手动管理安装程序的用户。
+
+两个版本的翻译、编辑、备份和恢复功能相同。通常只安装其中一个即可，不建议同时运行两个版本。需要更换渠道时，先退出并卸载当前版本，再安装另一版本；保存在本机数据目录中的设置、缓存、草稿、历史和备份不会因为更换安装渠道而主动删除。
+
+独立安装版直接覆盖安装新版即可。它暂未提供代码签名，Windows SmartScreen 可能首次显示安全提醒，请核对下载来源和 Release 中的 SHA-256 后再运行。Microsoft Store 版由 Store 提供安装可信度和更新。
 
 首次打开后，应用会自动检测 Steam 目录并扫描本机成就缓存。也可以在设置中手动指定 Steam 路径，或选择配置 Steam Web API，以补全账号拥有但本机尚无缓存的游戏。
 
-应用以普通用户权限启动。扫描、预览、设置、日志、编辑草稿和导出文件不会触发 UAC；只有确认安装、恢复、写回本地编辑、激活历史修订或安装软件更新时，才会请求管理员权限。取消 UAC 后，本次操作会停止，应用仍可继续使用。
+应用以普通用户权限启动。扫描、预览、设置、日志、编辑草稿和导出文件不会触发 UAC；只有确认安装、恢复、写回本地编辑或激活历史修订时，才会请求管理员权限。独立安装版安装软件更新时也会请求管理员权限；Microsoft Store 版的软件更新由 Store 处理。取消 UAC 后，本次操作会停止，应用仍可继续使用。
 
 ## ☁️ 查找和安装社区译本
 
@@ -99,7 +104,12 @@
 
 ## 🔄 更新与网络
 
-“设置 → 软件更新”可以检查稳定版、查看发布说明、下载安装包并校验 SHA-256。软件不会静默下载；只有点击“下载并安装”后才会开始。
+软件更新按安装渠道分别管理：
+
+- **Microsoft Store 版：** 由 Microsoft Store 检查、下载和安装；设置页会显示当前渠道，不提供 GitHub 安装程序按钮。
+- **独立安装版：** “设置 → 软件更新”可以检查 GitHub Releases 稳定版、查看发布说明、下载安装包并校验 SHA-256。软件不会静默下载，只有点击“下载并安装”后才会开始。
+
+两个渠道使用同一公开版本号，但不会相互安装对方的更新包。云端译本列表和译本内容的更新独立于软件版本，两个版本使用相同来源。
 
 网络设置支持：
 
@@ -110,7 +120,7 @@
 
 “设置 → 下载源”可分别拖动调整 `index.json` 与翻译 BIN 文件的来源顺序，应用会从上到下依次尝试。默认索引顺序为 GitHub Raw、jsDelivr、jsDelivr Fastly、StaticDelivr；默认文件顺序为 jsDelivr、jsDelivr Fastly、GitHub Raw。StaticDelivr 只提供索引候选，因为实际验证中其二进制文件响应不适合作为安装器下载源。两个列表可分别恢复默认顺序。
 
-无法访问 GitHub 时，更新检查失败不会影响扫描、安装、编辑或恢复。
+独立安装版无法访问 GitHub 时，软件更新检查失败不会影响扫描、安装、编辑或恢复。Microsoft Store 版的软件更新状态请在 Store 中查看。
 
 ## ❓ 常见问题
 
