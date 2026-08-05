@@ -1,3 +1,16 @@
+param(
+    [string] $CodeSigningCertificateThumbprint = $env:SATL_SIGNING_CERTIFICATE_SHA1,
+    [string] $TimestampServer = $(
+        if ([string]::IsNullOrWhiteSpace($env:SATL_TIMESTAMP_URL)) {
+            "http://timestamp.digicert.com"
+        }
+        else {
+            $env:SATL_TIMESTAMP_URL
+        }
+    ),
+    [switch] $RequireCodeSigning
+)
+
 $ErrorActionPreference = "Stop"
 $ProjectRoot = Split-Path -Parent $PSScriptRoot
 $DistRoot = Join-Path $ProjectRoot "dist"
@@ -15,6 +28,7 @@ $Python = if (Test-Path $VenvPython) { $VenvPython } else { "python" }
 $GuiProject = Join-Path $ProjectRoot "src\Satl.Gui\Satl.Gui.csproj"
 $InstallerScript = Join-Path $ProjectRoot "installer\SATLInstaller.iss"
 $IconPath = Join-Path $ProjectRoot "src\Satl.Gui\Assets\AppIcon.ico"
+$CodeSigningModule = Join-Path $PSScriptRoot "CodeSigning.psm1"
 $EmbeddedPythonVersion = "3.13.13"
 $EmbeddedPythonArchiveName = "python-$EmbeddedPythonVersion-embed-amd64.zip"
 $EmbeddedPythonArchive = Join-Path $DownloadRoot $EmbeddedPythonArchiveName
@@ -31,6 +45,22 @@ if ([string]::IsNullOrWhiteSpace($Version)) {
 $SetupName = "SATLInstaller-Setup-v$Version.exe"
 $SetupExecutable = Join-Path $ReleaseRoot $SetupName
 $Checksums = Join-Path $ReleaseRoot "SHA256SUMS.txt"
+
+Import-Module $CodeSigningModule -Force
+$CodeSigningContext = $null
+if (-not [string]::IsNullOrWhiteSpace($CodeSigningCertificateThumbprint)) {
+    $CodeSigningContext = New-CodeSigningContext `
+        -CertificateThumbprint $CodeSigningCertificateThumbprint `
+        -TimestampServer $TimestampServer `
+        -RequirePublicTrust:$RequireCodeSigning
+    Write-Host "Authenticode signing enabled for $($CodeSigningContext.Publisher)"
+}
+elseif ($RequireCodeSigning) {
+    throw "Code signing is required, but SATL_SIGNING_CERTIFICATE_SHA1 was not provided."
+}
+else {
+    Write-Warning "Building unsigned artifacts. Set SATL_SIGNING_CERTIFICATE_SHA1 to enable Authenticode signing."
+}
 
 function Assert-WithinProject([string] $Path) {
     $ResolvedProject = [System.IO.Path]::GetFullPath($ProjectRoot).TrimEnd('\') + '\'
@@ -208,6 +238,9 @@ try {
     if ($GuiVersion.ProductVersion -notlike "$Version*") {
         throw "WinUI executable has unexpected product version: $($GuiVersion.ProductVersion)"
     }
+    if ($CodeSigningContext) {
+        Invoke-AuthenticodeSign -Context $CodeSigningContext -Path $GuiExecutable
+    }
 
     Copy-Item -Path (Join-Path $GuiPublishRoot "*") -Destination $PackageRoot -Recurse
     New-Item -ItemType Directory -Path $PackageRuntimeRoot | Out-Null
@@ -259,14 +292,26 @@ try {
     if (-not $InnoCompiler) {
         throw "Inno Setup 6 is required to build the installable release"
     }
-    & $InnoCompiler `
-        "/DSourceRoot=$PackageRoot" `
-        "/DOutputRoot=$ReleaseRoot" `
-        "/DMyAppVersion=$Version" `
-        "/DMyAppIcon=$IconPath" `
-        $InstallerScript
+    $InnoArguments = @(
+        "/DSourceRoot=$PackageRoot",
+        "/DOutputRoot=$ReleaseRoot",
+        "/DMyAppVersion=$Version",
+        "/DMyAppIcon=$IconPath"
+    )
+    if ($CodeSigningContext) {
+        $InnoSignToolCommand = Get-InnoSignToolCommand -Context $CodeSigningContext
+        $InnoArguments += @(
+            "/DSignToolName=satl-authenticode",
+            "/Ssatl-authenticode=$InnoSignToolCommand"
+        )
+    }
+    $InnoArguments += $InstallerScript
+    & $InnoCompiler $InnoArguments
     if ($LASTEXITCODE -ne 0 -or -not (Test-Path $SetupExecutable)) {
         throw "Inno Setup did not produce $SetupName"
+    }
+    if ($CodeSigningContext) {
+        Assert-AuthenticodeSignature -Context $CodeSigningContext -Path $SetupExecutable
     }
 
     $SetupHash = (Get-FileHash -LiteralPath $SetupExecutable -Algorithm SHA256).Hash.ToLowerInvariant()
