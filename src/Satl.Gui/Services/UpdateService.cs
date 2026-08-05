@@ -13,7 +13,7 @@ public sealed record UpdateCheckResult(
     string LatestVersion,
     Uri? ReleasePage,
     Uri? InstallerDownload,
-    Uri? ChecksumsDownload,
+    string? InstallerSha256,
     string ReleaseNotes,
     string Message);
 
@@ -101,7 +101,9 @@ public sealed class UpdateService
         }
 
         if (_apiEndpoint is not null
-            && (metadata is null || string.IsNullOrWhiteSpace(metadata.ReleaseNotes)))
+            && (metadata is null
+                || string.IsNullOrWhiteSpace(metadata.ReleaseNotes)
+                || !metadata.Assets.Values.Any(asset => asset.Sha256 is not null)))
         {
             try
             {
@@ -134,10 +136,9 @@ public sealed class UpdateService
         var latestText = FormatVersion(latestVersion);
         releasePage ??= new Uri($"{RepositoryUrl}/releases/tag/{tag}");
         var installerName = $"SATLInstaller-Setup-v{latestText}.exe";
-        var installer = metadata.Asset(installerName)
+        var installerAsset = metadata.Asset(installerName);
+        var installer = installerAsset?.Download
             ?? new Uri($"{RepositoryUrl}/releases/download/{tag}/{installerName}");
-        var checksums = metadata.Asset("SHA256SUMS.txt")
-            ?? new Uri($"{RepositoryUrl}/releases/download/{tag}/SHA256SUMS.txt");
         var message = isAvailable
             ? $"发现新版本 v{latestText}。"
             : $"当前已是最新版本 v{currentText}。";
@@ -147,7 +148,7 @@ public sealed class UpdateService
             latestText,
             releasePage,
             installer,
-            checksums,
+            installerAsset?.Sha256,
             string.IsNullOrWhiteSpace(metadata.ReleaseNotes)
                 ? "暂时无法读取此版本的发布说明，请打开发布页查看。"
                 : metadata.ReleaseNotes,
@@ -214,7 +215,9 @@ public sealed class UpdateService
             return primary;
         }
 
-        var assets = new Dictionary<string, Uri>(supplement.Assets, StringComparer.OrdinalIgnoreCase);
+        var assets = new Dictionary<string, ReleaseAsset>(
+            supplement.Assets,
+            StringComparer.OrdinalIgnoreCase);
         foreach (var asset in primary.Assets)
         {
             assets[asset.Key] = asset.Value;
@@ -254,7 +257,7 @@ public sealed class UpdateService
                     tag,
                     releasePage,
                     HtmlToPlainText(content),
-                    new Dictionary<string, Uri>(StringComparer.OrdinalIgnoreCase));
+                    new Dictionary<string, ReleaseAsset>(StringComparer.OrdinalIgnoreCase));
             }
         }
         catch (System.Xml.XmlException)
@@ -286,7 +289,7 @@ public sealed class UpdateService
         tag,
         releasePage,
         string.Empty,
-        new Dictionary<string, Uri>(StringComparer.OrdinalIgnoreCase));
+        new Dictionary<string, ReleaseAsset>(StringComparer.OrdinalIgnoreCase));
 
     public async Task<string> DownloadInstallerAsync(
         UpdateCheckResult update,
@@ -295,7 +298,7 @@ public sealed class UpdateService
     {
         if (!update.IsUpdateAvailable
             || update.InstallerDownload is null
-            || update.ChecksumsDownload is null)
+            || update.InstallerSha256 is null)
         {
             throw new InvalidOperationException("当前更新信息不包含可下载并校验的安装程序。");
         }
@@ -306,10 +309,7 @@ public sealed class UpdateService
         {
             throw new InvalidDataException($"安装程序文件名无效：{fileName}");
         }
-        var expectedHash = await ReadExpectedHashAsync(
-            update.ChecksumsDownload,
-            fileName,
-            cancellationToken);
+        var expectedHash = update.InstallerSha256;
         Directory.CreateDirectory(_updateDirectory);
         var destination = Path.Combine(_updateDirectory, fileName);
         var partial = destination + ".part";
@@ -379,30 +379,6 @@ public sealed class UpdateService
         }
     }
 
-    private async Task<string> ReadExpectedHashAsync(
-        Uri checksumsDownload,
-        string fileName,
-        CancellationToken cancellationToken)
-    {
-        using var request = new HttpRequestMessage(HttpMethod.Get, checksumsDownload);
-        request.Headers.UserAgent.ParseAdd($"SATLInstaller/{FormatVersion(_currentVersion)}");
-        using var response = await _client.SendAsync(request, cancellationToken);
-        response.EnsureSuccessStatusCode();
-        var text = await response.Content.ReadAsStringAsync(cancellationToken);
-        foreach (var line in text.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries))
-        {
-            var parts = line.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries);
-            if (parts.Length >= 2
-                && parts[0].Length == 64
-                && parts[0].All(Uri.IsHexDigit)
-                && parts[^1].TrimStart('*').Equals(fileName, StringComparison.OrdinalIgnoreCase))
-            {
-                return parts[0].ToLowerInvariant();
-            }
-        }
-        throw new InvalidDataException($"SHA256SUMS.txt 中没有 {fileName} 的校验值。");
-    }
-
     private static ReleaseMetadata? TryParseReleaseMetadata(string payload)
     {
         if (string.IsNullOrWhiteSpace(payload))
@@ -418,7 +394,7 @@ public sealed class UpdateService
             {
                 return null;
             }
-            var assets = new Dictionary<string, Uri>(StringComparer.OrdinalIgnoreCase);
+            var assets = new Dictionary<string, ReleaseAsset>(StringComparer.OrdinalIgnoreCase);
             if (root.TryGetProperty("assets", out var assetValues)
                 && assetValues.ValueKind == JsonValueKind.Array)
             {
@@ -433,7 +409,10 @@ public sealed class UpdateService
                     if (!string.IsNullOrWhiteSpace(name)
                         && Uri.TryCreate(url, UriKind.Absolute, out var assetUri))
                     {
-                        assets[name] = assetUri;
+                        var digest = asset.TryGetProperty("digest", out var digestValue)
+                            ? ParseSha256Digest(digestValue.GetString())
+                            : null;
+                        assets[name] = new ReleaseAsset(assetUri, digest);
                     }
                 }
             }
@@ -504,12 +483,28 @@ public sealed class UpdateService
         return $"{normalized.Major}.{normalized.Minor}.{normalized.Build}";
     }
 
+    private static string? ParseSha256Digest(string? value)
+    {
+        const string prefix = "sha256:";
+        if (value is null || !value.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+        {
+            return null;
+        }
+        var hash = value[prefix.Length..];
+        return hash.Length == 64 && hash.All(Uri.IsHexDigit)
+            ? hash.ToLowerInvariant()
+            : null;
+    }
+
+    private sealed record ReleaseAsset(Uri Download, string? Sha256);
+
     private sealed record ReleaseMetadata(
         string Tag,
         Uri? ReleasePage,
         string ReleaseNotes,
-        IReadOnlyDictionary<string, Uri> Assets)
+        IReadOnlyDictionary<string, ReleaseAsset> Assets)
     {
-        public Uri? Asset(string name) => Assets.TryGetValue(name, out var value) ? value : null;
+        public ReleaseAsset? Asset(string name) =>
+            Assets.TryGetValue(name, out var value) ? value : null;
     }
 }

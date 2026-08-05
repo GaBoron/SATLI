@@ -109,7 +109,9 @@ def test_store_msix_is_a_full_trust_desktop_package() -> None:
     package_module = (
         ROOT / "scripts" / "StoreMsixPackage.psm1"
     ).read_text(encoding="utf-8")
-    identity = json.loads((ROOT / "store" / "identity.json").read_text(encoding="utf-8"))
+    identity_example = json.loads(
+        (ROOT / "store" / "identity.example.json").read_text(encoding="utf-8")
+    )
 
     assert 'EntryPoint="Windows.FullTrustApplication"' in manifest
     assert '<rescap:Capability Name="runFullTrust" />' in manifest
@@ -118,17 +120,83 @@ def test_store_msix_is_a_full_trust_desktop_package() -> None:
     assert "{{PACKAGE_IDENTITY_NAME}}" in manifest
     assert "{{PACKAGE_PUBLISHER}}" in manifest
     assert "{{PACKAGE_DISPLAY_NAME}}" in manifest
-    assert '[ValidateSet("Installer", "StoreMsix")]' in build_script
-    assert identity == {
-        "packageIdentityName": "GaBoron.SATLI",
-        "packagePublisher": "CN=1D797E8D-B698-4922-B05F-9651C7AA6F0A",
-        "packageDisplayName": "SATLI",
-        "publisherDisplayName": "GaBoron",
+    assert '<Resource Language="zh-CN" />' in manifest
+    assert '<Resource Language="en-US" />' not in manifest
+    assert manifest.count("<Resource Language=") == 1
+    assert '[ValidateSet("All", "Installer", "StoreMsix")]' in build_script
+    assert '[string] $Target = "All"' in build_script
+    assert identity_example == {
+        "packageIdentityName": "YOUR_PARTNER_CENTER_PACKAGE_IDENTITY_NAME",
+        "packagePublisher": "CN=YOUR_PARTNER_CENTER_PUBLISHER_ID",
+        "packageDisplayName": "YOUR_RESERVED_STORE_DISPLAY_NAME",
+        "publisherDisplayName": "YOUR_PARTNER_CENTER_PUBLISHER_DISPLAY_NAME",
     }
     assert 'Get-Content -LiteralPath $StoreIdentityPath' in build_script
+    assert "Store identity is local-only" in build_script
+    assert "identity.example.json" in build_script
     assert "New-SatlStoreMsix" in build_script
     assert 'return "$($parsed.Major).$($parsed.Minor).$($parsed.Build).0"' in package_module
     assert "makeappx.exe" in package_module
+
+
+def test_release_metadata_uses_project_identity_and_runs_privacy_audits() -> None:
+    installer = (ROOT / "installer" / "SATLInstaller.iss").read_text(encoding="utf-8")
+    project = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
+    license_text = (ROOT / "LICENSE").read_text(encoding="utf-8")
+    gui_project = (ROOT / "src" / "Satl.Gui" / "Satl.Gui.csproj").read_text(
+        encoding="utf-8"
+    )
+    build_script = (ROOT / "scripts" / "build.ps1").read_text(encoding="utf-8")
+
+    assert '#define MyAppPublisher "GaBoron"' in installer
+    assert 'authors = [{ name = "GaBoron" }]' in project
+    assert "Copyright (c) 2026 GaBoron" in license_text
+    assert "<Product>Steam 成就翻译管理器</Product>" in gui_project
+    assert "<Deterministic>True</Deterministic>" in gui_project
+    assert "<PathMap>$(MSBuildProjectDirectory)=/_/Satl.Gui</PathMap>" in gui_project
+    assert '$ReleasePrivacyScript = Join-Path $PSScriptRoot "release_privacy.py"' in build_script
+    assert build_script.count("--path $PackageRoot") == 1
+    assert build_script.count("--path $ReleaseArtifact") == 1
+
+    for surface in (
+        build_script,
+        (ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8"),
+    ):
+        assert "SHA256SUMS.txt" not in surface
+
+
+def test_local_build_owns_both_release_channels_while_github_runs_tests_only() -> None:
+    build_script = (ROOT / "scripts" / "build.ps1").read_text(encoding="utf-8")
+    ci = (ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
+
+    assert '$Target -in @("All", "Installer")' in build_script
+    assert '$Target -in @("All", "StoreMsix")' in build_script
+    assert "$ReleaseArtifacts.Add($SetupExecutable)" in build_script
+    assert "$ReleaseArtifacts.Add($BuiltStorePackage)" in build_script
+    assert "Built $($ReleaseArtifacts.Count) $Target release asset(s)" in build_script
+    assert "package:" not in ci
+    assert "build.ps1" not in ci
+    assert not (ROOT / ".github" / "workflows" / "store-msix.yml").exists()
+
+
+def test_root_gitignore_covers_generated_sensitive_and_release_files() -> None:
+    ignored = (ROOT / ".gitignore").read_text(encoding="utf-8")
+
+    for pattern in (
+        "**/[Bb]in/",
+        "**/[Oo]bj/",
+        "**/Properties/PublishProfiles/",
+        "*.msix",
+        "*.pdb",
+        "*.pfx",
+        "*.snk",
+        "credentials.*",
+        "secrets.json",
+        "store/identity.json",
+        "*.dmp",
+        "Thumbs.db",
+    ):
+        assert pattern in ignored
 
 
 def test_store_install_uses_store_managed_updates() -> None:
@@ -176,6 +244,8 @@ def test_release_bundles_pinned_pure_python_git_dependency() -> None:
     assert '"dulwich==1.2.12"' in build_script
     assert '"urllib3==2.7.0"' in build_script
     assert '.Extension -in @(".pyd", ".dll")' in build_script
+    assert 'foreach ($GeneratedEntryPointDirectory in @("bin", "Scripts"))' in build_script
+    assert "$GeneratedEntryPointPath" in build_script
     assert "does not contain Dulwich" in build_script
     assert '$env:PATH = ""' in build_script
     assert "schema revisions verify" in build_script

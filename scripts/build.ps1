@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param(
-    [ValidateSet("Installer", "StoreMsix")]
-    [string] $Target = "Installer",
+    [ValidateSet("All", "Installer", "StoreMsix")]
+    [string] $Target = "All",
     [string] $PackageIdentityName,
     [string] $PackagePublisher,
     [string] $PackageDisplayName,
@@ -29,6 +29,7 @@ $IconSourcePath = Join-Path $ProjectRoot "src\Satl.Gui\Assets\AppIcon.source.png
 $StoreManifestTemplate = Join-Path $ProjectRoot "store\Package.appxmanifest.template"
 $StoreIdentityPath = Join-Path $ProjectRoot "store\identity.json"
 $StorePackageModule = Join-Path $PSScriptRoot "StoreMsixPackage.psm1"
+$ReleasePrivacyScript = Join-Path $PSScriptRoot "release_privacy.py"
 $EmbeddedPythonVersion = "3.13.13"
 $EmbeddedPythonArchiveName = "python-$EmbeddedPythonVersion-embed-amd64.zip"
 $EmbeddedPythonArchive = Join-Path $DownloadRoot $EmbeddedPythonArchiveName
@@ -42,7 +43,13 @@ $Version = @($GuiProjectXml.Project.PropertyGroup.Version | Where-Object { $_ })
 if ([string]::IsNullOrWhiteSpace($Version)) {
     throw "The WinUI project does not define a release version"
 }
-if ($Target -eq "StoreMsix") {
+if ($Target -in @("All", "StoreMsix")) {
+    if (-not (Test-Path -LiteralPath $StoreIdentityPath)) {
+        throw (
+            "Store identity is local-only. Copy store\identity.example.json to " +
+            "store\identity.json and replace the placeholders with Partner Center values."
+        )
+    }
     $StoreIdentity = Get-Content -LiteralPath $StoreIdentityPath -Raw -Encoding UTF8 |
         ConvertFrom-Json
     if ([string]::IsNullOrWhiteSpace($PackageIdentityName)) {
@@ -62,7 +69,6 @@ $SetupName = "SATLInstaller-Setup-v$Version.exe"
 $SetupExecutable = Join-Path $ReleaseRoot $SetupName
 $StorePackageName = "SATLInstaller-Store-v$Version.msix"
 $StorePackage = Join-Path $ReleaseRoot $StorePackageName
-$Checksums = Join-Path $ReleaseRoot "SHA256SUMS.txt"
 
 function Assert-WithinProject([string] $Path) {
     $ResolvedProject = [System.IO.Path]::GetFullPath($ProjectRoot).TrimEnd('\') + '\'
@@ -83,7 +89,7 @@ function Find-InnoCompiler {
 }
 
 @($DistRoot, $CliRoot, $PackageRoot, $PackageRuntimeRoot, $GuiPublishRoot, $ReleaseRoot, $GuiBuildRoot,
-    $CliPayloadRoot, $CliOfflineSmokeRoot, $DownloadRoot) |
+    $CliPayloadRoot, $CliOfflineSmokeRoot, $DownloadRoot, $ReleasePrivacyScript) |
     ForEach-Object { Assert-WithinProject $_ }
 
 Push-Location $ProjectRoot
@@ -147,6 +153,12 @@ try {
         Remove-Item -Force
     Get-ChildItem -LiteralPath $CliPayloadRoot -Directory -Filter "__pycache__" -Recurse |
         Remove-Item -Recurse -Force
+    foreach ($GeneratedEntryPointDirectory in @("bin", "Scripts")) {
+        $GeneratedEntryPointPath = Join-Path $CliPayloadRoot $GeneratedEntryPointDirectory
+        if (Test-Path -LiteralPath $GeneratedEntryPointPath) {
+            Remove-Item -LiteralPath $GeneratedEntryPointPath -Recurse -Force
+        }
+    }
     & $Python -m zipapp $CliPayloadRoot -o (Join-Path $EmbeddedRuntimeRoot "satl.pyz")
     if ($LASTEXITCODE -ne 0) {
         throw "SATL Python archive build failed"
@@ -287,20 +299,14 @@ try {
             "(limit: $([math]::Round($MaximumPackageSizeBytes / 1MB, 2)) MiB)"
         )
     }
-    if ($Target -eq "StoreMsix") {
-        Import-Module $StorePackageModule -Force
-        $ReleaseArtifact = New-SatlStoreMsix `
-            -PayloadRoot $PackageRoot `
-            -OutputPath $StorePackage `
-            -ManifestTemplatePath $StoreManifestTemplate `
-            -AssetSourcePath $IconSourcePath `
-            -Version $Version `
-            -PackageIdentityName $PackageIdentityName `
-            -PackagePublisher $PackagePublisher `
-            -PackageDisplayName $PackageDisplayName `
-            -PublisherDisplayName $PublisherDisplayName
+    & $Python $ReleasePrivacyScript `
+        --project-root $ProjectRoot `
+        --path $PackageRoot
+    if ($LASTEXITCODE -ne 0) {
+        throw "Release payload privacy audit failed"
     }
-    else {
+    $ReleaseArtifacts = [System.Collections.Generic.List[string]]::new()
+    if ($Target -in @("All", "Installer")) {
         $InnoCompiler = Find-InnoCompiler
         if (-not $InnoCompiler) {
             throw "Inno Setup 6 is required to build the installable release"
@@ -314,14 +320,31 @@ try {
         if ($LASTEXITCODE -ne 0 -or -not (Test-Path $SetupExecutable)) {
             throw "Inno Setup did not produce $SetupName"
         }
-        $ReleaseArtifact = $SetupExecutable
+        $ReleaseArtifacts.Add($SetupExecutable)
+    }
+    if ($Target -in @("All", "StoreMsix")) {
+        Import-Module $StorePackageModule -Force
+        $BuiltStorePackage = New-SatlStoreMsix `
+            -PayloadRoot $PackageRoot `
+            -OutputPath $StorePackage `
+            -ManifestTemplatePath $StoreManifestTemplate `
+            -AssetSourcePath $IconSourcePath `
+            -Version $Version `
+            -PackageIdentityName $PackageIdentityName `
+            -PackagePublisher $PackagePublisher `
+            -PackageDisplayName $PackageDisplayName `
+            -PublisherDisplayName $PublisherDisplayName
+        $ReleaseArtifacts.Add($BuiltStorePackage)
     }
 
-    $ReleaseHash = (Get-FileHash -LiteralPath $ReleaseArtifact -Algorithm SHA256).Hash.ToLowerInvariant()
-    Set-Content `
-        -LiteralPath $Checksums `
-        -Value "$ReleaseHash  $([System.IO.Path]::GetFileName($ReleaseArtifact))" `
-        -Encoding ascii
+    foreach ($ReleaseArtifact in $ReleaseArtifacts) {
+        & $Python $ReleasePrivacyScript `
+            --project-root $ProjectRoot `
+            --path $ReleaseArtifact
+        if ($LASTEXITCODE -ne 0) {
+            throw "Release artifact privacy audit failed: $ReleaseArtifact"
+        }
+    }
     foreach ($Path in @(
         $CliRoot,
         $PackageRoot,
@@ -334,7 +357,7 @@ try {
         }
     }
     Write-Host "Uncompressed release payload: $([math]::Round($PackageSizeBytes / 1MB, 2)) MiB"
-    Write-Host "Built $Target release assets in $ReleaseRoot"
+    Write-Host "Built $($ReleaseArtifacts.Count) $Target release asset(s) in $ReleaseRoot"
 }
 finally {
     Pop-Location

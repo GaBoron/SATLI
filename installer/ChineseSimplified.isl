@@ -9,7 +9,6 @@
 ; two periods being displayed).
 ;
 ; Maintainer: Zhenghan Yang (Kira)
-; Email: 847320916@QQ.com
 ; Github: https://github.com/kira-96/Inno-Setup-Chinese-Simplified-Translation
 ; Encoding: UTF-8
 ; Translation based on network resource
@@ -93,7 +92,7 @@ AboutSetupMenuItem=关于安装程序(&A)...
 AboutSetupTitle=关于安装程序
 AboutSetupMessage=%1 版本 %2%n%3%n%n%1 主页：%n%4
 AboutSetupNote=
-TranslatorNote=简体中文翻译由 Kira（847320916@qq.com）维护。项目地址：https://github.com/kira-96/Inno-Setup-Chinese-Simplified-Translation
+TranslatorNote=简体中文翻译由 Kira 维护。项目地址：https://github.com/kira-96/Inno-Setup-Chinese-Simplified-Translation
 
 ; *** Buttons
 ButtonBack=< 上一步(&B)

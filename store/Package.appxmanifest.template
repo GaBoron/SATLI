@@ -20,7 +20,6 @@
 
   <Resources>
     <Resource Language="zh-CN" />
-    <Resource Language="en-US" />
   </Resources>
 
   <Dependencies>
