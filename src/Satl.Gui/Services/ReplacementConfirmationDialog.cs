@@ -58,11 +58,22 @@ public static class ReplacementConfirmationDialog
         IReadOnlyList<ReplacementPreview> previews,
         string title) => await ShowCoreAsync(xamlRoot, previews, title, confirmText: null);
 
+    public static async Task ShowCatalogReadOnlyAsync(
+        XamlRoot xamlRoot,
+        IReadOnlyList<ReplacementPreview> previews,
+        string title) => await ShowCoreAsync(
+            xamlRoot,
+            previews,
+            title,
+            confirmText: null,
+            readOnlyExplanation: "下表来自云端翻译索引对应的 BIN 文件，并已通过 Binary KeyValues 字节级 roundtrip 校验。语言列表由该 BIN 的名称和说明字段自动扫描生成。");
+
     private static async Task<bool> ShowCoreAsync(
         XamlRoot xamlRoot,
         IReadOnlyList<ReplacementPreview> previews,
         string title,
-        string? confirmText)
+        string? confirmText,
+        string? readOnlyExplanation = null)
     {
         if (previews.Count == 0)
         {
@@ -79,7 +90,7 @@ public static class ReplacementConfirmationDialog
         var explanation = new TextBlock
         {
             Text = confirmText is null
-                ? "下表来自 Steam 当前使用的 BIN 文件，并已通过 Binary KeyValues 字节级 roundtrip 校验。语言列表由该 BIN 的名称和说明字段自动扫描生成。"
+                ? readOnlyExplanation ?? "下表来自 Steam 当前使用的 BIN 文件，并已通过 Binary KeyValues 字节级 roundtrip 校验。语言列表由该 BIN 的名称和说明字段自动扫描生成。"
                 : "下表来自即将写入的 BIN 文件，并已通过 Binary KeyValues 字节级 roundtrip 校验。语言列表由该 BIN 的名称和说明字段自动扫描生成。",
             TextWrapping = TextWrapping.Wrap,
             Foreground = Application.Current.Resources["TextFillColorSecondaryBrush"] as Brush,

@@ -26,6 +26,23 @@ public sealed partial class CloudGamesPage : Page
     private async void Refresh_Click(object sender, RoutedEventArgs e) =>
         await ViewModel.RefreshAsync();
 
+    private async void ViewAchievements_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not FrameworkElement { Tag: GameItem game })
+        {
+            return;
+        }
+
+        var preview = await App.ViewModel.Translations.PreviewCatalogAsync(game);
+        if (preview is not null)
+        {
+            await ReplacementConfirmationDialog.ShowCatalogReadOnlyAsync(
+                XamlRoot,
+                [preview],
+                $"查看云端成就 · {game.GameName}");
+        }
+    }
+
     private async void Report_Click(object sender, RoutedEventArgs e)
     {
         if (sender is not Button { Tag: GameItem game })

@@ -70,18 +70,28 @@
                                 <TextBlock Text="{x:Bind StateText}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Style="{StaticResource CaptionTextBlockStyle}" />
                                 <InfoBar IsOpen="{x:Bind HasCatalogWarning}" IsClosable="False" Severity="Warning" Message="{x:Bind CatalogWarningText}" />
                             </StackPanel>
-                            <Button
-                                Grid.Column="1"
-                                VerticalAlignment="Center"
-                                Click="Report_Click"
-                                Tag="{x:Bind}"
-                                AutomationProperties.Name="报告游戏文件问题"
-                                AutomationProperties.HelpText="{x:Bind GameName}">
-                                <StackPanel Orientation="Horizontal" Spacing="7">
-                                    <FontIcon Glyph="&#xE7C1;" FontSize="15" />
-                                    <TextBlock Text="报告" VerticalAlignment="Center" />
-                                </StackPanel>
-                            </Button>
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Spacing="8">
+                                <Button
+                                    Click="ViewAchievements_Click"
+                                    Tag="{x:Bind}"
+                                    AutomationProperties.Name="查看云端游戏成就"
+                                    AutomationProperties.HelpText="{x:Bind GameName}">
+                                    <StackPanel Orientation="Horizontal" Spacing="7">
+                                        <SymbolIcon Symbol="View" />
+                                        <TextBlock Text="查看成就" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </Button>
+                                <Button
+                                    Click="Report_Click"
+                                    Tag="{x:Bind}"
+                                    AutomationProperties.Name="报告游戏文件问题"
+                                    AutomationProperties.HelpText="{x:Bind GameName}">
+                                    <StackPanel Orientation="Horizontal" Spacing="7">
+                                        <FontIcon Glyph="&#xE7C1;" FontSize="15" />
+                                        <TextBlock Text="报告" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </Button>
+                            </StackPanel>
                         </Grid>
                     </Border>
                 </DataTemplate>
