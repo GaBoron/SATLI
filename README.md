@@ -2,7 +2,8 @@
   <img src="src/Satl.Gui/Assets/AppIcon.preview.png" width="112" alt="Steam 成就翻译管理器图标">
 </p>
 
-<h1 align="center">Steam 成就翻译管理器</h1>
+<h1 align="center">SATLI</h1>
+<p align="center"><strong>Steam 成就翻译管理器</strong></p>
 
 <p align="center">
   在 Windows 上查找、编辑、安装并安全恢复 Steam 成就翻译。
