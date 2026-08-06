@@ -11,6 +11,7 @@ public sealed class MainViewModel : ObservableObject
 {
     private readonly SettingsService _settingsService = new();
     private readonly UpdateService _updateService = new();
+    private readonly StoreUpdateService _storeUpdateService;
     private readonly NetworkProbeService _networkProbeService = new();
     private readonly ApplicationDistributionService _distributionService;
     private bool _isInfoOpen;
@@ -30,6 +31,7 @@ public sealed class MainViewModel : ObservableObject
     internal MainViewModel(ApplicationDistributionService distributionService)
     {
         _distributionService = distributionService;
+        _storeUpdateService = new StoreUpdateService(_updateService);
         Translations = new TranslationManagementViewModel(
             () => Settings,
             Operation,
@@ -121,7 +123,7 @@ public sealed class MainViewModel : ObservableObject
         await App.Logs.WriteAsync("信息", "应用", "设置已加载，开始初始化。");
         ApplyTheme();
         await Translations.ScanAsync(refreshCatalog: true);
-        if (Settings.CheckForUpdatesOnStartup && !UsesStoreManagedUpdates)
+        if (Settings.CheckForUpdatesOnStartup)
         {
             await CheckForUpdatesCoreAsync(showCurrentResult: false);
         }
@@ -129,11 +131,6 @@ public sealed class MainViewModel : ObservableObject
 
     public Task<UpdateCheckResult?> CheckForUpdatesAsync()
     {
-        if (UsesStoreManagedUpdates)
-        {
-            ShowInfo("此版本由 Microsoft Store 管理软件更新。", InfoBarSeverity.Informational);
-            return Task.FromResult<UpdateCheckResult?>(null);
-        }
         return CheckForUpdatesCoreAsync(showCurrentResult: true);
     }
 
@@ -240,7 +237,9 @@ public sealed class MainViewModel : ObservableObject
             debug: true);
         try
         {
-            var result = await _updateService.CheckAsync();
+            var result = UsesStoreManagedUpdates
+                ? await _storeUpdateService.CheckAsync()
+                : await _updateService.CheckAsync();
             LatestReleasePage = result.ReleasePage;
             await App.Logs.WriteAsync("信息", "更新", result.Message);
             await App.Logs.WriteAsync(

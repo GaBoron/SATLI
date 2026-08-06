@@ -46,13 +46,16 @@ public sealed partial class SettingsPage : Page
         UpdateStatusText.Text = $"当前版本 v{UpdateService.CurrentVersionText}。";
         AboutVersionText.Text =
             $"版本 {UpdateService.CurrentVersionText} · {ViewModel.DistributionChannelName} · Windows 10/11 x64";
+        StartupUpdateDescription.Text = ViewModel.UsesStoreManagedUpdates
+            ? "启动后向 Microsoft Store 检查软件包更新；发现新版时显示发布说明和 Store 更新入口。"
+            : "启动后检查 GitHub Releases；发现新版时显示发布说明和下载按钮。";
+        OpenReleaseButton.Content = ViewModel.UsesStoreManagedUpdates
+            ? "打开 Microsoft Store"
+            : "打开发布页";
         OpenReleaseButton.Visibility = ViewModel.LatestReleasePage is null ? Visibility.Collapsed : Visibility.Visible;
         StoreUpdateNotice.Visibility = ViewModel.UsesStoreManagedUpdates
             ? Visibility.Visible
             : Visibility.Collapsed;
-        GitHubUpdateSettings.Visibility = ViewModel.UsesStoreManagedUpdates
-            ? Visibility.Collapsed
-            : Visibility.Visible;
         RefreshDirectoryLabels();
         _isInitializing = false;
     }
@@ -106,14 +109,17 @@ public sealed partial class SettingsPage : Page
         OpenReleaseButton.Visibility = result.ReleasePage is null ? Visibility.Collapsed : Visibility.Visible;
     }
 
-    private void OpenRelease_Click(object sender, RoutedEventArgs e)
+    private async void OpenRelease_Click(object sender, RoutedEventArgs e)
     {
         var releasePage = ViewModel.LatestReleasePage;
         if (releasePage is null)
         {
             return;
         }
-        Process.Start(new ProcessStartInfo(releasePage.AbsoluteUri) { UseShellExecute = true });
+        if (!await Windows.System.Launcher.LaunchUriAsync(releasePage))
+        {
+            ViewModel.ShowInfo("无法打开软件更新页面。", InfoBarSeverity.Warning);
+        }
     }
 
     private async void BrowseSteamDirectory_Click(object sender, RoutedEventArgs e)

@@ -12,6 +12,12 @@ public static class UpdateDialogService
         UpdateCheckResult update,
         UpdateService updateService)
     {
+        if (update.IsMicrosoftStoreUpdate)
+        {
+            await ShowStoreUpdateAsync(xamlRoot, update);
+            return;
+        }
+
         var notes = new ReleaseNotesMarkdownView(
             update.ReleaseNotes,
             new Uri($"{UpdateService.RepositoryUrl}/"));
@@ -109,6 +115,69 @@ public static class UpdateDialogService
             if (downloading)
             {
                 cancellation.Cancel();
+            }
+        };
+        await dialog.ShowAsync();
+    }
+
+    private static async Task ShowStoreUpdateAsync(
+        XamlRoot xamlRoot,
+        UpdateCheckResult update)
+    {
+        var notes = new ReleaseNotesMarkdownView(
+            update.ReleaseNotes,
+            new Uri($"{UpdateService.RepositoryUrl}/"));
+        var status = new TextBlock
+        {
+            Text = "打开 Microsoft Store 后，请在产品页选择“更新”。如果已开启应用自动更新，"
+                + "Store 也可能已在后台开始下载。",
+            TextWrapping = TextWrapping.Wrap,
+        };
+        var content = new StackPanel { Spacing = 12, MinWidth = 560 };
+        content.Children.Add(new TextBlock
+        {
+            Text = $"v{update.CurrentVersion} → v{update.LatestVersion}",
+            Style = Application.Current.Resources["SubtitleTextBlockStyle"] as Style,
+        });
+        content.Children.Add(new Border
+        {
+            Child = notes,
+            Height = 420,
+        });
+        content.Children.Add(status);
+
+        var dialog = new ContentDialog
+        {
+            XamlRoot = xamlRoot,
+            Title = $"Microsoft Store 中有新版本 v{update.LatestVersion}",
+            Content = content,
+            PrimaryButtonText = "在 Microsoft Store 中更新",
+            CloseButtonText = "稍后",
+            DefaultButton = ContentDialogButton.Primary,
+        };
+        dialog.Resources["ContentDialogMaxWidth"] = 720d;
+        dialog.PrimaryButtonClick += async (_, args) =>
+        {
+            var deferral = args.GetDeferral();
+            try
+            {
+                var opened = await Windows.System.Launcher.LaunchUriAsync(
+                    StoreUpdateService.ProductPageUri);
+                args.Cancel = !opened;
+                if (!opened)
+                {
+                    status.Text = "无法打开 Microsoft Store，请稍后在 Store 的“库”页面检查更新。";
+                }
+            }
+            catch (Exception exception)
+            {
+                args.Cancel = true;
+                status.Text = $"无法打开 Microsoft Store：{exception.Message}";
+                await App.Logs.WriteExceptionDetailsAsync("更新", exception);
+            }
+            finally
+            {
+                deferral.Complete();
             }
         };
         await dialog.ShowAsync();

@@ -15,7 +15,8 @@ public sealed record UpdateCheckResult(
     Uri? InstallerDownload,
     string? InstallerSha256,
     string ReleaseNotes,
-    string Message);
+    string Message,
+    bool IsMicrosoftStoreUpdate = false);
 
 public sealed class UpdateService
 {
@@ -472,12 +473,12 @@ public sealed class UpdateService
         return false;
     }
 
-    private static Version Normalize(Version value) => new(
+    internal static Version Normalize(Version value) => new(
         Math.Max(value.Major, 0),
         Math.Max(value.Minor, 0),
         Math.Max(value.Build, 0));
 
-    private static string FormatVersion(Version value)
+    internal static string FormatVersion(Version value)
     {
         var normalized = Normalize(value);
         return $"{normalized.Major}.{normalized.Minor}.{normalized.Build}";

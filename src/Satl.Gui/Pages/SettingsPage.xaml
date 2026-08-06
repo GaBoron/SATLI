@@ -224,11 +224,11 @@
                 <Grid Style="{StaticResource SettingsRowStyle}">
                     <StackPanel VerticalAlignment="Center" Spacing="3">
                         <TextBlock Text="Microsoft Store 更新" Style="{StaticResource BodyStrongTextBlockStyle}" />
-                        <TextBlock Text="此安装版本由 Microsoft Store 自动检查、下载和安装软件更新。" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
+                        <TextBlock Text="除 Microsoft Store 的系统自动更新外，也可在此主动检查新版并查看更新内容。" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
                     </StackPanel>
                 </Grid>
             </Border>
-            <StackPanel x:Name="GitHubUpdateSettings" Spacing="8">
+            <StackPanel x:Name="UpdateSettings" Spacing="8">
                 <Border Style="{StaticResource SettingsCardStyle}">
                     <Grid Style="{StaticResource SettingsRowStyle}">
                         <Grid.ColumnDefinitions>
@@ -237,7 +237,7 @@
                         </Grid.ColumnDefinitions>
                         <StackPanel VerticalAlignment="Center" Spacing="3">
                             <TextBlock Text="启动时检查更新" Style="{StaticResource BodyStrongTextBlockStyle}" />
-                            <TextBlock Text="启动后检查 GitHub Releases；发现新版本时显示发布说明和下载按钮。" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
+                            <TextBlock x:Name="StartupUpdateDescription" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
                         </StackPanel>
                         <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
                             <TextBlock x:Name="UpdateCheckStateText" Style="{StaticResource SettingsToggleStateTextStyle}" />
@@ -261,7 +261,7 @@
                         </StackPanel>
                         <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Spacing="8">
                             <Button Content="检查更新" Click="CheckForUpdates_Click" AutomationProperties.Name="检查软件更新" />
-                            <Button x:Name="OpenReleaseButton" Content="打开发布页" Click="OpenRelease_Click" Visibility="Collapsed" AutomationProperties.Name="打开 GitHub Release 发布页" />
+                            <Button x:Name="OpenReleaseButton" Content="打开发布页" Click="OpenRelease_Click" Visibility="Collapsed" AutomationProperties.Name="打开软件更新页面" />
                         </StackPanel>
                     </Grid>
                 </Border>
