@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using System.IO.Compression;
 using System.Security.Cryptography;
 using Satl_Gui.Models;
 using Windows.System;
@@ -35,7 +34,7 @@ public sealed class ContributionWorkflowService
             throw new FileNotFoundException("找不到刚导出的投稿 ZIP。", zipPath);
         }
 
-        var schema = ReadSingleSchema(zipPath, game.AppId);
+        var schema = SchemaZipArchive.ReadSingleSchema(zipPath, game.AppId);
         var schemaSha256 = Convert.ToHexString(SHA256.HashData(schema)).ToLowerInvariant();
         if (!schemaSha256.Equals(result.OutputSha256, StringComparison.OrdinalIgnoreCase))
         {
@@ -97,22 +96,5 @@ public sealed class ContributionWorkflowService
         var startInfo = new ProcessStartInfo("explorer.exe") { UseShellExecute = true };
         startInfo.ArgumentList.Add($"/select,{draft.ZipPath}");
         Process.Start(startInfo);
-    }
-
-    private static byte[] ReadSingleSchema(string zipPath, string appId)
-    {
-        using var archive = ZipFile.OpenRead(zipPath);
-        var expectedMember = $"UserGameStatsSchema_{appId}.bin";
-        var files = archive.Entries.Where(entry => !string.IsNullOrEmpty(entry.Name)).ToArray();
-        if (files.Length != 1
-            || !files[0].FullName.Equals(expectedMember, StringComparison.Ordinal))
-        {
-            throw new InvalidDataException(
-                $"投稿 ZIP 必须只包含根目录下的 {expectedMember}。");
-        }
-        using var stream = files[0].Open();
-        using var memory = new MemoryStream();
-        stream.CopyTo(memory);
-        return memory.ToArray();
     }
 }

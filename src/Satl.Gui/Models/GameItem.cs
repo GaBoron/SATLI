@@ -230,6 +230,12 @@ public sealed class GameItem : ObservableObject
     public bool HasNativeChinese => NativeLanguages.Any(language =>
         language.Equals("schinese", StringComparison.OrdinalIgnoreCase)
         || language.Equals("tchinese", StringComparison.OrdinalIgnoreCase));
+    public bool CanRequestTranslation => NativeLanguages.Count > 0
+        && !HasNativeChinese
+        && Variants.Count == 0;
+    public Visibility TranslationRequestVisibility => CanRequestTranslation
+        ? Visibility.Visible
+        : Visibility.Collapsed;
     public bool HasCatalogWarning => !IsLocalEdit && !IsLocalImport && !IsCurrent && !HasNativeChinese;
     public string CatalogText => IsLocalEdit
         ? "本地编辑译本"

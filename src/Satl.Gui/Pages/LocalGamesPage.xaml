@@ -72,18 +72,29 @@
                                 <TextBlock Text="{x:Bind StateText}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Style="{StaticResource CaptionTextBlockStyle}" />
                                 <InfoBar IsOpen="{x:Bind HasCatalogWarning}" IsClosable="False" Severity="Warning" Message="{x:Bind CatalogWarningText}" />
                             </StackPanel>
-                            <Button
-                                Grid.Column="1"
-                                VerticalAlignment="Center"
-                                Click="Edit_Click"
-                                Tag="{x:Bind}"
-                                AutomationProperties.Name="编辑游戏成就"
-                                AutomationProperties.HelpText="{x:Bind GameName}">
-                                <StackPanel Orientation="Horizontal" Spacing="7">
-                                    <FontIcon Glyph="&#xE70F;" FontSize="15" />
-                                    <TextBlock Text="编辑" VerticalAlignment="Center" />
-                                </StackPanel>
-                            </Button>
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Spacing="8">
+                                <Button
+                                    Click="RequestTranslation_Click"
+                                    Tag="{x:Bind}"
+                                    Visibility="{x:Bind TranslationRequestVisibility}"
+                                    AutomationProperties.Name="请求社区翻译"
+                                    AutomationProperties.HelpText="{x:Bind GameName}">
+                                    <StackPanel Orientation="Horizontal" Spacing="7">
+                                        <FontIcon Glyph="&#xE8F1;" FontSize="15" />
+                                        <TextBlock Text="请求翻译" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </Button>
+                                <Button
+                                    Click="Edit_Click"
+                                    Tag="{x:Bind}"
+                                    AutomationProperties.Name="编辑游戏成就"
+                                    AutomationProperties.HelpText="{x:Bind GameName}">
+                                    <StackPanel Orientation="Horizontal" Spacing="7">
+                                        <FontIcon Glyph="&#xE70F;" FontSize="15" />
+                                        <TextBlock Text="编辑" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </Button>
+                            </StackPanel>
                         </Grid>
                     </Border>
                 </DataTemplate>

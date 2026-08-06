@@ -1,8 +1,5 @@
-using System.Diagnostics;
-using System.Globalization;
 using Microsoft.UI.Input;
 using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Satl_Gui.Models;
@@ -16,11 +13,6 @@ namespace Satl_Gui.Pages;
 
 public sealed partial class GamesPage : Page
 {
-    private const string PetitionUrl =
-        "https://github.com/GaBoron/steam-achievement-translation-library/issues/new?template=translation_petition_zh.yml";
-    private const string ContributionUrl =
-        "https://github.com/GaBoron/steam-achievement-translation-library/issues/new?template=translation_contribution_zh.yml";
-
     private readonly TranslationUpdateDiffService _updateDiffs = new();
     private int? _selectionAnchorIndex;
 
@@ -41,73 +33,8 @@ public sealed partial class GamesPage : Page
         _selectionAnchorIndex = null;
     }
 
-    private async void Petition_Click(object sender, RoutedEventArgs e)
-    {
-        var appIdBox = new TextBox
-        {
-            Header = "Steam App ID",
-            PlaceholderText = "例如：123456",
-            MaxLength = 20,
-        };
-        AutomationProperties.SetName(appIdBox, "Steam App ID");
-        var content = new StackPanel { Spacing = 12, MaxWidth = 500 };
-        content.Children.Add(new TextBlock
-        {
-            Text = "在 Steam 商店打开游戏，地址中 /app/ 后面的数字就是游戏 ID。也可以在 Steam 的游戏属性页面查看 App ID。",
-            TextWrapping = TextWrapping.Wrap,
-        });
-        content.Children.Add(new TextBlock
-        {
-            Text = "只有原始文件：输入 ID 并导出请愿 ZIP，再通过“提交翻译请愿”告诉社区你需要哪些语言。请愿不会把原始文件直接收录为翻译。",
-            TextWrapping = TextWrapping.Wrap,
-        });
-        content.Children.Add(new TextBlock
-        {
-            Text = "已经完成翻译：使用下面的“贡献翻译”入口。投稿 ZIP 必须命名为 UserGameStatsSchema_<app_id>.zip，并完整包含所声明语言的成就名称和说明。提交前请先在翻译库索引中搜索 App ID；已收录游戏应使用“更新已有翻译”模板。",
-            TextWrapping = TextWrapping.Wrap,
-        });
-        var contributionButton = new Button
-        {
-            Content = "贡献翻译",
-            HorizontalAlignment = HorizontalAlignment.Left,
-        };
-        AutomationProperties.SetName(contributionButton, "打开翻译贡献表单");
-        contributionButton.Click += (_, _) => OpenExternalUrl(ContributionUrl, "翻译贡献");
-        content.Children.Add(contributionButton);
-        content.Children.Add(appIdBox);
-
-        var dialog = new ContentDialog
-        {
-            XamlRoot = XamlRoot,
-            Title = "翻译请愿",
-            Content = content,
-            PrimaryButtonText = "提交翻译请愿",
-            SecondaryButtonText = "导出请愿 ZIP",
-            CloseButtonText = "取消",
-            DefaultButton = ContentDialogButton.Primary,
-            IsSecondaryButtonEnabled = false,
-        };
-        appIdBox.TextChanged += (_, _) =>
-            dialog.IsSecondaryButtonEnabled = IsValidAppId(appIdBox.Text);
-
-        var result = await dialog.ShowAsync();
-        if (result == ContentDialogResult.Primary)
-        {
-            OpenExternalUrl(PetitionUrl, "翻译请愿");
-            return;
-        }
-        if (result != ContentDialogResult.Secondary)
-        {
-            return;
-        }
-
-        var appId = appIdBox.Text.Trim();
-        var output = await PickPetitionDestinationAsync(appId);
-        if (output is not null)
-        {
-            await ViewModel.ExportPetitionAsync(appId, output);
-        }
-    }
+    private async void Petition_Click(object sender, RoutedEventArgs e) =>
+        await TranslationPetitionDialogService.RunAsync(XamlRoot);
 
     private async void Install_Click(object sender, RoutedEventArgs e)
     {
@@ -252,39 +179,4 @@ public sealed partial class GamesPage : Page
         await ViewModel.ScanAsync();
     }
 
-    private void OpenExternalUrl(string url, string description)
-    {
-        try
-        {
-            Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
-        }
-        catch (Exception exception)
-        {
-            ViewModel.ShowInfo($"无法打开{description}页面：{exception.Message}", InfoBarSeverity.Error);
-        }
-    }
-
-    private static bool IsValidAppId(string value) =>
-        value.Length <= 20
-        && ulong.TryParse(value, NumberStyles.None, CultureInfo.InvariantCulture, out var parsed)
-        && parsed > 0;
-
-    private async Task<string?> PickPetitionDestinationAsync(string appId)
-    {
-        try
-        {
-            return NativeFilePickerService.PickSaveFile(
-                App.WindowHandle,
-                "导出翻译请愿 ZIP",
-                $"UserGameStatsSchema_{appId}.zip",
-                "ZIP 压缩文件",
-                ".zip");
-        }
-        catch (Exception exception)
-        {
-            ViewModel.ShowInfo($"无法打开保存位置选择器：{exception.Message}", InfoBarSeverity.Error);
-            await App.Logs.WriteExceptionDetailsAsync("文件选择器", exception);
-            return null;
-        }
-    }
 }

@@ -158,11 +158,11 @@ public sealed partial class TranslationManagementViewModel
         }
     }
 
-    public async Task ExportPetitionAsync(string appId, string outputPath)
+    public async Task<bool> ExportPetitionAsync(string appId, string outputPath)
     {
         if (!_operation.TryBegin())
         {
-            return;
+            return false;
         }
         try
         {
@@ -172,13 +172,15 @@ public sealed partial class TranslationManagementViewModel
             if (!result.IsSuccess)
             {
                 ShowResultError(result);
-                return;
+                return false;
             }
             ShowInfo($"翻译请愿 ZIP 已导出：{outputPath}", InfoBarSeverity.Success);
+            return true;
         }
         catch (Exception exception)
         {
             ShowException("导出请愿文件", exception);
+            return false;
         }
         finally
         {

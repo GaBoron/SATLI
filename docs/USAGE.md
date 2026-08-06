@@ -98,7 +98,9 @@
 
 ### 请求或贡献翻译
 
-没有云端译本时，在搜索页点击“未找到游戏？”，填写 Steam App ID 并导出原始 schema ZIP，再前往 [Steam 成就翻译库](https://github.com/GaBoron/steam-achievement-translation-library/issues/new/choose) 提交翻译请愿。
+没有云端译本时，可在搜索页点击“未找到游戏？”。本地游戏的成就 schema 能正常读取、没有简体或繁体中文且翻译库也未收录时，游戏卡片还会直接显示“请求翻译”。
+
+填写目标语言和可选备注后，应用会导出并校验原始 schema ZIP，自动填写 GitHub 翻译请愿的游戏名、App ID、商店地址、目标语言和备注，并在资源管理器中选中 ZIP。GitHub Issue API 不支持附件上传，因此最后需要把该 ZIP 拖到网页表单的上传区域并提交；已绑定 GitHub 的账户会在应用内明确显示当前身份。
 
 如果已经完成翻译，可从编辑页或投稿流程导出标准 ZIP，再提交到翻译库。ZIP 根目录只能包含一个 `UserGameStatsSchema_<app_id>.bin`。
 

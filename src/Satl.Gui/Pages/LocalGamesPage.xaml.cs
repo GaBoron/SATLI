@@ -104,6 +104,14 @@ public sealed partial class LocalGamesPage : Page
         }
     }
 
+    private async void RequestTranslation_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button { Tag: GameItem game })
+        {
+            await TranslationPetitionDialogService.RunAsync(XamlRoot, game);
+        }
+    }
+
     private async Task<string?> PickImportSourceAsync()
     {
         try
