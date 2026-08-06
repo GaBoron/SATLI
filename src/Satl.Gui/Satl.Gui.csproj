@@ -123,4 +123,12 @@
       DestinationFiles="@(WinUIRuntimeResource->'$(PublishDir)%(RecursiveDir)%(Filename)%(Extension)')"
       SkipUnchangedFiles="true" />
   </Target>
+
+  <Target
+    Name="PrepareSatlLocalRuntime"
+    AfterTargets="Build"
+    Condition="'$(DesignTimeBuild)' != 'true' and '$(IncludeSatlRuntime)' != 'false'">
+    <Exec
+      Command="powershell.exe -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -File &quot;$(MSBuildProjectDirectory)\..\..\scripts\prepare-local-runtime.ps1&quot; -OutputDirectory &quot;$(TargetDir).&quot;" />
+  </Target>
 </Project>
