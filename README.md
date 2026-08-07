@@ -21,6 +21,8 @@
   <a href="docs/USAGE.md">📖 使用指南</a>
   ·
   <a href="https://github.com/GaBoron/steam-achievement-translation-installer/issues/new/choose">💬 反馈问题</a>
+  ·
+  <a href="https://www.ifdian.net/a/gaboron">❤️ 赞助开发者</a>
 </p>
 
 ## 下载与安装
