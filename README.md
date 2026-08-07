@@ -13,7 +13,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/GaBoron/SATLI/releases/latest"><img alt="最新版本" src="https://img.shields.io/github/v/release/GaBoron/SATLI?label=%E6%9C%80%E6%96%B0%E7%89%88%E6%9C%AC"></a>
+  <a href="https://github.com/GaBoron/SATLI/releases/latest"><img alt="最新版本" src="https://img.shields.io/github/v/release/GaBoron/SATLI?display_name=tag&amp;sort=semver&amp;label=%E6%9C%80%E6%96%B0%E7%89%88%E6%9C%AC&amp;cacheSeconds=300"></a>
   <img alt="Windows 10 / 11" src="https://img.shields.io/badge/Windows-10%20%2F%2011-0078D4">
   <a href="LICENSE"><img alt="MIT License" src="https://img.shields.io/badge/License-MIT-green.svg"></a>
 </p>
