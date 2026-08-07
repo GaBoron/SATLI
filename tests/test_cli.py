@@ -94,6 +94,7 @@ def test_scan_json_has_stable_fields(tmp_path: Path, capsys: pytest.CaptureFixtu
     assert set(output[0]) == {
         "app_id",
         "game_name",
+        "contributors",
         "discovery",
         "catalog_status",
         "variants",
@@ -106,6 +107,7 @@ def test_scan_json_has_stable_fields(tmp_path: Path, capsys: pytest.CaptureFixtu
         "action",
         "error",
     }
+    assert output[0]["contributors"] == []
     assert output[0]["discovery"] == ["installed"]
 
 

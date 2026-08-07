@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
+using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Satl_Gui.Models;
 using Satl_Gui.Services;
@@ -12,6 +13,7 @@ public sealed class GameInventoryViewModel(GameInventoryScope scope) : Observabl
     private string _searchText = string.Empty;
     private string _statusMessage = "准备就绪";
     private bool _isBusy;
+    private bool _isLoading = true;
     private bool _initialized;
     private GameInstallFilterOption _selectedFilterOption = GameInstallFiltering.OptionsFor(scope)[0];
 
@@ -56,6 +58,24 @@ public sealed class GameInventoryViewModel(GameInventoryScope scope) : Observabl
         private set => SetProperty(ref _isBusy, value);
     }
 
+    public bool IsLoading
+    {
+        get => _isLoading;
+        private set
+        {
+            if (SetProperty(ref _isLoading, value))
+            {
+                OnPropertyChanged(nameof(GameListVisibility));
+                OnPropertyChanged(nameof(EmptyStateVisibility));
+            }
+        }
+    }
+
+    public Visibility GameListVisibility => IsLoading ? Visibility.Collapsed : Visibility.Visible;
+    public Visibility EmptyStateVisibility => !IsLoading && VisibleGames.Count == 0
+        ? Visibility.Visible
+        : Visibility.Collapsed;
+
     public async Task InitializeAsync()
     {
         if (_initialized)
@@ -75,6 +95,7 @@ public sealed class GameInventoryViewModel(GameInventoryScope scope) : Observabl
         }
 
         IsBusy = true;
+        IsLoading = true;
         StatusMessage = scope == GameInventoryScope.Local
             ? "正在扫描本地 Steam 游戏…"
             : "正在读取云端翻译索引…";
@@ -112,6 +133,7 @@ public sealed class GameInventoryViewModel(GameInventoryScope scope) : Observabl
         }
         finally
         {
+            IsLoading = false;
             IsBusy = false;
         }
     }
@@ -189,5 +211,6 @@ public sealed class GameInventoryViewModel(GameInventoryScope scope) : Observabl
         {
             VisibleGames.Add(game);
         }
+        OnPropertyChanged(nameof(EmptyStateVisibility));
     }
 }

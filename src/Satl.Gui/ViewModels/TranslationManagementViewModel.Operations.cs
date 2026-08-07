@@ -13,6 +13,7 @@ public sealed partial class TranslationManagementViewModel
         {
             return;
         }
+        BeginLoading();
         try
         {
             var settings = _settings();
@@ -38,6 +39,7 @@ public sealed partial class TranslationManagementViewModel
         }
         finally
         {
+            CompleteLoading();
             _operation.Complete();
         }
     }
@@ -306,6 +308,7 @@ public sealed partial class TranslationManagementViewModel
                 scanned.InstalledSha256 = managed.InstalledSha256;
             }
         }
+        OnPropertyChanged(nameof(ManagedEmptyStateVisibility));
         UpdateAvailableCount = GameInstallFiltering.CountUpdates(Games);
         ApplyFilter();
     }

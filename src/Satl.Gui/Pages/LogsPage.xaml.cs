@@ -61,6 +61,7 @@ public sealed partial class LogsPage : Page
 
     private async Task RefreshAsync()
     {
+        SetLoading(true);
         try
         {
             _allLogs = await App.Logs.ReadRecentAsync();
@@ -70,6 +71,16 @@ public sealed partial class LogsPage : Page
         {
             App.ViewModel.ShowInfo($"无法读取日志：{exception.Message}", InfoBarSeverity.Error);
         }
+        finally
+        {
+            SetLoading(false);
+        }
+    }
+
+    private void SetLoading(bool isLoading)
+    {
+        LoadingState.IsActive = isLoading;
+        LogTextBox.Visibility = isLoading ? Visibility.Collapsed : Visibility.Visible;
     }
 
     private void ApplyFilter()

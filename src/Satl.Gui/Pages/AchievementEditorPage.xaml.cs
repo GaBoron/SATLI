@@ -33,6 +33,7 @@ public sealed partial class AchievementEditorPage : Page
         _game = e.Parameter as GameItem;
         if (_game is null)
         {
+            SetBusyState(false);
             App.ViewModel.ShowInfo("无法打开成就编辑器：缺少游戏信息。", InfoBarSeverity.Error);
             return;
         }

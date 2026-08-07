@@ -65,6 +65,32 @@ public sealed class ProtocolTests
         Assert.Equal("default", item.SelectedVariantId);
     }
 
+    [Fact]
+    public void GameItemPresentsCatalogContributors()
+    {
+        using var document = JsonDocument.Parse(
+            """{"app_id":"123","game_name":"Game","contributors":["Translator","Reviewer"]}"""
+        );
+
+        var item = GameItem.FromPayload(document.RootElement);
+
+        Assert.Equal(["Translator", "Reviewer"], item.Contributors);
+        Assert.Equal("译本作者：Translator、Reviewer", item.ContributorText);
+        Assert.Equal("App ID 123 · 译本作者：Translator、Reviewer", item.CloudMetadataText);
+    }
+
+    [Fact]
+    public void GameItemExplainsMissingCatalogContributors()
+    {
+        using var document = JsonDocument.Parse(
+            """{"app_id":"123","game_name":"Game"}"""
+        );
+
+        var item = GameItem.FromPayload(document.RootElement);
+
+        Assert.Equal("译本作者：未提供", item.ContributorText);
+    }
+
     [Theory]
     [InlineData("current", "索引状态：可用", false)]
     [InlineData("possibly-outdated", "索引状态：可能过期", true)]

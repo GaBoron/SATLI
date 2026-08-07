@@ -31,6 +31,7 @@ public sealed class GameItem : ObservableObject
     public required string GameName { get; init; }
     public string CatalogStatus { get; init; } = "unknown";
     public string DiscoveryText { get; init; } = string.Empty;
+    public IReadOnlyList<string> Contributors { get; init; } = [];
     public IReadOnlyList<string> NativeLanguages { get; init; } = [];
     public ObservableCollection<SchemaVariantOption> Variants { get; } = [];
 
@@ -248,6 +249,10 @@ public sealed class GameItem : ObservableObject
         ? string.Empty
         : CatalogStatusPresentation.Warning(CatalogStatus);
     public string Subtitle => $"App ID {AppId}" + (string.IsNullOrWhiteSpace(DiscoveryText) ? string.Empty : $" · {DiscoveryText}");
+    public string ContributorText => Contributors.Count == 0
+        ? "译本作者：未提供"
+        : $"译本作者：{string.Join("、", Contributors)}";
+    public string CloudMetadataText => $"App ID {AppId} · {ContributorText}";
 
     public static GameItem FromPayload(JsonElement payload)
     {
@@ -256,6 +261,7 @@ public sealed class GameItem : ObservableObject
             AppId = GetString(payload, "app_id", "0"),
             GameName = GetString(payload, "game_name", "未知游戏"),
             CatalogStatus = GetString(payload, "catalog_status", "unknown"),
+            Contributors = GetStringArray(payload, "contributors"),
             DiscoveryText = payload.TryGetProperty("discovery", out var discovery)
                 ? string.Join(
                     " / ",

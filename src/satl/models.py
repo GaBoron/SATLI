@@ -21,6 +21,7 @@ class CatalogEntry:
     game_name: str
     status: str
     variants: tuple[SchemaVariant, ...]
+    contributors: tuple[str, ...] = ()
 
     def primary_variant(self) -> SchemaVariant:
         return next(variant for variant in self.variants if variant.primary)

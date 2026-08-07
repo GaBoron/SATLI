@@ -3,6 +3,7 @@
     x:Class="Satl_Gui.Pages.ManagedPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:Satl_Gui.Controls"
     xmlns:models="using:Satl_Gui.Models"
     KeyboardAcceleratorPlacementMode="Hidden">
     <Grid Padding="32,24,32,16" RowSpacing="16">
@@ -15,7 +16,10 @@
             <AppBarButton Icon="Refresh" Label="刷新状态" Click="Refresh_Click" KeyboardAcceleratorTextOverride="F5" />
         </CommandBar>
         <Grid Grid.Row="2">
-        <ListView ItemsSource="{x:Bind ViewModel.ManagedGames, Mode=OneWay}" SelectionMode="None">
+        <ListView
+            ItemsSource="{x:Bind ViewModel.ManagedGames, Mode=OneWay}"
+            Visibility="{x:Bind ViewModel.ManagedGameListVisibility, Mode=OneWay}"
+            SelectionMode="None">
             <ListView.ItemContainerStyle>
                 <Style TargetType="ListViewItem">
                     <Setter Property="HorizontalContentAlignment" Value="Stretch" /><Setter Property="Padding" Value="0" /><Setter Property="Margin" Value="0,0,0,8" />
@@ -56,11 +60,12 @@
                 </DataTemplate>
             </ListView.ItemTemplate>
         </ListView>
+            <controls:LoadingStateControl IsActive="{x:Bind ViewModel.IsLoading, Mode=OneWay}" />
             <StackPanel
                 HorizontalAlignment="Center"
                 VerticalAlignment="Center"
                 Spacing="8"
-                Visibility="{x:Bind ViewModel.ManagedGames.Count, Mode=OneWay, Converter={StaticResource ZeroCountToVisibilityConverter}}">
+                Visibility="{x:Bind ViewModel.ManagedEmptyStateVisibility, Mode=OneWay}">
                 <FontIcon Glyph="&#xE8FD;" FontSize="32" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                 <TextBlock Text="暂无已管理的游戏" Style="{StaticResource SubtitleTextBlockStyle}" />
                 <TextBlock Text="安装、导入或保存本地编辑后会显示在这里。" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />

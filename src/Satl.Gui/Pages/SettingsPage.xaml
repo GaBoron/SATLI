@@ -267,15 +267,86 @@
                 </Border>
             </StackPanel>
 
-            <TextBlock Text="关于" Style="{StaticResource SubtitleTextBlockStyle}" Margin="0,12,0,0" />
+            <TextBlock Text="反馈" Style="{StaticResource SubtitleTextBlockStyle}" Margin="0,12,0,0" />
             <Border Style="{StaticResource SettingsCardStyle}">
                 <Grid Style="{StaticResource SettingsRowStyle}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
                     <StackPanel VerticalAlignment="Center" Spacing="3">
-                        <TextBlock Text="Steam 成就翻译管理器" Style="{StaticResource BodyStrongTextBlockStyle}" />
-                        <TextBlock x:Name="AboutVersionText" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        <TextBlock Text="反馈问题或建议" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                        <TextBlock Text="可通过 GitHub Issue 提交结构化反馈，或发送邮件至 SATLI.support@proton.me。" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Spacing="8">
+                        <Button Content="提交 issue 反馈" Click="OpenIssueFeedback_Click" AutomationProperties.Name="通过 GitHub Issue 提交反馈" />
+                        <Button Content="邮件反馈" Click="OpenEmailFeedback_Click" AutomationProperties.Name="发送邮件反馈" />
                     </StackPanel>
                 </Grid>
             </Border>
+
+            <TextBlock Text="关于" Style="{StaticResource SubtitleTextBlockStyle}" Margin="0,12,0,0" />
+            <StackPanel Spacing="8">
+                <Border Style="{StaticResource SettingsCardStyle}">
+                    <Grid Style="{StaticResource SettingsRowStyle}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel VerticalAlignment="Center" Spacing="3">
+                            <TextBlock Text="Steam 成就翻译管理器" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                            <TextBlock Text="扫描、安装、管理与恢复社区维护的 Steam 成就翻译。项目源代码托管于 GitHub。" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
+                        </StackPanel>
+                        <Button Grid.Column="1" Content="查看项目主页" VerticalAlignment="Center" Click="OpenProjectPage_Click" AutomationProperties.Name="打开项目 GitHub 主页" />
+                    </Grid>
+                </Border>
+                <Border Style="{StaticResource SettingsCardStyle}">
+                    <Grid Style="{StaticResource SettingsRowStyle}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel VerticalAlignment="Center" Spacing="3">
+                            <TextBlock Text="版本与分发来源" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                            <TextBlock Text="显示当前运行的软件版本及其安装渠道。" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Right" Spacing="3">
+                            <TextBlock x:Name="AboutVersionText" HorizontalAlignment="Right" />
+                            <TextBlock x:Name="AboutDistributionText" HorizontalAlignment="Right" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        </StackPanel>
+                    </Grid>
+                </Border>
+                <Border Style="{StaticResource SettingsCardStyle}">
+                    <Grid Style="{StaticResource SettingsRowStyle}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel VerticalAlignment="Center" Spacing="3">
+                            <TextBlock Text="系统与架构" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                            <TextBlock Text="当前发行包仅面向 64 位 Windows 设备。" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
+                        </StackPanel>
+                        <TextBlock x:Name="AboutPlatformText" Grid.Column="1" VerticalAlignment="Center" TextAlignment="Right" TextWrapping="Wrap" MaxWidth="420" />
+                    </Grid>
+                </Border>
+                <Border Style="{StaticResource SettingsCardStyle}">
+                    <Grid Style="{StaticResource SettingsRowStyle}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel VerticalAlignment="Center" Spacing="3">
+                            <TextBlock Text="版权与许可" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                            <TextBlock x:Name="AboutCopyrightText" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                            <TextBlock Text="程序代码采用 MIT License；第三方组件与翻译数据保留各自的版权和许可条款。" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Spacing="8">
+                            <Button Content="MIT 许可证" Click="OpenLicense_Click" AutomationProperties.Name="查看 MIT 许可证" />
+                            <Button Content="第三方声明" Click="OpenThirdPartyNotices_Click" AutomationProperties.Name="查看第三方版权与许可声明" />
+                        </StackPanel>
+                    </Grid>
+                </Border>
+            </StackPanel>
             </StackPanel>
         </Grid>
     </ScrollViewer>

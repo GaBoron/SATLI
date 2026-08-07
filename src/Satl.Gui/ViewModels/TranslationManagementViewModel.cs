@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
+using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Satl_Gui.Models;
 using Satl_Gui.Services;
@@ -15,6 +16,7 @@ public sealed partial class TranslationManagementViewModel : ObservableObject
     private readonly TranslationCliArguments _arguments;
     private string _searchText = string.Empty;
     private string _detectedSteamDirectory = string.Empty;
+    private bool _isLoading = true;
     private GameInstallFilterOption _selectedFilterOption = GameInstallFiltering.Options[0];
     private int _updateAvailableCount;
 
@@ -44,6 +46,32 @@ public sealed partial class TranslationManagementViewModel : ObservableObject
         get => _updateAvailableCount;
         private set => SetProperty(ref _updateAvailableCount, value);
     }
+
+    public bool IsLoading
+    {
+        get => _isLoading;
+        private set
+        {
+            if (SetProperty(ref _isLoading, value))
+            {
+                OnPropertyChanged(nameof(LoadingVisibility));
+                OnPropertyChanged(nameof(GameListVisibility));
+                OnPropertyChanged(nameof(EmptyStateVisibility));
+                OnPropertyChanged(nameof(ManagedGameListVisibility));
+                OnPropertyChanged(nameof(ManagedEmptyStateVisibility));
+            }
+        }
+    }
+
+    public Visibility LoadingVisibility => IsLoading ? Visibility.Visible : Visibility.Collapsed;
+    public Visibility GameListVisibility => IsLoading ? Visibility.Collapsed : Visibility.Visible;
+    public Visibility EmptyStateVisibility => !IsLoading && VisibleGames.Count == 0
+        ? Visibility.Visible
+        : Visibility.Collapsed;
+    public Visibility ManagedGameListVisibility => IsLoading ? Visibility.Collapsed : Visibility.Visible;
+    public Visibility ManagedEmptyStateVisibility => !IsLoading && ManagedGames.Count == 0
+        ? Visibility.Visible
+        : Visibility.Collapsed;
 
     public GameInstallFilterOption SelectedFilterOption
     {
@@ -93,7 +121,15 @@ public sealed partial class TranslationManagementViewModel : ObservableObject
             VisibleGames.Add(game);
         }
         OnPropertyChanged(nameof(SelectionActionText));
+        OnPropertyChanged(nameof(EmptyStateVisibility));
     }
+
+    internal void BeginLoading()
+    {
+        IsLoading = true;
+    }
+
+    internal void CompleteLoading() => IsLoading = false;
 
     public void ToggleVisibleSelection()
     {

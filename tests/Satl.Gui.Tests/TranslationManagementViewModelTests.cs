@@ -9,6 +9,37 @@ namespace Satl_Gui.Tests;
 public sealed class TranslationManagementViewModelTests
 {
     [Fact]
+    public void HomePageStartsLoadingAndOnlyShowsEmptyStateAfterCompletion()
+    {
+        var viewModel = new TranslationManagementViewModel(
+            () => new GuiSettings(),
+            new ApplicationOperationState(),
+            (_, _) => { });
+
+        Assert.True(viewModel.IsLoading);
+        Assert.Equal(Microsoft.UI.Xaml.Visibility.Visible, viewModel.LoadingVisibility);
+        Assert.Equal(Microsoft.UI.Xaml.Visibility.Collapsed, viewModel.GameListVisibility);
+        Assert.Equal(Microsoft.UI.Xaml.Visibility.Collapsed, viewModel.EmptyStateVisibility);
+        Assert.Equal(Microsoft.UI.Xaml.Visibility.Collapsed, viewModel.ManagedGameListVisibility);
+        Assert.Equal(Microsoft.UI.Xaml.Visibility.Collapsed, viewModel.ManagedEmptyStateVisibility);
+
+        viewModel.CompleteLoading();
+
+        Assert.False(viewModel.IsLoading);
+        Assert.Equal(Microsoft.UI.Xaml.Visibility.Collapsed, viewModel.LoadingVisibility);
+        Assert.Equal(Microsoft.UI.Xaml.Visibility.Visible, viewModel.GameListVisibility);
+        Assert.Equal(Microsoft.UI.Xaml.Visibility.Visible, viewModel.EmptyStateVisibility);
+        Assert.Equal(Microsoft.UI.Xaml.Visibility.Visible, viewModel.ManagedGameListVisibility);
+        Assert.Equal(Microsoft.UI.Xaml.Visibility.Visible, viewModel.ManagedEmptyStateVisibility);
+
+        viewModel.VisibleGames.Add(new GameItem { AppId = "123", GameName = "Game" });
+        viewModel.BeginLoading();
+        viewModel.CompleteLoading();
+
+        Assert.Equal(Microsoft.UI.Xaml.Visibility.Collapsed, viewModel.EmptyStateVisibility);
+    }
+
+    [Fact]
     public void InstallSummaryReportsEveryFailureAndContinuedBatch()
     {
         using var firstFailure = JsonDocument.Parse(

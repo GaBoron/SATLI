@@ -30,6 +30,7 @@ def game_record(
     return {
         "app_id": entry.app_id,
         "game_name": entry.game_name,
+        "contributors": list(entry.contributors),
         "discovery": list(discovery),
         "catalog_status": entry.status,
         "variants": [variant_record(variant) for variant in entry.variants],

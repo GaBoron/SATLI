@@ -82,6 +82,21 @@ def _require_string(raw: dict[str, Any], key: str, context: str) -> str:
     return value.strip()
 
 
+def _parse_contributors(raw: Any, context: str) -> tuple[str, ...]:
+    if raw is None:
+        return ()
+    if not isinstance(raw, list):
+        raise CatalogError(f"{context} 的 contributors 必须是数组")
+    contributors: list[str] = []
+    for value in raw:
+        if not isinstance(value, str) or not value.strip():
+            raise CatalogError(f"{context} 的 contributors 包含无效作者")
+        contributor = value.strip()
+        if contributor not in contributors:
+            contributors.append(contributor)
+    return tuple(contributors)
+
+
 def _variant_path(app_id: str, variant_id: str, primary: bool) -> str:
     filename = f"UserGameStatsSchema_{app_id}.bin"
     if primary:
@@ -182,7 +197,13 @@ def parse_catalog(payload: bytes | str | dict[str, Any], *, source: str = "") ->
             if sum(variant.primary for variant in parsed) != 1:
                 raise CatalogError(f"{app_id} 必须且只能包含一个 default 主版本")
             variants = tuple(sorted(parsed, key=lambda value: (not value.primary, value.variant_id)))
-        entries[app_id] = CatalogEntry(app_id, game_name, status, variants)
+        entries[app_id] = CatalogEntry(
+            app_id=app_id,
+            game_name=game_name,
+            status=status,
+            variants=variants,
+            contributors=_parse_contributors(item.get("contributors"), app_id),
+        )
     return Catalog(version=1, entries=entries, source=source)
 
 

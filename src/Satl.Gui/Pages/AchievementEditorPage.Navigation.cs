@@ -78,7 +78,7 @@ public sealed partial class AchievementEditorPage
             return;
         }
         _isBusy = true;
-        BusyProgress.Visibility = Visibility.Visible;
+        SetBusyState(true);
         PageLayout.IsHitTestVisible = false;
         try
         {
@@ -92,8 +92,15 @@ public sealed partial class AchievementEditorPage
         finally
         {
             PageLayout.IsHitTestVisible = true;
-            BusyProgress.Visibility = Visibility.Collapsed;
+            SetBusyState(false);
             _isBusy = false;
         }
+    }
+
+    private void SetBusyState(bool isBusy)
+    {
+        BusyProgress.Visibility = isBusy ? Visibility.Visible : Visibility.Collapsed;
+        LoadingState.IsActive = isBusy;
+        EditorContent.Visibility = isBusy ? Visibility.Collapsed : Visibility.Visible;
     }
 }

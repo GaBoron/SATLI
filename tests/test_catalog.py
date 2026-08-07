@@ -88,6 +88,16 @@ def test_parse_legacy_entry() -> None:
     entry = catalog.entries["123"]
     assert entry.primary_variant().variant_id == "default"
     assert entry.primary_variant().schema_file == "files/123/UserGameStatsSchema_123.bin"
+    assert entry.contributors == ()
+
+
+def test_parse_entry_preserves_unique_contributors() -> None:
+    raw = legacy_entry()
+    raw["contributors"] = ["Translator", " Reviewer ", "Translator"]
+
+    entry = parse_catalog({"version": 1, "entries": [raw]}).entries["123"]
+
+    assert entry.contributors == ("Translator", "Reviewer")
 
 
 def test_parse_multi_version_uses_each_variants_metadata() -> None:

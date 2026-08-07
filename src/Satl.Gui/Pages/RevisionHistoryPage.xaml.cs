@@ -26,6 +26,7 @@ public sealed partial class RevisionHistoryPage : Page
         _game = e.Parameter as GameItem;
         if (_game is null)
         {
+            SetBusyState(false);
             App.ViewModel.ShowInfo("无法打开修订历史：缺少游戏信息。", InfoBarSeverity.Error);
             return;
         }
@@ -157,7 +158,7 @@ public sealed partial class RevisionHistoryPage : Page
             return;
         }
         _isBusy = true;
-        BusyProgress.Visibility = Visibility.Visible;
+        SetBusyState(true);
         PageLayout.IsHitTestVisible = false;
         try
         {
@@ -171,8 +172,15 @@ public sealed partial class RevisionHistoryPage : Page
         finally
         {
             PageLayout.IsHitTestVisible = true;
-            BusyProgress.Visibility = Visibility.Collapsed;
+            SetBusyState(false);
             _isBusy = false;
         }
+    }
+
+    private void SetBusyState(bool isBusy)
+    {
+        BusyProgress.Visibility = isBusy ? Visibility.Visible : Visibility.Collapsed;
+        LoadingState.IsActive = isBusy;
+        RevisionContent.Visibility = isBusy ? Visibility.Collapsed : Visibility.Visible;
     }
 }

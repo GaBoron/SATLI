@@ -5,6 +5,7 @@ using Microsoft.UI.Xaml.Controls;
 using Satl_Gui.Models;
 using Satl_Gui.Services;
 using Satl_Gui.ViewModels;
+using Windows.ApplicationModel.DataTransfer;
 
 namespace Satl_Gui.Pages;
 
@@ -12,6 +13,7 @@ public sealed partial class SettingsPage : Page
 {
     private readonly SemaphoreSlim _settingsGate = new(1, 1);
     private readonly SteamWebApiProbeService _steamWebApiProbe = new();
+    private readonly ExternalUriLauncher _externalUriLauncher = new();
     private bool _isInitializing;
     private string _steamDirectory = string.Empty;
     private string _dataDirectory = string.Empty;
@@ -44,8 +46,10 @@ public sealed partial class SettingsPage : Page
             ViewModel.Settings.SteamLibrary,
             ViewModel.Settings.Offline);
         UpdateStatusText.Text = $"当前版本 v{UpdateService.CurrentVersionText}。";
-        AboutVersionText.Text =
-            $"版本 {UpdateService.CurrentVersionText} · {ViewModel.DistributionChannelName} · Windows 10/11 x64";
+        AboutVersionText.Text = $"软件版本：v{UpdateService.CurrentVersionText}";
+        AboutDistributionText.Text = $"分发来源：{ViewModel.DistributionChannelName}";
+        AboutPlatformText.Text = ApplicationInformation.SupportedPlatformText;
+        AboutCopyrightText.Text = ApplicationInformation.CopyrightText;
         StartupUpdateDescription.Text = ViewModel.UsesStoreManagedUpdates
             ? "启动后向 Microsoft Store 检查软件包更新；发现新版时显示发布说明和 Store 更新入口。"
             : "启动后检查 GitHub Releases；发现新版时显示发布说明和下载按钮。";
@@ -119,6 +123,99 @@ public sealed partial class SettingsPage : Page
         if (!await Windows.System.Launcher.LaunchUriAsync(releasePage))
         {
             ViewModel.ShowInfo("无法打开软件更新页面。", InfoBarSeverity.Warning);
+        }
+    }
+
+    private async void OpenIssueFeedback_Click(object sender, RoutedEventArgs e) =>
+        await OpenUriAsync(ApplicationInformation.BugReportUri, "无法打开 GitHub Issue 反馈页面。");
+
+    private async void OpenEmailFeedback_Click(object sender, RoutedEventArgs e)
+    {
+        var version = UpdateService.CurrentVersionText;
+        var content = new StackPanel { Spacing = 12, MaxWidth = 520 };
+        content.Children.Add(new TextBlock
+        {
+            Text = "复制以下信息后，可使用 QQ 邮箱、163、Outlook、Gmail 或任何其他邮箱发送反馈。",
+            TextWrapping = TextWrapping.Wrap,
+        });
+        content.Children.Add(new TextBox
+        {
+            Header = "收件地址",
+            Text = ApplicationInformation.SupportEmailAddress,
+            IsReadOnly = true,
+        });
+        content.Children.Add(new TextBox
+        {
+            Header = "建议主题",
+            Text = ApplicationInformation.CreateSupportEmailSubject(version),
+            IsReadOnly = true,
+        });
+
+        var dialog = new ContentDialog
+        {
+            XamlRoot = XamlRoot,
+            Title = "邮件反馈",
+            Content = content,
+            PrimaryButtonText = "复制邮箱地址",
+            SecondaryButtonText = "复制地址和主题",
+            CloseButtonText = "取消",
+            DefaultButton = ContentDialogButton.Primary,
+        };
+        var result = await dialog.ShowAsync();
+        if (result == ContentDialogResult.Primary)
+        {
+            CopyFeedbackText(
+                ApplicationInformation.SupportEmailAddress,
+                "反馈邮箱地址已复制。");
+        }
+        else if (result == ContentDialogResult.Secondary)
+        {
+            CopyFeedbackText(
+                ApplicationInformation.CreateSupportEmailCopyText(version),
+                "反馈邮箱地址和建议主题已复制。");
+        }
+    }
+
+    private void CopyFeedbackText(string text, string successMessage)
+    {
+        try
+        {
+            var data = new DataPackage();
+            data.SetText(text);
+            Clipboard.SetContent(data);
+            ViewModel.ShowInfo(successMessage, InfoBarSeverity.Success);
+        }
+        catch (Exception exception)
+        {
+            _ = App.Logs.WriteExceptionDetailsAsync("复制反馈邮箱", exception);
+            ViewModel.ShowInfo(
+                $"无法复制邮箱信息，请手动复制 {ApplicationInformation.SupportEmailAddress}。",
+                InfoBarSeverity.Warning);
+        }
+    }
+
+    private async void OpenProjectPage_Click(object sender, RoutedEventArgs e) =>
+        await OpenUriAsync(ApplicationInformation.RepositoryUri, "无法打开项目主页。");
+
+    private async void OpenLicense_Click(object sender, RoutedEventArgs e) =>
+        await OpenUriAsync(ApplicationInformation.LicenseUri, "无法打开 MIT 许可证页面。");
+
+    private async void OpenThirdPartyNotices_Click(object sender, RoutedEventArgs e) =>
+        await OpenUriAsync(ApplicationInformation.ThirdPartyNoticesUri, "无法打开第三方声明页面。");
+
+    private async Task OpenUriAsync(Uri uri, string failureMessage)
+    {
+        try
+        {
+            if (!await _externalUriLauncher.LaunchAsync(uri))
+            {
+                ViewModel.ShowInfo(failureMessage, InfoBarSeverity.Warning);
+            }
+        }
+        catch (Exception exception)
+        {
+            _ = App.Logs.WriteExceptionDetailsAsync("外部链接", exception);
+            ViewModel.ShowInfo(failureMessage, InfoBarSeverity.Warning);
         }
     }
 
