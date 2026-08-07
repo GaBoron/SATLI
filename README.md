@@ -16,8 +16,12 @@
 </p>
 
 <p align="center">
-  <a href="https://apps.microsoft.com/detail/9PB7V9S03K80">⬇️ 从 Microsoft Store 获取</a>
-  ·
+  <a href="https://get.microsoft.com/installer/download/9pb7v9s03k80?referrer=appbadge" target="_self" >
+	  <img src="https://get.microsoft.com/images/zh-cn%20dark.svg" width="200"/>
+  </a>
+</p>
+
+<p align="center">
   <a href="docs/USAGE.md">📖 使用指南</a>
   ·
   <a href="https://github.com/GaBoron/steam-achievement-translation-installer/issues/new/choose">💬 反馈问题</a>
