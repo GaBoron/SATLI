@@ -34,7 +34,7 @@ public static class UpdateDialogService
         };
         var status = new TextBlock
         {
-            Text = "下载后会校验 Release 提供的 SHA-256，随后打开安装界面并关闭当前窗口。",
+            Text = "下载完成后会打开安装界面并关闭当前窗口。",
             TextWrapping = TextWrapping.Wrap,
         };
         var content = new StackPanel { Spacing = 12, MinWidth = 560 };
@@ -79,7 +79,7 @@ public static class UpdateDialogService
                     update,
                     reporter,
                     cancellation.Token);
-                status.Text = "校验完成，正在打开安装界面…";
+                status.Text = "下载完成，正在打开安装界面…";
                 Process.Start(new ProcessStartInfo(installer)
                 {
                     UseShellExecute = true,

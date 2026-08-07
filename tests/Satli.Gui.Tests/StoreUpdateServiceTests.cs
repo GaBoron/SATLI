@@ -67,7 +67,6 @@ public sealed class StoreUpdateServiceTests
         version,
         new Uri($"https://example.test/releases/{version}"),
         null,
-        null,
         notes,
         $"发现新版本 v{version}。");
 

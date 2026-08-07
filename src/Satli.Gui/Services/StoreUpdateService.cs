@@ -86,7 +86,6 @@ internal sealed class StoreUpdateService
                 currentText,
                 ProductPageUri,
                 null,
-                null,
                 string.Empty,
                 $"当前已是 Microsoft Store 提供的最新版本 v{currentText}。",
                 IsMicrosoftStoreUpdate: true);
@@ -102,7 +101,6 @@ internal sealed class StoreUpdateService
             currentText,
             latestText,
             ProductPageUri,
-            null,
             null,
             releaseNotes,
             $"Microsoft Store 中有新版本 v{latestText}。",

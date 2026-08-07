@@ -1,5 +1,4 @@
 using System.Net;
-using System.Security.Cryptography;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Xml.Linq;
@@ -13,7 +12,6 @@ public sealed record UpdateCheckResult(
     string LatestVersion,
     Uri? ReleasePage,
     Uri? InstallerDownload,
-    string? InstallerSha256,
     string ReleaseNotes,
     string Message,
     bool IsMicrosoftStoreUpdate = false);
@@ -102,8 +100,7 @@ public sealed class UpdateService
 
         if (_apiEndpoint is not null
             && (metadata is null
-                || string.IsNullOrWhiteSpace(metadata.ReleaseNotes)
-                || !metadata.Assets.Values.Any(asset => asset.Sha256 is not null)))
+                || string.IsNullOrWhiteSpace(metadata.ReleaseNotes)))
         {
             try
             {
@@ -148,7 +145,6 @@ public sealed class UpdateService
             latestText,
             releasePage,
             installer,
-            installerAsset?.Sha256,
             string.IsNullOrWhiteSpace(metadata.ReleaseNotes)
                 ? "暂时无法读取此版本的发布说明，请打开发布页查看。"
                 : metadata.ReleaseNotes,
@@ -297,10 +293,9 @@ public sealed class UpdateService
         CancellationToken cancellationToken = default)
     {
         if (!update.IsUpdateAvailable
-            || update.InstallerDownload is null
-            || update.InstallerSha256 is null)
+            || update.InstallerDownload is null)
         {
-            throw new InvalidOperationException("当前更新信息不包含可下载并校验的安装程序。");
+            throw new InvalidOperationException("当前更新信息不包含可下载的安装程序。");
         }
 
         var fileName = Path.GetFileName(update.InstallerDownload.LocalPath);
@@ -309,7 +304,6 @@ public sealed class UpdateService
         {
             throw new InvalidDataException($"安装程序文件名无效：{fileName}");
         }
-        var expectedHash = update.InstallerSha256;
         Directory.CreateDirectory(_updateDirectory);
         var destination = Path.Combine(_updateDirectory, fileName);
         var partial = destination + ".part";
@@ -328,7 +322,7 @@ public sealed class UpdateService
             {
                 throw new InvalidDataException("安装程序超过 1 GiB 安全上限。");
             }
-            string actualHash;
+            long received = 0;
             {
                 await using var source = await response.Content.ReadAsStreamAsync(cancellationToken);
                 await using var target = new FileStream(
@@ -338,9 +332,7 @@ public sealed class UpdateService
                     FileShare.None,
                     1024 * 1024,
                     FileOptions.Asynchronous | FileOptions.WriteThrough);
-                using var hasher = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
                 var buffer = new byte[1024 * 1024];
-                long received = 0;
                 while (true)
                 {
                     var count = await source.ReadAsync(buffer, cancellationToken);
@@ -353,7 +345,6 @@ public sealed class UpdateService
                     {
                         throw new InvalidDataException("安装程序超过 1 GiB 安全上限。");
                     }
-                    hasher.AppendData(buffer, 0, count);
                     await target.WriteAsync(buffer.AsMemory(0, count), cancellationToken);
                     if (total is > 0)
                     {
@@ -361,13 +352,11 @@ public sealed class UpdateService
                     }
                 }
                 await target.FlushAsync(cancellationToken);
-                actualHash = Convert.ToHexString(hasher.GetHashAndReset()).ToLowerInvariant();
             }
-            if (!actualHash.Equals(expectedHash, StringComparison.OrdinalIgnoreCase))
+            if (total is >= 0 && received != total.Value)
             {
                 throw new InvalidDataException(
-                    $"安装程序 SHA-256 校验失败：期望 {expectedHash}，实际 {actualHash}。"
-                );
+                    $"安装程序下载不完整：预期 {total.Value} 字节，实际 {received} 字节。");
             }
             File.Move(partial, destination, overwrite: true);
             progress?.Report(1);
@@ -409,10 +398,7 @@ public sealed class UpdateService
                     if (!string.IsNullOrWhiteSpace(name)
                         && Uri.TryCreate(url, UriKind.Absolute, out var assetUri))
                     {
-                        var digest = asset.TryGetProperty("digest", out var digestValue)
-                            ? ParseSha256Digest(digestValue.GetString())
-                            : null;
-                        assets[name] = new ReleaseAsset(assetUri, digest);
+                        assets[name] = new ReleaseAsset(assetUri);
                     }
                 }
             }
@@ -483,20 +469,7 @@ public sealed class UpdateService
         return $"{normalized.Major}.{normalized.Minor}.{normalized.Build}";
     }
 
-    private static string? ParseSha256Digest(string? value)
-    {
-        const string prefix = "sha256:";
-        if (value is null || !value.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
-        {
-            return null;
-        }
-        var hash = value[prefix.Length..];
-        return hash.Length == 64 && hash.All(Uri.IsHexDigit)
-            ? hash.ToLowerInvariant()
-            : null;
-    }
-
-    private sealed record ReleaseAsset(Uri Download, string? Sha256);
+    private sealed record ReleaseAsset(Uri Download);
 
     private sealed record ReleaseMetadata(
         string Tag,

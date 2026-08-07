@@ -1,18 +1,16 @@
-using System.Security.Cryptography;
 using Satli_Gui.Services;
 using Xunit;
 
 namespace Satli_Gui.Tests;
 
-public sealed class UpdateServiceDigestTests
+public sealed class UpdateServiceDownloadTests
 {
     [Fact]
-    public async Task DownloadsInstallerVerifiedByGithubAssetDigest()
+    public async Task DownloadsInstallerWithoutGithubAssetDigest()
     {
-        var root = Path.Combine(Path.GetTempPath(), $"satli-update-digest-{Guid.NewGuid():N}");
-        var installerBytes = "verified-installer"u8.ToArray();
-        var hash = Convert.ToHexString(SHA256.HashData(installerBytes)).ToLowerInvariant();
-        using var client = ClientFor(ReleaseJson(hash), installerBytes);
+        var root = Path.Combine(Path.GetTempPath(), $"satli-update-download-{Guid.NewGuid():N}");
+        var installerBytes = "installer"u8.ToArray();
+        using var client = ClientFor(ReleaseJson(), installerBytes);
         try
         {
             var service = Service(client, root);
@@ -21,7 +19,6 @@ public sealed class UpdateServiceDigestTests
             var installer = await service.DownloadInstallerAsync(update);
 
             Assert.Contains("修复刷新问题", update.ReleaseNotes);
-            Assert.Equal(hash, update.InstallerSha256);
             Assert.Equal(installerBytes, await File.ReadAllBytesAsync(installer));
         }
         finally
@@ -31,33 +28,18 @@ public sealed class UpdateServiceDigestTests
     }
 
     [Fact]
-    public async Task RefusesInstallerWhenGithubDigestIsMissing()
+    public async Task IgnoresGithubAssetDigest()
     {
-        using var client = ClientFor(ReleaseJson(null), "installer"u8.ToArray());
-        var service = Service(client, Path.GetTempPath());
-
-        var update = await service.CheckAsync();
-
-        Assert.Null(update.InstallerSha256);
-        await Assert.ThrowsAsync<InvalidOperationException>(
-            () => service.DownloadInstallerAsync(update));
-    }
-
-    [Fact]
-    public async Task DeletesPartialInstallerWhenGithubDigestDoesNotMatch()
-    {
-        var root = Path.Combine(Path.GetTempPath(), $"satli-update-mismatch-{Guid.NewGuid():N}");
-        var installerBytes = "tampered-installer"u8.ToArray();
+        var root = Path.Combine(Path.GetTempPath(), $"satli-update-digest-ignored-{Guid.NewGuid():N}");
+        var installerBytes = "installer"u8.ToArray();
         using var client = ClientFor(ReleaseJson(new string('0', 64)), installerBytes);
         try
         {
             var service = Service(client, root);
             var update = await service.CheckAsync();
+            var installer = await service.DownloadInstallerAsync(update);
 
-            await Assert.ThrowsAsync<InvalidDataException>(
-                () => service.DownloadInstallerAsync(update));
-
-            Assert.Empty(Directory.GetFiles(root));
+            Assert.Equal(installerBytes, await File.ReadAllBytesAsync(installer));
         }
         finally
         {
@@ -87,7 +69,7 @@ public sealed class UpdateServiceDigestTests
             };
         }));
 
-    private static string ReleaseJson(string? hash)
+    private static string ReleaseJson(string? hash = null)
     {
         var digest = hash is null ? string.Empty : $",\"digest\":\"sha256:{hash}\"";
         return $$"""

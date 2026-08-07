@@ -23,7 +23,7 @@
 
 ### 独立安装版
 
-无法使用 Microsoft Store，或希望手动管理安装程序时，可从 [GitHub Releases](https://github.com/GaBoron/SATLI/releases/latest) 下载安装程序。独立安装版暂未提供代码签名，Windows SmartScreen 可能在首次运行时显示安全提醒；请核对下载来源和 Release 中的 SHA-256 后再运行。
+无法使用 Microsoft Store，或希望手动管理安装程序时，可从 [GitHub Releases](https://github.com/GaBoron/SATLI/releases/latest) 下载安装程序。独立安装版暂未提供代码签名，Windows SmartScreen 可能在首次运行时显示安全提醒；请核对下载来源后再运行。
 
 独立安装版可以直接覆盖安装新版，也可以使用“设置 → 软件更新”获取更新。
 
@@ -120,7 +120,7 @@
 ### 软件更新
 
 - **Microsoft Store 版：** Microsoft Store 仍会按系统设置自动提供更新；也可在“设置 → 软件更新”开启启动检查或手动检查。发现新版时，应用会显示对应版本的发布说明，并可直接打开 Store 产品页完成更新。
-- **独立安装版：** 在“设置 → 软件更新”中检查 GitHub Releases 稳定版、查看发布说明、下载安装包并校验 SHA-256。软件不会静默下载，只有点击“下载并安装”后才会开始。
+- **独立安装版：** 在“设置 → 软件更新”中检查 GitHub Releases 稳定版、查看发布说明并下载安装包。软件不会静默下载，只有点击“下载并安装”后才会开始。
 
 两个渠道使用同一公开版本号，但不会相互安装对方的更新包。云端译本列表和译本内容的更新独立于软件版本，两个渠道使用相同来源。
 
