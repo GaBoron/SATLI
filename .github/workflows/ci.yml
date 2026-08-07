@@ -20,5 +20,5 @@ jobs:
       - run: python -m pip install -e ".[dev]"
       - run: python -m compileall -q src tests scripts
       - run: python -m pytest -q
-      - run: python -m satl --version
+      - run: python -m satli --version
       - run: python scripts/offline_smoke.py

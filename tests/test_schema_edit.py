@@ -8,10 +8,10 @@ from pathlib import Path
 
 import pytest
 
-from satl.bkv import achievement_preview
-from satl.errors import IntegrityError, PreflightError, TransactionError, UsageError
-from satl.schema_command import command_schema_apply
-from satl.schema_edit import (
+from satli.bkv import achievement_preview
+from satli.errors import IntegrityError, PreflightError, TransactionError, UsageError
+from satli.schema_command import command_schema_apply
+from satli.schema_edit import (
     EditHistoryStore,
     apply_schema,
     export_schema,
@@ -235,7 +235,7 @@ def test_apply_rolls_back_when_history_cannot_be_saved(
 def test_schema_apply_refuses_to_write_while_steam_is_running(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.setattr("satl.schema_command.is_steam_running", lambda: True)
+    monkeypatch.setattr("satli.schema_command.is_steam_running", lambda: True)
 
     with pytest.raises(PreflightError, match="Steam 正在运行"):
         command_schema_apply(Namespace(app_id="123", yes=True))

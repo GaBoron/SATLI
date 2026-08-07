@@ -5,8 +5,8 @@ import urllib.error
 
 import pytest
 
-from satl.models import OwnedGame
-from satl.steam_web_api import (
+from satli.models import OwnedGame
+from satli.steam_web_api import (
     SteamWebApiClient,
     SteamWebApiError,
     merge_owned_games,

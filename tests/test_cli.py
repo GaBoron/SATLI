@@ -8,11 +8,11 @@ from types import SimpleNamespace
 
 import pytest
 
-from satl.cli import main
-from satl.catalog import CatalogRepository
-from satl.game_names import GameNameResolution, SteamGameNameResolver
-from satl.models import OwnedGame
-from satl.transaction import TransactionManager
+from satli.cli import main
+from satli.catalog import CatalogRepository
+from satli.game_names import GameNameResolution, SteamGameNameResolver
+from satli.models import OwnedGame
+from satli.transaction import TransactionManager
 
 
 RESERVED_TEST_STEAM_ID = "76561197960265728"
@@ -233,7 +233,7 @@ def test_scan_local_scope_resolves_missing_names_online(
     )
     cached_catalog = CatalogRepository(data_dir).load(offline=True)
     monkeypatch.setattr(
-        "satl.scan_command.CatalogRepository",
+        "satli.scan_command.CatalogRepository",
         lambda data_dir: SimpleNamespace(load=lambda offline: cached_catalog),
     )
 
@@ -287,15 +287,15 @@ def test_scan_can_merge_owned_games_from_steam_web_api(
     )
     cached_catalog = CatalogRepository(data_dir).load(offline=True)
     monkeypatch.setattr(
-        "satl.scan_command.CatalogRepository",
+        "satli.scan_command.CatalogRepository",
         lambda data_dir: SimpleNamespace(load=lambda offline: cached_catalog),
     )
     monkeypatch.setenv(
-        "SATL_STEAM_WEB_API_KEY",
+        "SATLI_STEAM_WEB_API_KEY",
         "0123456789abcdef0123456789abcdef",
     )
     monkeypatch.setattr(
-        "satl.scan_command.SteamWebApiClient.get_owned_games",
+        "satli.scan_command.SteamWebApiClient.get_owned_games",
         lambda client, api_key, account_id: (
             OwnedGame("123", "CLI Game"),
             OwnedGame("456", "Never Installed"),
@@ -351,11 +351,11 @@ def test_scan_cached_catalog_still_intersects_steam_web_api_inventory(
     )
     catalog_path.write_text(json.dumps(catalog), encoding="utf-8")
     monkeypatch.setenv(
-        "SATL_STEAM_WEB_API_KEY",
+        "SATLI_STEAM_WEB_API_KEY",
         "0123456789abcdef0123456789abcdef",
     )
     monkeypatch.setattr(
-        "satl.scan_command.SteamWebApiClient.get_owned_games",
+        "satli.scan_command.SteamWebApiClient.get_owned_games",
         lambda client, api_key, account_id: (
             OwnedGame("456", "Steam Inventory Name"),
         ),
@@ -402,7 +402,7 @@ def test_scan_web_api_failure_degrades_to_local_results(
         f'"users" {{ "{steam_id}" {{ "PersonaName" "Tester" "MostRecent" "1" }} }}',
         encoding="utf-8",
     )
-    monkeypatch.delenv("SATL_STEAM_WEB_API_KEY", raising=False)
+    monkeypatch.delenv("SATLI_STEAM_WEB_API_KEY", raising=False)
 
     result = main(
         [
@@ -439,16 +439,16 @@ def test_explicit_owned_account_does_not_need_to_exist_in_local_loginusers(
     steam_id = RESERVED_TEST_STEAM_ID
     cached_catalog = CatalogRepository(data_dir).load(offline=True)
     monkeypatch.setattr(
-        "satl.scan_command.CatalogRepository",
+        "satli.scan_command.CatalogRepository",
         lambda data_dir: SimpleNamespace(load=lambda offline: cached_catalog),
     )
     monkeypatch.setenv(
-        "SATL_STEAM_WEB_API_KEY",
+        "SATLI_STEAM_WEB_API_KEY",
         "0123456789abcdef0123456789abcdef",
     )
     requested_accounts = []
     monkeypatch.setattr(
-        "satl.scan_command.SteamWebApiClient.get_owned_games",
+        "satli.scan_command.SteamWebApiClient.get_owned_games",
         lambda client, api_key, account_id: (
             requested_accounts.append(account_id)
             or (OwnedGame("456", "Remote Library Game"),)
@@ -601,7 +601,7 @@ def test_install_preview_emits_verified_schema_content_without_writes(tmp_path: 
 
 def test_noninteractive_install_requires_yes(tmp_path: Path, monkeypatch, capsys) -> None:
     steam, data_dir = make_fixture(tmp_path)
-    monkeypatch.setattr("satl.cli_validation.sys.stdin.isatty", lambda: False)
+    monkeypatch.setattr("satli.cli_validation.sys.stdin.isatty", lambda: False)
     result = main(
         [
             "install",
@@ -620,8 +620,8 @@ def test_noninteractive_install_requires_yes(tmp_path: Path, monkeypatch, capsys
 
 def test_install_and_status_offline(tmp_path: Path, monkeypatch, capsys) -> None:
     steam, data_dir = make_fixture(tmp_path)
-    monkeypatch.setattr("satl.install_command.is_steam_running", lambda: False)
-    monkeypatch.setattr("satl.restore_command.is_steam_running", lambda: False)
+    monkeypatch.setattr("satli.install_command.is_steam_running", lambda: False)
+    monkeypatch.setattr("satli.restore_command.is_steam_running", lambda: False)
     result = main(
         [
             "install",
@@ -680,8 +680,8 @@ def test_local_schema_edit_enters_managed_status_and_restores_through_managed_fl
         ),
         encoding="utf-8",
     )
-    monkeypatch.setattr("satl.schema_command.is_steam_running", lambda: False)
-    monkeypatch.setattr("satl.restore_command.is_steam_running", lambda: False)
+    monkeypatch.setattr("satli.schema_command.is_steam_running", lambda: False)
+    monkeypatch.setattr("satli.restore_command.is_steam_running", lambda: False)
 
     assert main(
         [
@@ -749,8 +749,8 @@ def test_local_schema_edit_enters_managed_status_and_restores_through_managed_fl
 
 def test_install_and_restore_jsonl_emit_item_results(tmp_path: Path, monkeypatch, capsys) -> None:
     steam, data_dir = make_fixture(tmp_path)
-    monkeypatch.setattr("satl.install_command.is_steam_running", lambda: False)
-    monkeypatch.setattr("satl.restore_command.is_steam_running", lambda: False)
+    monkeypatch.setattr("satli.install_command.is_steam_running", lambda: False)
+    monkeypatch.setattr("satli.restore_command.is_steam_running", lambda: False)
     install_result = main(
         [
             "install",
@@ -810,8 +810,8 @@ def test_install_jsonl_reports_partial_failure(tmp_path: Path, monkeypatch, caps
         }
     )
     catalog_path.write_text(json.dumps(catalog), encoding="utf-8")
-    monkeypatch.setattr("satl.install_command.is_steam_running", lambda: False)
-    monkeypatch.setattr("satl.restore_command.is_steam_running", lambda: False)
+    monkeypatch.setattr("satli.install_command.is_steam_running", lambda: False)
+    monkeypatch.setattr("satli.restore_command.is_steam_running", lambda: False)
 
     result = main(
         [
@@ -855,7 +855,7 @@ def test_install_continues_after_unexpected_item_failure(tmp_path: Path, monkeyp
         },
     )
     catalog_path.write_text(json.dumps(catalog), encoding="utf-8")
-    monkeypatch.setattr("satl.install_command.is_steam_running", lambda: False)
+    monkeypatch.setattr("satli.install_command.is_steam_running", lambda: False)
     real_install = TransactionManager.install
 
     def fail_first_item(self, app_id, *args, **kwargs):
@@ -926,8 +926,8 @@ def test_non_current_entry_requires_explicit_override(tmp_path: Path, capsys) ->
 
 def test_restore_dry_run_does_not_change_installed_file(tmp_path: Path, monkeypatch, capsys) -> None:
     steam, data_dir = make_fixture(tmp_path)
-    monkeypatch.setattr("satl.install_command.is_steam_running", lambda: False)
-    monkeypatch.setattr("satl.restore_command.is_steam_running", lambda: False)
+    monkeypatch.setattr("satli.install_command.is_steam_running", lambda: False)
+    monkeypatch.setattr("satli.restore_command.is_steam_running", lambda: False)
     assert main(
         [
             "install",
@@ -963,8 +963,8 @@ def test_restore_dry_run_does_not_change_installed_file(tmp_path: Path, monkeypa
 
 def test_restore_preview_reports_delete_when_no_original_existed(tmp_path: Path, monkeypatch, capsys) -> None:
     steam, data_dir = make_fixture(tmp_path, payload=preview_schema_bytes())
-    monkeypatch.setattr("satl.install_command.is_steam_running", lambda: False)
-    monkeypatch.setattr("satl.restore_command.is_steam_running", lambda: False)
+    monkeypatch.setattr("satli.install_command.is_steam_running", lambda: False)
+    monkeypatch.setattr("satli.restore_command.is_steam_running", lambda: False)
     assert main(
         [
             "install",

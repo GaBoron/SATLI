@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Page
+    x:Class="Satli_Gui.Pages.GamesPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:controls="using:Satli_Gui.Controls"
+    xmlns:models="using:Satli_Gui.Models"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    KeyboardAcceleratorPlacementMode="Hidden"
+    mc:Ignorable="d">
+    <Grid x:Name="PageLayout" Padding="32,24,32,16" RowSpacing="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <StackPanel Spacing="4">
+            <TextBlock Text="可管理游戏" Style="{StaticResource TitleTextBlockStyle}" />
+            <TextBlock Text="查看本地与云端索引匹配的游戏，选择需要安装的成就翻译。" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+        </StackPanel>
+        <CommandBar Grid.Row="1" DefaultLabelPosition="Right" IsDynamicOverflowEnabled="True">
+            <CommandBar.Content>
+                <StackPanel Orientation="Horizontal" Spacing="12">
+                    <AutoSuggestBox
+                        x:Name="SearchBox"
+                        Width="300"
+                        Height="40"
+                        VerticalAlignment="Center"
+                        Style="{StaticResource ToolbarSearchBoxStyle}"
+                        PlaceholderText="搜索游戏名称或 App ID"
+                        QueryIcon="Find"
+                        Text="{x:Bind ViewModel.SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                        AutomationProperties.Name="搜索游戏" />
+                    <ComboBox
+                        Width="140"
+                        Height="40"
+                        VerticalAlignment="Center"
+                        Style="{StaticResource ToolbarComboBoxStyle}"
+                        ItemsSource="{x:Bind ViewModel.FilterOptions}"
+                        SelectedItem="{x:Bind ViewModel.SelectedFilterOption, Mode=TwoWay}"
+                        AutomationProperties.Name="筛选安装状态" />
+                    <TextBlock
+                        VerticalAlignment="Center"
+                        Text="{x:Bind ViewModel.SelectedCountText, Mode=OneWay}"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                </StackPanel>
+            </CommandBar.Content>
+            <AppBarButton Icon="SelectAll" Label="{x:Bind ViewModel.SelectionActionText, Mode=OneWay}" Click="ToggleSelection_Click" />
+            <AppBarButton Icon="Help" Label="未找到游戏？" Click="Petition_Click" AutomationProperties.Name="打开翻译请愿" />
+            <AppBarButton Icon="Refresh" Label="重新扫描" Click="Refresh_Click" KeyboardAcceleratorTextOverride="F5" />
+            <AppBarButton Icon="Download" Label="安装/更新所选" Click="Install_Click" />
+        </CommandBar>
+        <Grid Grid.Row="2">
+            <ListView
+                ItemsSource="{x:Bind ViewModel.VisibleGames, Mode=OneWay}"
+                Visibility="{x:Bind ViewModel.GameListVisibility, Mode=OneWay}"
+                SelectionMode="None"
+                IsItemClickEnabled="False">
+            <ListView.ItemContainerStyle>
+                <Style TargetType="ListViewItem">
+                    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                    <Setter Property="Padding" Value="0" />
+                    <Setter Property="Margin" Value="0,0,0,8" />
+                </Style>
+            </ListView.ItemContainerStyle>
+            <ListView.ItemTemplate>
+                <DataTemplate x:DataType="models:GameItem">
+                    <Border Style="{StaticResource GameCardStyle}">
+                        <Grid ColumnSpacing="16">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <CheckBox
+                                VerticalAlignment="Center"
+                                IsChecked="{x:Bind IsSelected, Mode=TwoWay}"
+                                Click="GameSelection_Click"
+                                AutomationProperties.Name="{x:Bind GameName}" />
+                            <StackPanel Grid.Column="1" Spacing="4">
+                                <TextBlock Text="{x:Bind GameName}" TextTrimming="CharacterEllipsis" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                                <TextBlock Text="{x:Bind Subtitle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Style="{StaticResource CaptionTextBlockStyle}" />
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <TextBlock Text="{x:Bind CatalogText}" Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" Style="{StaticResource CaptionTextBlockStyle}" />
+                                    <TextBlock Text="{x:Bind StateText}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Style="{StaticResource CaptionTextBlockStyle}" />
+                                    <TextBlock Text="可更新" Visibility="{x:Bind UpdateVisibility}" Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" Style="{StaticResource CaptionTextBlockStyle}" />
+                                </StackPanel>
+                                <InfoBar
+                                    IsOpen="{x:Bind HasCatalogWarning}"
+                                    IsClosable="False"
+                                    Severity="Warning"
+                                    Message="{x:Bind CatalogWarningText}" />
+                                <TextBlock Text="{x:Bind InstalledVersionText, Mode=OneWay}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Style="{StaticResource CaptionTextBlockStyle}" />
+                            </StackPanel>
+                            <ComboBox
+                                Grid.Column="2"
+                                Width="220"
+                                VerticalAlignment="Center"
+                                Header="翻译版本"
+                                ItemsSource="{x:Bind Variants}"
+                                SelectedValuePath="VariantId"
+                                SelectedValue="{x:Bind SelectedVariantId, Mode=TwoWay}"
+                                AutomationProperties.Name="选择翻译版本" />
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </ListView.ItemTemplate>
+            </ListView>
+            <controls:LoadingStateControl IsActive="{x:Bind ViewModel.IsLoading, Mode=OneWay}" />
+            <StackPanel
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Spacing="8"
+                Visibility="{x:Bind ViewModel.EmptyStateVisibility, Mode=OneWay}">
+                <FontIcon Glyph="&#xE8FD;" FontSize="32" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                <TextBlock Text="当前分类或搜索条件下没有游戏" Style="{StaticResource SubtitleTextBlockStyle}" />
+                <TextBlock Text="可调整安装状态或搜索条件。" HorizontalAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+            </StackPanel>
+        </Grid>
+        <VisualStateManager.VisualStateGroups>
+            <VisualStateGroup>
+                <VisualState x:Name="Wide" />
+                <VisualState x:Name="Narrow">
+                    <VisualState.StateTriggers><AdaptiveTrigger MinWindowWidth="0" /></VisualState.StateTriggers>
+                    <VisualState.Setters><Setter Target="PageLayout.Padding" Value="16,16,16,8" /></VisualState.Setters>
+                </VisualState>
+                <VisualState x:Name="Comfortable">
+                    <VisualState.StateTriggers><AdaptiveTrigger MinWindowWidth="800" /></VisualState.StateTriggers>
+                    <VisualState.Setters><Setter Target="PageLayout.Padding" Value="32,24,32,16" /></VisualState.Setters>
+                </VisualState>
+            </VisualStateGroup>
+        </VisualStateManager.VisualStateGroups>
+    </Grid>
+</Page>

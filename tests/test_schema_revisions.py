@@ -8,11 +8,11 @@ from pathlib import Path
 
 import pytest
 
-from satl.errors import TransactionError
-from satl.cli import main
-from satl.schema_command import _legacy_unavailable_records, _migrate_legacy_edit_history
-from satl.schema_edit import EditHistoryStore
-from satl.schema_revisions import METADATA_VERSION, SchemaRevisionRepository
+from satli.errors import TransactionError
+from satli.cli import main
+from satli.schema_command import _legacy_unavailable_records, _migrate_legacy_edit_history
+from satli.schema_edit import EditHistoryStore
+from satli.schema_revisions import METADATA_VERSION, SchemaRevisionRepository
 from test_managed_games import _schema
 
 

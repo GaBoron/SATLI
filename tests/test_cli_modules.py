@@ -4,10 +4,10 @@ import json
 
 import pytest
 
-from satl.cli_protocol import emit_jsonl
-from satl.cli_validation import validate_app_ids
-from satl.errors import UsageError
-from satl.install_command import parse_variant_overrides
+from satli.cli_protocol import emit_jsonl
+from satli.cli_validation import validate_app_ids
+from satli.errors import UsageError
+from satli.install_command import parse_variant_overrides
 
 
 def test_validate_app_ids_deduplicates_and_sorts_numerically() -> None:

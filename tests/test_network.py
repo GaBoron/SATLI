@@ -6,7 +6,7 @@ import urllib.request
 
 import pytest
 
-from satl.network import (
+from satli.network import (
     NetworkConfigurationError,
     NetworkSettings,
     NetworkTransport,
@@ -25,10 +25,10 @@ class Response:
 
 def test_network_settings_read_general_desktop_defaults(monkeypatch: pytest.MonkeyPatch) -> None:
     for name in (
-        "SATL_DNS_MODE",
-        "SATL_DNS_SERVERS",
-        "SATL_PROXY_MODE",
-        "SATL_PROXY_ADDRESS",
+        "SATLI_DNS_MODE",
+        "SATLI_DNS_SERVERS",
+        "SATLI_PROXY_MODE",
+        "SATLI_PROXY_ADDRESS",
     ):
         monkeypatch.delenv(name, raising=False)
 
@@ -40,8 +40,8 @@ def test_network_settings_read_general_desktop_defaults(monkeypatch: pytest.Monk
 
 
 def test_manual_proxy_requires_complete_http_address(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("SATL_PROXY_MODE", "manual")
-    monkeypatch.setenv("SATL_PROXY_ADDRESS", "127.0.0.1:7890")
+    monkeypatch.setenv("SATLI_PROXY_MODE", "manual")
+    monkeypatch.setenv("SATLI_PROXY_ADDRESS", "127.0.0.1:7890")
 
     with pytest.raises(NetworkConfigurationError, match="http://"):
         NetworkSettings.from_environment()

@@ -2,7 +2,7 @@ $ErrorActionPreference = "Stop"
 Add-Type -AssemblyName System.Drawing
 
 $ProjectRoot = Split-Path -Parent $PSScriptRoot
-$AssetRoot = Join-Path $ProjectRoot "src\Satl.Gui\Assets"
+$AssetRoot = Join-Path $ProjectRoot "src\Satli.Gui\Assets"
 $SourcePath = Join-Path $AssetRoot "AppIcon.source.png"
 
 if (-not (Test-Path -LiteralPath $SourcePath)) {
@@ -95,4 +95,4 @@ New-Item -ItemType Directory -Path $AssetRoot -Force | Out-Null
 Copy-Item -LiteralPath $SourcePath -Destination (Join-Path $AssetRoot "AppIcon.preview.png") -Force
 Save-AppIconIco (Join-Path $AssetRoot "AppIcon.ico")
 
-Write-Host "Generated SATL application icon from $SourcePath"
+Write-Host "Generated SATLI application icon from $SourcePath"

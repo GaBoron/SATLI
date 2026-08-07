@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Page
+    x:Class="Satli_Gui.Pages.LocalGamesPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:Satli_Gui.Controls"
+    xmlns:models="using:Satli_Gui.Models">
+    <Grid Padding="32,24,32,16" RowSpacing="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="3" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <StackPanel Spacing="4">
+            <TextBlock Text="本地游戏" Style="{StaticResource TitleTextBlockStyle}" />
+            <TextBlock Text="查看本机游戏，或导入 Localizer Skill 生成的标准 BIN/ZIP。" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+        </StackPanel>
+        <CommandBar Grid.Row="1" DefaultLabelPosition="Right" IsDynamicOverflowEnabled="True">
+            <CommandBar.Content>
+                <StackPanel Orientation="Horizontal" Spacing="12">
+                    <AutoSuggestBox
+                        x:Name="SearchBox"
+                        Width="300"
+                        Height="40"
+                        VerticalAlignment="Center"
+                        Style="{StaticResource ToolbarSearchBoxStyle}"
+                        PlaceholderText="搜索游戏名称或 App ID"
+                        QueryIcon="Find"
+                        Text="{x:Bind ViewModel.SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                    <ComboBox
+                        Width="140"
+                        Height="40"
+                        VerticalAlignment="Center"
+                        Style="{StaticResource ToolbarComboBoxStyle}"
+                        ItemsSource="{x:Bind ViewModel.FilterOptions}"
+                        SelectedItem="{x:Bind ViewModel.SelectedFilterOption, Mode=TwoWay}" />
+                </StackPanel>
+            </CommandBar.Content>
+            <AppBarButton Icon="OpenFile" Label="导入本地翻译" Click="Import_Click" AutomationProperties.Name="导入本地 BIN 或 ZIP" />
+            <AppBarButton Icon="Edit" Label="制作翻译" Click="Localizer_Click" AutomationProperties.Name="打开 Steam Achievement Localizer Skill" />
+            <AppBarButton Icon="Refresh" Label="重新扫描" Click="Refresh_Click" />
+        </CommandBar>
+        <ProgressBar
+            Grid.Row="2"
+            Visibility="{x:Bind ViewModel.Loading.Visibility, Mode=OneWay}"
+            IsIndeterminate="{x:Bind ViewModel.Loading.IsIndeterminate, Mode=OneWay}"
+            Maximum="{x:Bind ViewModel.Loading.Maximum, Mode=OneWay}"
+            Value="{x:Bind ViewModel.Loading.Value, Mode=OneWay}"
+            AutomationProperties.Name="本地游戏加载进度" />
+        <Grid Grid.Row="3">
+        <ListView
+            ItemsSource="{x:Bind ViewModel.VisibleGames, Mode=OneWay}"
+            Visibility="{x:Bind ViewModel.GameListVisibility, Mode=OneWay}"
+            SelectionMode="None">
+            <ListView.ItemContainerStyle>
+                <Style TargetType="ListViewItem">
+                    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                    <Setter Property="Padding" Value="0" />
+                    <Setter Property="Margin" Value="0,0,0,8" />
+                </Style>
+            </ListView.ItemContainerStyle>
+            <ListView.ItemTemplate>
+                <DataTemplate x:DataType="models:GameItem">
+                    <Border Style="{StaticResource GameCardStyle}">
+                        <Grid ColumnSpacing="16">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="{x:Bind GameName}" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                                <TextBlock Text="{x:Bind Subtitle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Style="{StaticResource CaptionTextBlockStyle}" />
+                                <TextBlock Text="{x:Bind CatalogText}" Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" Style="{StaticResource CaptionTextBlockStyle}" />
+                                <TextBlock Text="{x:Bind StateText}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Style="{StaticResource CaptionTextBlockStyle}" />
+                                <InfoBar IsOpen="{x:Bind HasCatalogWarning}" IsClosable="False" Severity="Warning" Message="{x:Bind CatalogWarningText}" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Spacing="8">
+                                <Button
+                                    Click="RequestTranslation_Click"
+                                    Tag="{x:Bind}"
+                                    Visibility="{x:Bind TranslationRequestVisibility}"
+                                    AutomationProperties.Name="请求社区翻译"
+                                    AutomationProperties.HelpText="{x:Bind GameName}">
+                                    <StackPanel Orientation="Horizontal" Spacing="7">
+                                        <FontIcon Glyph="&#xE8F1;" FontSize="15" />
+                                        <TextBlock Text="请求翻译" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </Button>
+                                <Button
+                                    Click="Edit_Click"
+                                    Tag="{x:Bind}"
+                                    AutomationProperties.Name="编辑游戏成就"
+                                    AutomationProperties.HelpText="{x:Bind GameName}">
+                                    <StackPanel Orientation="Horizontal" Spacing="7">
+                                        <FontIcon Glyph="&#xE70F;" FontSize="15" />
+                                        <TextBlock Text="编辑" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </Button>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </ListView.ItemTemplate>
+        </ListView>
+            <controls:LoadingStateControl IsActive="{x:Bind ViewModel.IsLoading, Mode=OneWay}" />
+            <StackPanel
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Spacing="8"
+                Visibility="{x:Bind ViewModel.EmptyStateVisibility, Mode=OneWay}">
+                <FontIcon Glyph="&#xE8FD;" FontSize="32" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                <TextBlock Text="当前分类或搜索条件下没有本地游戏" Style="{StaticResource SubtitleTextBlockStyle}" />
+                <TextBlock Text="可调整安装状态或搜索条件。" HorizontalAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+            </StackPanel>
+        </Grid>
+        <TextBlock Grid.Row="4" Text="{x:Bind ViewModel.StatusMessage, Mode=OneWay}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Style="{StaticResource CaptionTextBlockStyle}" />
+    </Grid>
+</Page>

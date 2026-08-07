@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import urllib.error
 
-from satl.game_name_sources import SteamGameNameSources
+from satli.game_name_sources import SteamGameNameSources
 
 
 class FakeResponse:

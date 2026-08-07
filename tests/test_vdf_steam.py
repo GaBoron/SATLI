@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from satl.steam import (
+from satli.steam import (
     _tasklist_contains_steam,
     discover_accounts,
     discover_library_dirs,
@@ -10,7 +10,7 @@ from satl.steam import (
     discover_local_games,
     steam_id32,
 )
-from satl.vdf import parse_vdf
+from satli.vdf import parse_vdf
 
 
 STEAM_ID = "76561197960265728"

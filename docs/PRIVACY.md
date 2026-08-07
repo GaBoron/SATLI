@@ -9,8 +9,10 @@ Steam 成就翻译管理器以本地处理为主。扫描、编辑、备份和�
 默认数据目录为：
 
 ```text
-%LOCALAPPDATA%\SteamAchievementTranslationInstaller\
+%LOCALAPPDATA%\SATLI\
 ```
+
+首次运行新版本时，应用会将旧目录 `%LOCALAPPDATA%\SteamAchievementTranslationInstaller\` 一次性迁移到上述目录；迁移完成后不再并行读写旧目录。
 
 其中可能保存：
 

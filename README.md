@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="src/Satl.Gui/Assets/AppIcon.preview.png" width="112" alt="Steam 成就翻译管理器图标">
+  <img src="src/Satli.Gui/Assets/AppIcon.preview.png" width="112" alt="Steam 成就翻译管理器图标">
 </p>
 
 <h1 align="center">SATLI</h1>

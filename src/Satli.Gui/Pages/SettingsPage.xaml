@@ -1,0 +1,353 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Page
+    x:Class="Satli_Gui.Pages.SettingsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:Satli_Gui.Controls">
+    <ScrollViewer
+        HorizontalContentAlignment="Stretch"
+        HorizontalScrollBarVisibility="Disabled"
+        HorizontalScrollMode="Disabled">
+        <Grid HorizontalAlignment="Stretch">
+            <StackPanel Padding="32,24,32,32" Spacing="12" MaxWidth="960" HorizontalAlignment="Stretch">
+            <StackPanel Spacing="4">
+                <TextBlock Text="设置" Style="{StaticResource TitleTextBlockStyle}" />
+                <TextBlock Text="管理 SATLI 使用的目录、连接方式和外观。更改会立即生效。" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+            </StackPanel>
+
+            <TextBlock Text="路径" Style="{StaticResource SubtitleTextBlockStyle}" Margin="0,12,0,0" />
+            <StackPanel Spacing="8">
+                <Border Style="{StaticResource SettingsCardStyle}">
+                    <Grid Style="{StaticResource SettingsRowStyle}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="400" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel VerticalAlignment="Center" Spacing="3">
+                            <TextBlock Text="Steam 目录" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                            <TextBlock Text="用于扫描已安装游戏和成就缓存。" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
+                        </StackPanel>
+                        <Grid Grid.Column="1" VerticalAlignment="Center" ColumnSpacing="12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock x:Name="SteamDirectoryText" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" AutomationProperties.Name="当前 Steam 目录" />
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                                <Button Content="自动检测" Click="ResetSteamDirectory_Click" />
+                                <Button Content="浏览…" Click="BrowseSteamDirectory_Click" AutomationProperties.Name="选择 Steam 目录" />
+                            </StackPanel>
+                        </Grid>
+                    </Grid>
+                </Border>
+                <Border Style="{StaticResource SettingsCardStyle}">
+                    <Grid Style="{StaticResource SettingsRowStyle}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="400" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel VerticalAlignment="Center" Spacing="3">
+                            <TextBlock Text="SATLI 数据目录" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                            <TextBlock Text="保存目录缓存、安装状态、备份与恢复归档。" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
+                        </StackPanel>
+                        <Grid Grid.Column="1" VerticalAlignment="Center" ColumnSpacing="12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock x:Name="DataDirectoryText" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" AutomationProperties.Name="当前 SATLI 数据目录" />
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                                <Button Content="使用默认目录" Click="ResetDataDirectory_Click" />
+                                <Button Content="打开" Click="OpenData_Click" AutomationProperties.Name="在文件资源管理器中打开数据目录" />
+                                <Button Content="浏览…" Click="BrowseDataDirectory_Click" AutomationProperties.Name="选择 SATLI 数据目录" />
+                            </StackPanel>
+                        </Grid>
+                    </Grid>
+                </Border>
+            </StackPanel>
+
+            <TextBlock Text="首选项" Style="{StaticResource SubtitleTextBlockStyle}" Margin="0,12,0,0" />
+            <StackPanel Spacing="8">
+                <Border Style="{StaticResource SettingsCardStyle}">
+                    <Grid Style="{StaticResource SettingsRowStyle}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel VerticalAlignment="Center" Spacing="3">
+                            <TextBlock Text="离线模式" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                            <TextBlock Text="启用后仅使用本地已验证缓存，不访问在线目录。" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+                            <TextBlock x:Name="OfflineStateText" Style="{StaticResource SettingsToggleStateTextStyle}" />
+                            <ToggleSwitch
+                                x:Name="OfflineSwitch"
+                                Style="{StaticResource SettingsToggleSwitchStyle}"
+                                Toggled="OfflineSwitch_Toggled"
+                                AutomationProperties.Name="离线模式" />
+                        </StackPanel>
+                    </Grid>
+                </Border>
+                <Border Style="{StaticResource SettingsCardStyle}">
+                    <Grid Style="{StaticResource SettingsRowStyle}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel VerticalAlignment="Center" Spacing="3">
+                            <TextBlock Text="应用主题" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                            <TextBlock Text="选择跟随 Windows，或固定使用浅色、深色主题。" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
+                        </StackPanel>
+                        <ComboBox x:Name="ThemeBox" Grid.Column="1" Style="{StaticResource SettingsSelectorStyle}" SelectedIndex="0" SelectionChanged="ThemeBox_SelectionChanged">
+                            <ComboBoxItem Content="跟随系统" Tag="system" />
+                            <ComboBoxItem Content="浅色" Tag="light" />
+                            <ComboBoxItem Content="深色" Tag="dark" />
+                        </ComboBox>
+                    </Grid>
+                </Border>
+            </StackPanel>
+
+            <TextBlock Text="网络" Style="{StaticResource SubtitleTextBlockStyle}" Margin="0,12,0,0" />
+            <controls:NetworkSettingsControl
+                x:Name="NetworkSettingsEditor"
+                SettingsChanged="NetworkSettingsEditor_SettingsChanged"
+                TestConnectionRequested="NetworkSettingsEditor_TestConnectionRequested" />
+
+            <TextBlock Text="下载源" Style="{StaticResource SubtitleTextBlockStyle}" Margin="0,12,0,0" />
+            <controls:DownloadSourceSettingsControl
+                x:Name="DownloadSourceSettingsEditor"
+                SettingsChanged="DownloadSourceSettingsEditor_SettingsChanged" />
+
+            <TextBlock Text="Steam 游戏库" Style="{StaticResource SubtitleTextBlockStyle}" Margin="0,12,0,0" />
+            <controls:SteamLibrarySettingsControl
+                x:Name="SteamLibrarySettingsEditor"
+                SettingsChanged="SteamLibrarySettingsEditor_SettingsChanged"
+                TestConnectionRequested="SteamLibrarySettingsEditor_TestConnectionRequested"
+                OpenApiKeyPageRequested="SteamLibrarySettingsEditor_OpenApiKeyPageRequested" />
+
+            <TextBlock Text="GitHub" Style="{StaticResource SubtitleTextBlockStyle}" Margin="0,12,0,0" />
+            <controls:GitHubSettingsControl />
+
+            <TextBlock Text="日志" Style="{StaticResource SubtitleTextBlockStyle}" Margin="0,12,0,0" />
+            <StackPanel Spacing="8">
+                <Border Style="{StaticResource SettingsCardStyle}">
+                    <Grid Style="{StaticResource SettingsRowStyle}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel VerticalAlignment="Center" Spacing="3">
+                            <TextBlock Text="记录运行日志" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                            <TextBlock Text="记录扫描、安装、恢复、缓存和异常信息，不记录成就文件内容。" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+                            <TextBlock x:Name="LoggingStateText" Style="{StaticResource SettingsToggleStateTextStyle}" />
+                            <ToggleSwitch
+                                x:Name="LoggingSwitch"
+                                Style="{StaticResource SettingsToggleSwitchStyle}"
+                                Toggled="LoggingSwitch_Toggled"
+                                AutomationProperties.Name="记录运行日志" />
+                        </StackPanel>
+                    </Grid>
+                </Border>
+                <Border Style="{StaticResource SettingsCardStyle}">
+                    <Grid Style="{StaticResource SettingsRowStyle}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel VerticalAlignment="Center" Spacing="3">
+                            <TextBlock Text="详细程度" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                            <TextBlock
+                                x:Name="LogLevelDescriptionText"
+                                Text="仅记录关键结果、警告和错误摘要，适合日常使用。"
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                TextWrapping="Wrap" />
+                        </StackPanel>
+                        <ComboBox
+                            x:Name="LogLevelBox"
+                            Grid.Column="1"
+                            MinWidth="140"
+                            Style="{StaticResource SettingsSelectorStyle}"
+                            SelectedIndex="0"
+                            SelectionChanged="LogSettings_SelectionChanged">
+                            <ComboBoxItem Content="基础" Tag="standard" />
+                            <ComboBoxItem Content="详细" Tag="detailed" />
+                            <ComboBoxItem Content="调试（本次）" Tag="debug" />
+                        </ComboBox>
+                    </Grid>
+                </Border>
+                <Border Style="{StaticResource SettingsCardStyle}">
+                    <Grid Style="{StaticResource SettingsRowStyle}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel VerticalAlignment="Center" Spacing="3">
+                            <TextBlock Text="自动换行" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                            <TextBlock Text="根据窗口宽度换行显示较长的日志内容。" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+                            <TextBlock x:Name="LogWordWrapStateText" Style="{StaticResource SettingsToggleStateTextStyle}" />
+                            <ToggleSwitch
+                                x:Name="LogWordWrapSwitch"
+                                Style="{StaticResource SettingsToggleSwitchStyle}"
+                                Toggled="LogWordWrapSwitch_Toggled"
+                                AutomationProperties.Name="日志自动换行" />
+                        </StackPanel>
+                    </Grid>
+                </Border>
+                <Border Style="{StaticResource SettingsCardStyle}">
+                    <Grid Style="{StaticResource SettingsRowStyle}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel VerticalAlignment="Center" Spacing="3">
+                            <TextBlock Text="保留时间" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                            <TextBlock Text="启动和设置变更时自动清理超过期限的日志。" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Spacing="8">
+                            <ComboBox x:Name="LogRetentionBox" Width="120" SelectedIndex="1" SelectionChanged="LogSettings_SelectionChanged">
+                                <ComboBoxItem Content="7 天" Tag="7" />
+                                <ComboBoxItem Content="30 天" Tag="30" />
+                                <ComboBoxItem Content="90 天" Tag="90" />
+                            </ComboBox>
+                            <Button Content="打开目录" Click="OpenLogs_Click" AutomationProperties.Name="在文件资源管理器中打开日志目录" />
+                        </StackPanel>
+                    </Grid>
+                </Border>
+            </StackPanel>
+
+            <TextBlock Text="软件更新" Style="{StaticResource SubtitleTextBlockStyle}" Margin="0,12,0,0" />
+            <Border x:Name="StoreUpdateNotice" Style="{StaticResource SettingsCardStyle}" Visibility="Collapsed">
+                <Grid Style="{StaticResource SettingsRowStyle}">
+                    <StackPanel VerticalAlignment="Center" Spacing="3">
+                        <TextBlock Text="Microsoft Store 更新" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                        <TextBlock Text="除 Microsoft Store 的系统自动更新外，也可在此主动检查新版并查看更新内容。" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+            <StackPanel x:Name="UpdateSettings" Spacing="8">
+                <Border Style="{StaticResource SettingsCardStyle}">
+                    <Grid Style="{StaticResource SettingsRowStyle}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel VerticalAlignment="Center" Spacing="3">
+                            <TextBlock Text="启动时检查更新" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                            <TextBlock x:Name="StartupUpdateDescription" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+                            <TextBlock x:Name="UpdateCheckStateText" Style="{StaticResource SettingsToggleStateTextStyle}" />
+                            <ToggleSwitch
+                                x:Name="UpdateCheckSwitch"
+                                Style="{StaticResource SettingsToggleSwitchStyle}"
+                                Toggled="UpdateCheckSwitch_Toggled"
+                                AutomationProperties.Name="启动时检查更新" />
+                        </StackPanel>
+                    </Grid>
+                </Border>
+                <Border Style="{StaticResource SettingsCardStyle}">
+                    <Grid Style="{StaticResource SettingsRowStyle}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel VerticalAlignment="Center" Spacing="3">
+                            <TextBlock Text="检查软件更新" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                            <TextBlock x:Name="UpdateStatusText" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Spacing="8">
+                            <Button Content="检查更新" Click="CheckForUpdates_Click" AutomationProperties.Name="检查软件更新" />
+                            <Button x:Name="OpenReleaseButton" Content="打开发布页" Click="OpenRelease_Click" Visibility="Collapsed" AutomationProperties.Name="打开软件更新页面" />
+                        </StackPanel>
+                    </Grid>
+                </Border>
+            </StackPanel>
+
+            <TextBlock Text="反馈" Style="{StaticResource SubtitleTextBlockStyle}" Margin="0,12,0,0" />
+            <Border Style="{StaticResource SettingsCardStyle}">
+                <Grid Style="{StaticResource SettingsRowStyle}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel VerticalAlignment="Center" Spacing="3">
+                        <TextBlock Text="反馈问题或建议" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                        <TextBlock Text="可通过 GitHub Issue 提交结构化反馈，或发送邮件至 SATLI.support@proton.me。" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Spacing="8">
+                        <Button Content="提交 issue 反馈" Click="OpenIssueFeedback_Click" AutomationProperties.Name="通过 GitHub Issue 提交反馈" />
+                        <Button Content="邮件反馈" Click="OpenEmailFeedback_Click" AutomationProperties.Name="发送邮件反馈" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <TextBlock Text="关于" Style="{StaticResource SubtitleTextBlockStyle}" Margin="0,12,0,0" />
+            <StackPanel Spacing="8">
+                <Border Style="{StaticResource SettingsCardStyle}">
+                    <Grid Style="{StaticResource SettingsRowStyle}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel VerticalAlignment="Center" Spacing="3">
+                            <TextBlock Text="Steam 成就翻译管理器" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                            <TextBlock Text="扫描、安装、管理与恢复社区维护的 Steam 成就翻译。项目源代码托管于 GitHub。" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
+                        </StackPanel>
+                        <Button Grid.Column="1" Content="查看项目主页" VerticalAlignment="Center" Click="OpenProjectPage_Click" AutomationProperties.Name="打开项目 GitHub 主页" />
+                    </Grid>
+                </Border>
+                <Border Style="{StaticResource SettingsCardStyle}">
+                    <Grid Style="{StaticResource SettingsRowStyle}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel VerticalAlignment="Center" Spacing="3">
+                            <TextBlock Text="版本与分发来源" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                            <TextBlock Text="显示当前运行的软件版本及其安装渠道。" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Right" Spacing="3">
+                            <TextBlock x:Name="AboutVersionText" HorizontalAlignment="Right" />
+                            <TextBlock x:Name="AboutDistributionText" HorizontalAlignment="Right" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        </StackPanel>
+                    </Grid>
+                </Border>
+                <Border Style="{StaticResource SettingsCardStyle}">
+                    <Grid Style="{StaticResource SettingsRowStyle}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel VerticalAlignment="Center" Spacing="3">
+                            <TextBlock Text="系统与架构" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                            <TextBlock Text="当前发行包仅面向 64 位 Windows 设备。" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
+                        </StackPanel>
+                        <TextBlock x:Name="AboutPlatformText" Grid.Column="1" VerticalAlignment="Center" TextAlignment="Right" TextWrapping="Wrap" MaxWidth="420" />
+                    </Grid>
+                </Border>
+                <Border Style="{StaticResource SettingsCardStyle}">
+                    <Grid Style="{StaticResource SettingsRowStyle}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel VerticalAlignment="Center" Spacing="3">
+                            <TextBlock Text="版权与许可" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                            <TextBlock x:Name="AboutCopyrightText" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                            <TextBlock Text="程序代码采用 MIT License；第三方组件与翻译数据保留各自的版权和许可条款。" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Spacing="8">
+                            <Button Content="MIT 许可证" Click="OpenLicense_Click" AutomationProperties.Name="查看 MIT 许可证" />
+                            <Button Content="第三方声明" Click="OpenThirdPartyNotices_Click" AutomationProperties.Name="查看第三方版权与许可声明" />
+                        </StackPanel>
+                    </Grid>
+                </Border>
+            </StackPanel>
+            </StackPanel>
+        </Grid>
+    </ScrollViewer>
+</Page>

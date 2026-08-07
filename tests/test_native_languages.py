@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from satl.native_languages import detect_achievement_languages
+from satli.native_languages import detect_achievement_languages
 
 
 def _string(name: str, value: str) -> bytes:

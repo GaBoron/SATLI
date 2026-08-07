@@ -6,11 +6,11 @@ param(
 
 $ErrorActionPreference = "Stop"
 $ProjectRoot = Split-Path -Parent $PSScriptRoot
-$SourceRoot = Join-Path $ProjectRoot "src\satl"
+$SourceRoot = Join-Path $ProjectRoot "src\satli"
 $BuildRoot = Join-Path $ProjectRoot "build"
 $DownloadRoot = Join-Path $BuildRoot "downloads"
 $RuntimeRoot = Join-Path $OutputDirectory "_runtime"
-$RuntimeMarker = Join-Path $RuntimeRoot ".satl-runtime"
+$RuntimeMarker = Join-Path $RuntimeRoot ".satli-runtime"
 $EmbeddedPythonVersion = "3.13.13"
 $EmbeddedPythonArchiveName = "python-$EmbeddedPythonVersion-embed-amd64.zip"
 $EmbeddedPythonArchive = Join-Path $DownloadRoot $EmbeddedPythonArchiveName
@@ -61,7 +61,7 @@ function Get-RuntimeFingerprint {
     $FingerprintFiles = @(
         Get-ChildItem -LiteralPath $SourceRoot -File -Recurse
         Get-Item -LiteralPath (Join-Path $ProjectRoot "pyproject.toml")
-        Get-Item -LiteralPath (Join-Path $ProjectRoot "src\Satl.Gui\Satl.Gui.csproj")
+        Get-Item -LiteralPath (Join-Path $ProjectRoot "src\Satli.Gui\Satli.Gui.csproj")
         Get-Item -LiteralPath $PSCommandPath
     ) | Sort-Object FullName
     foreach ($SourceFile in $FingerprintFiles) {
@@ -77,12 +77,12 @@ Assert-WithinProject $DownloadRoot
 
 $Fingerprint = Get-RuntimeFingerprint
 $PythonExecutable = Join-Path $RuntimeRoot "python.exe"
-$ApplicationArchive = Join-Path $RuntimeRoot "satl.pyz"
+$ApplicationArchive = Join-Path $RuntimeRoot "satli.pyz"
 if ((Test-Path -LiteralPath $PythonExecutable) -and
     (Test-Path -LiteralPath $ApplicationArchive) -and
     (Test-Path -LiteralPath $RuntimeMarker) -and
     ((Get-Content -LiteralPath $RuntimeMarker -Raw -Encoding UTF8).Trim() -eq $Fingerprint)) {
-    Write-Host "SATL local runtime is up to date: $RuntimeRoot"
+    Write-Host "SATLI local runtime is up to date: $RuntimeRoot"
     exit 0
 }
 
@@ -149,19 +149,19 @@ try {
         }
     }
 
-    $StagedArchive = Join-Path $StagedRuntime "satl.pyz"
+    $StagedArchive = Join-Path $StagedRuntime "satli.pyz"
     & $Python -m zipapp $PayloadRoot -o $StagedArchive
     if ($LASTEXITCODE -ne 0) {
-        throw "SATL Python archive build failed"
+        throw "SATLI Python archive build failed"
     }
 
-    $Project = [xml](Get-Content -LiteralPath (Join-Path $ProjectRoot "src\Satl.Gui\Satl.Gui.csproj") -Raw -Encoding UTF8)
+    $Project = [xml](Get-Content -LiteralPath (Join-Path $ProjectRoot "src\Satli.Gui\Satli.Gui.csproj") -Raw -Encoding UTF8)
     $Version = @($Project.Project.PropertyGroup.Version | Where-Object { $_ })[0]
     $CliVersion = & (Join-Path $StagedRuntime "python.exe") $StagedArchive --version
-    if ($LASTEXITCODE -ne 0 -or $CliVersion -ne "satl $Version") {
-        throw "Built SATL Python payload has unexpected version: $CliVersion"
+    if ($LASTEXITCODE -ne 0 -or $CliVersion -ne "satli $Version") {
+        throw "Built SATLI Python payload has unexpected version: $CliVersion"
     }
-    Set-Content -LiteralPath (Join-Path $StagedRuntime ".satl-runtime") -Value $Fingerprint -Encoding UTF8
+    Set-Content -LiteralPath (Join-Path $StagedRuntime ".satli-runtime") -Value $Fingerprint -Encoding UTF8
 
     if (Test-Path -LiteralPath $BackupRuntime) {
         Remove-Item -LiteralPath $BackupRuntime -Recurse -Force
@@ -181,7 +181,7 @@ try {
     if (Test-Path -LiteralPath $BackupRuntime) {
         Remove-Item -LiteralPath $BackupRuntime -Recurse -Force
     }
-    Write-Host "Prepared complete SATL local runtime: $RuntimeRoot"
+    Write-Host "Prepared complete SATLI local runtime: $RuntimeRoot"
 }
 finally {
     if (Test-Path -LiteralPath $StagingRoot) {

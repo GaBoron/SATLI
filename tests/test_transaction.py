@@ -7,11 +7,11 @@ from pathlib import Path
 
 import pytest
 
-from satl import file_replacement
-from satl.errors import TransactionError
-from satl.models import SchemaVariant
-from satl.state import StateStore
-from satl.transaction import TransactionManager
+from satli import file_replacement
+from satli.errors import TransactionError
+from satli.models import SchemaVariant
+from satli.state import StateStore
+from satli.transaction import TransactionManager
 
 
 def variant_for(app_id: str, payload: bytes, variant_id: str = "default") -> SchemaVariant:

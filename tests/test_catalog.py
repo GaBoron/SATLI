@@ -7,14 +7,14 @@ from urllib.error import URLError
 
 import pytest
 
-from satl import __version__
-from satl.catalog import CATALOG_URLS, USER_AGENT, CatalogRepository, parse_catalog, verify_schema_file
-from satl.download_sources import DEFAULT_FILE_ROOTS
-from satl.errors import CatalogError, IntegrityError
+from satli import __version__
+from satli.catalog import CATALOG_URLS, USER_AGENT, CatalogRepository, parse_catalog, verify_schema_file
+from satli.download_sources import DEFAULT_FILE_ROOTS
+from satli.errors import CatalogError, IntegrityError
 
 
 def test_user_agent_uses_package_version() -> None:
-    assert USER_AGENT.startswith(f"satl/{__version__} ")
+    assert USER_AGENT.startswith(f"satli/{__version__} ")
 
 
 def test_default_sources_prioritize_github_raw() -> None:
@@ -205,9 +205,9 @@ def test_catalog_retries_direct_when_configured_proxy_is_unavailable(
         calls.append(f"direct:{request.full_url}")
         return Response(payload)
 
-    monkeypatch.setattr("satl.catalog.urllib.request.urlopen", proxied_opener)
+    monkeypatch.setattr("satli.catalog.urllib.request.urlopen", proxied_opener)
     monkeypatch.setattr(
-        "satl.catalog.urllib.request.getproxies",
+        "satli.catalog.urllib.request.getproxies",
         lambda: {"https": "http://127.0.0.1:9"},
     )
     repository = CatalogRepository(
@@ -220,8 +220,8 @@ def test_catalog_retries_direct_when_configured_proxy_is_unavailable(
 
     assert "123" in catalog.entries
     assert len(calls) == 2
-    assert calls[0].startswith("proxy:https://catalog.invalid?satl_refresh=")
-    assert calls[1].startswith("direct:https://catalog.invalid?satl_refresh=")
+    assert calls[0].startswith("proxy:https://catalog.invalid?satli_refresh=")
+    assert calls[1].startswith("direct:https://catalog.invalid?satli_refresh=")
 
 
 def test_catalog_falls_back_after_invalid_first_source(tmp_path: Path) -> None:
@@ -253,8 +253,8 @@ def test_repository_uses_environment_source_orders(
         calls.append(request.full_url)
         return Response(payload if "index.json" in request.full_url else b"default")
 
-    monkeypatch.setenv("SATL_INDEX_SOURCES", "github;jsdelivr")
-    monkeypatch.setenv("SATL_FILE_SOURCES", "github;jsdelivr-fastly")
+    monkeypatch.setenv("SATLI_INDEX_SOURCES", "github;jsdelivr")
+    monkeypatch.setenv("SATLI_FILE_SOURCES", "github;jsdelivr-fastly")
     repository = CatalogRepository(tmp_path, opener=opener)
 
     repository.refresh()

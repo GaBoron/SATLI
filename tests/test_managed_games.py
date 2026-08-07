@@ -4,10 +4,10 @@ import hashlib
 import json
 from pathlib import Path
 
-from satl.managed_games import ManagedGameRegistry
-from satl.models import SchemaVariant
-from satl.schema_edit import apply_schema
-from satl.transaction import TransactionManager
+from satli.managed_games import ManagedGameRegistry
+from satli.models import SchemaVariant
+from satli.schema_edit import apply_schema
+from satli.transaction import TransactionManager
 
 
 def test_existing_local_edit_without_stored_name_uses_steam_manifest(tmp_path: Path) -> None:

@@ -1,0 +1,134 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows10.0.26100.0</TargetFramework>
+    <TargetPlatformMinVersion>10.0.19041.0</TargetPlatformMinVersion>
+    <RootNamespace>Satli_Gui</RootNamespace>
+    <AssemblyName>SATLI</AssemblyName>
+    <Version>0.13.0</Version>
+    <AssemblyVersion>0.13.0.0</AssemblyVersion>
+    <FileVersion>0.13.0.0</FileVersion>
+    <InformationalVersion>0.13.0</InformationalVersion>
+    <Product>Steam 成就翻译管理器</Product>
+    <AssemblyTitle>Steam 成就翻译管理器</AssemblyTitle>
+    <Description>Steam 成就翻译管理器</Description>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <Platforms>x64</Platforms>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <WindowsPackageType>None</WindowsPackageType>
+    <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
+    <SelfContained>true</SelfContained>
+    <UseWinUI>true</UseWinUI>
+    <WinUISDKReferences>false</WinUISDKReferences>
+    <EnableMsixTooling>true</EnableMsixTooling>
+    <EnableWinAppRunSupport>false</EnableWinAppRunSupport>
+    <ApplicationIcon>$(MSBuildProjectDirectory)\Assets\AppIcon.ico</ApplicationIcon>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <GitHubClientId Condition="'$(GitHubClientId)' == ''">$(SATLI_GITHUB_CLIENT_ID)</GitHubClientId>
+    <GitHubClientId Condition="'$(GitHubClientId)' == ''">Iv23liRKwdJVLeXkGuXe</GitHubClientId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
+      <_Parameter1>GitHubClientId</_Parameter1>
+      <_Parameter2>$(GitHubClientId)</_Parameter2>
+    </AssemblyAttribute>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Assets\AppIcon.ico" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Update="Assets\AppIcon.ico">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <Content Update="Assets\AppIcon.preview.png">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+      <CopyToPublishDirectory>Never</CopyToPublishDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Manifest Include="$(ApplicationManifest)" />
+  </ItemGroup>
+
+  <!--
+    Defining the "Msix" ProjectCapability here allows the Single-project MSIX Packaging
+    Tools extension to be activated for this project even if the Windows App SDK Nuget
+    package has not yet been restored.
+  -->
+  <ItemGroup Condition="'$(DisableMsixProjectCapabilityAddedByProject)'!='true' and '$(EnableMsixTooling)'=='true'">
+    <ProjectCapability Include="Msix" />
+  </ItemGroup>
+
+  <!--
+    Microsoft.Windows.SDK.BuildTools.WinApp adds first-class support for
+    `dotnet run` on packaged WinUI apps: it hooks the .NET CLI Run target to
+    register a debug identity via the winapp CLI and launch the app with
+    package identity (AUMID).
+    Set <EnableWinAppRunSupport>false</EnableWinAppRunSupport> in a
+    <PropertyGroup> above to opt out.
+  -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.28000.2270" />
+    <!--
+      Reference only the WinUI component instead of the Windows App SDK meta-package.
+      The meta-package also deploys unused AI, ML, widgets, and workload runtimes,
+      which add tens of megabytes to both release formats.
+    -->
+    <PackageReference Include="Microsoft.WindowsAppSDK.WinUI" Version="2.2.1" />
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+    <PackageReference Include="Markdig" Version="1.1.2" />
+    <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="10.0.9" />
+  </ItemGroup>
+
+  <!--
+    Defining the "HasPackageAndPublishMenuAddedByProject" property here allows the Solution
+    Explorer "Package and Publish" context menu entry to be enabled for this project even if
+    the Windows App SDK Nuget package has not yet been restored.
+  -->
+  <PropertyGroup Condition="'$(DisableHasPackageAndPublishMenuAddedByProject)'!='true' and '$(EnableMsixTooling)'=='true'">
+    <HasPackageAndPublishMenu>true</HasPackageAndPublishMenu>
+  </PropertyGroup>
+
+  <!-- Publish Properties -->
+  <PropertyGroup>
+    <PublishReadyToRun>False</PublishReadyToRun>
+    <!-- WinUI/WinRT initialization crashes after startup when this app is trimmed. -->
+    <PublishTrimmed>False</PublishTrimmed>
+    <PublishSingleFile>True</PublishSingleFile>
+    <IncludeAllContentForSelfExtract>True</IncludeAllContentForSelfExtract>
+    <IncludeNativeLibrariesForSelfExtract>True</IncludeNativeLibrariesForSelfExtract>
+    <EnableCompressionInSingleFile>True</EnableCompressionInSingleFile>
+    <Optimize>True</Optimize>
+    <Deterministic>True</Deterministic>
+    <PathMap>$(MSBuildProjectDirectory)=/_/Satli.Gui</PathMap>
+    <DebugSymbols>False</DebugSymbols>
+    <DebugType>None</DebugType>
+  </PropertyGroup>
+
+  <Target
+    Name="CopyWinUIRuntimeResources"
+    AfterTargets="Publish"
+    Condition="'$(PublishSingleFile)' != 'true'">
+    <ItemGroup>
+      <WinUIRuntimeResource Include="$(TargetDir)**\*.xbf" />
+      <WinUIRuntimeResource Include="$(TargetDir)$(AssemblyName).pri" />
+    </ItemGroup>
+    <Copy
+      SourceFiles="@(WinUIRuntimeResource)"
+      DestinationFiles="@(WinUIRuntimeResource->'$(PublishDir)%(RecursiveDir)%(Filename)%(Extension)')"
+      SkipUnchangedFiles="true" />
+  </Target>
+
+  <Target
+    Name="PrepareSatliLocalRuntime"
+    AfterTargets="Build"
+    Condition="'$(DesignTimeBuild)' != 'true' and '$(IncludeSatliRuntime)' != 'false'">
+    <Exec
+      Command="powershell.exe -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -File &quot;$(MSBuildProjectDirectory)\..\..\scripts\prepare-local-runtime.ps1&quot; -OutputDirectory &quot;$(TargetDir).&quot;" />
+  </Target>
+</Project>

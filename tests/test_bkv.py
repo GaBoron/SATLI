@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from satl.bkv import achievement_preview, parse_binary_keyvalues, serialize_binary_keyvalues
+from satli.bkv import achievement_preview, parse_binary_keyvalues, serialize_binary_keyvalues
 
 
 def _string(name: str, value: str) -> bytes:

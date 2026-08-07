@@ -5,11 +5,11 @@ import json
 import tempfile
 from pathlib import Path
 
-from satl.cli import main
+from satli.cli import main
 
 
 def run() -> int:
-    with tempfile.TemporaryDirectory(prefix="satl-smoke-") as raw:
+    with tempfile.TemporaryDirectory(prefix="satli-smoke-") as raw:
         root = Path(raw)
         steam = root / "Steam"
         (steam / "steamapps").mkdir(parents=True)

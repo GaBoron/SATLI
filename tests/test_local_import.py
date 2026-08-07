@@ -7,9 +7,9 @@ from pathlib import Path
 
 import pytest
 
-from satl.cli import main
-from satl.errors import PreflightError, UsageError
-from satl.local_import import read_local_import
+from satli.cli import main
+from satli.errors import PreflightError, UsageError
+from satli.local_import import read_local_import
 
 
 def _string(name: str, value: str) -> bytes:
@@ -119,7 +119,7 @@ def test_local_import_installs_snapshot_and_records_transaction(
     with zipfile.ZipFile(source, "w", compression=zipfile.ZIP_DEFLATED) as archive:
         archive.writestr("UserGameStatsSchema_123.bin", payload)
     data_dir = tmp_path / "data"
-    monkeypatch.setattr("satl.local_import_command.is_steam_running", lambda: False)
+    monkeypatch.setattr("satli.local_import_command.is_steam_running", lambda: False)
 
     result = main(
         [

@@ -21,7 +21,7 @@ The independently distributed Windows installer is built with Inno Setup and inc
 
 ### Embedded Python runtime and tools
 
-Windows release packages include the official CPython 3.13 embeddable runtime. Python is distributed under the Python Software Foundation License; the complete runtime `LICENSE.txt` is included beside its binaries in `_satl_runtime`.
+Windows release packages include the official CPython 3.13 embeddable runtime. Python is distributed under the Python Software Foundation License; the complete runtime `LICENSE.txt` is included beside its binaries in `_satli_runtime`.
 
 The embedded Python command-line payload includes:
 

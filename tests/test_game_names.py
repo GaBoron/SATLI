@@ -4,7 +4,7 @@ import json
 import urllib.error
 from pathlib import Path
 
-from satl.game_names import SteamGameNameResolver
+from satli.game_names import SteamGameNameResolver
 
 
 class FakeResponse:
