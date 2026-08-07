@@ -1,31 +1,50 @@
 name: Bug 报告
-description: 报告可稳定复现的软件错误，帮助我们定位并修复问题
+description: 报告 Steam 成就翻译管理器的启动、扫描、安装、编辑、设置或更新问题
 title: "[Bug] "
 body:
   - type: markdown
     attributes:
       value: |
-        感谢你报告问题。提交前请先确认正在使用最新版本，并尽量完整填写以下信息。
+        感谢你帮助改进 Steam 成就翻译管理器。提交前请先更新到最新版本、搜索已有 Issue，并尽量完整填写以下信息。
 
-        请勿上传包含 Steam 登录凭据、访问令牌或其他隐私信息的日志与截图。
+        如果问题只涉及某个云端译本的内容、过期状态或是否生效，请优先在应用“云端”页对应游戏的“报告”按钮中提交。请勿上传 Steam Web API Key、GitHub 令牌、账号信息或其他隐私数据。
 
   - type: input
     id: app-version
     attributes:
       label: 软件版本
-      description: 可在应用的“设置”页面或下载文件名中查看。
-      placeholder: 例如：v0.0.1
+      description: 可在“设置 → 关于 → 版本与分发来源”中查看。
+      placeholder: 例如：v0.13.0
     validations:
       required: true
 
   - type: dropdown
-    id: install-method
+    id: distribution-channel
     attributes:
-      label: 使用方式
-      description: 请选择出现问题时使用的版本。
+      label: 分发来源
+      description: 请选择“设置 → 关于”中显示的安装渠道。
       options:
-        - 图形界面版（安装程序）
-        - 从源代码运行
+        - Microsoft Store 版
+        - GitHub Releases 独立安装版
+        - 从源代码构建
+        - 不确定
+    validations:
+      required: true
+
+  - type: dropdown
+    id: affected-area
+    attributes:
+      label: 问题发生位置
+      options:
+        - 应用启动或窗口显示
+        - 游戏扫描与本地游戏列表
+        - 云端目录与译本下载
+        - 翻译安装、更新或恢复
+        - 已管理游戏与修订历史
+        - 本地导入或成就编辑器
+        - 设置、网络、下载源或 GitHub 绑定
+        - 日志或软件更新
+        - 安装、卸载或 Microsoft Store
         - 其他
     validations:
       required: true
@@ -47,6 +66,13 @@ body:
       placeholder: 描述你观察到的异常现象。
     validations:
       required: true
+
+  - type: input
+    id: game-information
+    attributes:
+      label: 相关游戏（可选）
+      description: 如果问题只影响特定游戏，请填写游戏名称和 Steam App ID。
+      placeholder: 例如：Game Name，App ID 123456
 
   - type: textarea
     id: reproduction-steps
@@ -74,8 +100,8 @@ body:
     id: logs
     attributes:
       label: 日志或错误信息
-      description: 请粘贴相关日志或完整错误信息；提交前请移除个人信息和敏感内容。
-      render: shell
+      description: 可在“设置 → 日志 → 打开目录”找到日志。请仅粘贴相关片段，并先移除本机路径、账号、API Key、令牌等敏感信息。
+      render: text
     validations:
       required: false
 
@@ -91,7 +117,7 @@ body:
     id: additional-context
     attributes:
       label: 补充信息
-      description: 可填写游戏名称、Steam App ID、翻译版本，以及近期是否修改过 Steam 库目录或相关文件。
+      description: 可说明是否启用离线模式、自定义 DNS/代理、Steam Web API 游戏库补全，以及近期是否修改过 Steam 库目录或游戏文件。
     validations:
       required: false
 
@@ -102,5 +128,7 @@ body:
       options:
         - label: 我已确认正在使用最新版本，并搜索过现有 Issue，没有发现相同问题。
           required: true
-        - label: 我已移除日志和截图中的账号、路径、令牌等敏感信息。
+        - label: 我已移除日志和截图中的本机路径、账号、API Key、令牌等敏感信息。
+          required: true
+        - label: 我确认这是管理器本身的问题；若只是单个云端译本的内容或状态问题，我会使用应用“云端”页的“报告”按钮。
           required: true
