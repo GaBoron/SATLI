@@ -14,7 +14,7 @@ body:
     attributes:
       label: 软件版本
       description: 可在“设置 → 关于 → 版本与分发来源”中查看。
-      placeholder: 例如：v0.13.0
+      placeholder: 例如：v1.0.0
     validations:
       required: true
 
