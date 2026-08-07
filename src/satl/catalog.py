@@ -35,7 +35,7 @@ SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 MAX_CATALOG_BYTES = 8 * 1024 * 1024
 USER_AGENT = (
     f"satl/{__version__} "
-    "(+https://github.com/GaBoron/steam-achievement-translation-installer)"
+    "(+https://github.com/GaBoron/SATLI)"
 )
 
 

@@ -14,7 +14,7 @@
 #define MyAppName "Steam 成就翻译管理器"
 #define MyAppExeName "SATLInstaller.exe"
 #define MyAppPublisher "GaBoron"
-#define MyAppUrl "https://github.com/GaBoron/steam-achievement-translation-installer"
+#define MyAppUrl "https://github.com/GaBoron/SATLI"
 
 [Setup]
 AppId={{8E4CF3D1-13E7-4FF7-A979-CE07F27F020A}

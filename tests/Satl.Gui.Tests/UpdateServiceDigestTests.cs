@@ -93,7 +93,7 @@ public sealed class UpdateServiceDigestTests
         return $$"""
             {
               "tag_name": "v0.3.0",
-              "html_url": "https://github.com/GaBoron/steam-achievement-translation-installer/releases/tag/v0.3.0",
+              "html_url": "https://github.com/GaBoron/SATLI/releases/tag/v0.3.0",
               "body": "## 修复\n- 修复刷新问题",
               "assets": [
                 {"name":"SATLInstaller-Setup-v0.3.0.exe","browser_download_url":"https://example.invalid/SATLInstaller-Setup-v0.3.0.exe"{{digest}}}

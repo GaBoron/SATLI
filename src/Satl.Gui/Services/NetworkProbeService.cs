@@ -7,7 +7,7 @@ public sealed record NetworkProbeResult(bool IsSuccess, string Message);
 public sealed class NetworkProbeService
 {
     private static readonly Uri UpdateEndpoint = new(
-        "https://github.com/GaBoron/steam-achievement-translation-installer/releases/latest");
+        "https://github.com/GaBoron/SATLI/releases/latest");
 
     public async Task<NetworkProbeResult> TestAsync(
         NetworkSettings settings,

@@ -593,7 +593,7 @@ public sealed class ProtocolTests
     public async Task UpdateServiceMapsLatestReleaseRedirectWithoutGithubApi()
     {
         using var client = new HttpClient(new StubHttpHandler(
-            new Uri("https://github.com/GaBoron/steam-achievement-translation-installer/releases/tag/v0.3.0")));
+            new Uri("https://github.com/GaBoron/SATLI/releases/tag/v0.3.0")));
         var service = new UpdateService(client, new Version(0, 2, 0), new Uri("https://example.invalid/latest"));
 
         var result = await service.CheckAsync();
@@ -601,7 +601,7 @@ public sealed class ProtocolTests
         Assert.True(result.IsUpdateAvailable);
         Assert.Equal("0.3.0", result.LatestVersion);
         Assert.Equal(
-            "https://github.com/GaBoron/steam-achievement-translation-installer/releases/download/v0.3.0/SATLInstaller-Setup-v0.3.0.exe",
+            "https://github.com/GaBoron/SATLI/releases/download/v0.3.0/SATLInstaller-Setup-v0.3.0.exe",
             result.InstallerDownload?.AbsoluteUri);
         Assert.Contains("发现新版本", result.Message);
     }
@@ -610,7 +610,7 @@ public sealed class ProtocolTests
     public async Task UpdateServiceReportsCurrentVersion()
     {
         using var client = new HttpClient(new StubHttpHandler(
-            new Uri("https://github.com/GaBoron/steam-achievement-translation-installer/releases/tag/v0.2.0")));
+            new Uri("https://github.com/GaBoron/SATLI/releases/tag/v0.2.0")));
         var service = new UpdateService(client, new Version(0, 2, 0), new Uri("https://example.invalid/latest"));
 
         var result = await service.CheckAsync();
@@ -630,7 +630,7 @@ public sealed class ProtocolTests
             <?xml version="1.0" encoding="UTF-8"?>
             <feed xmlns="http://www.w3.org/2005/Atom">
               <entry>
-                <link rel="alternate" href="https://github.com/GaBoron/steam-achievement-translation-installer/releases/tag/v0.4.0" />
+                <link rel="alternate" href="https://github.com/GaBoron/SATLI/releases/tag/v0.4.0" />
                 <content type="html">&lt;h2&gt;修复&lt;/h2&gt;&lt;ul&gt;&lt;li&gt;改进更新检查回退&lt;/li&gt;&lt;/ul&gt;</content>
               </entry>
             </feed>

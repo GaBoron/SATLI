@@ -9,7 +9,7 @@ public sealed class ApplicationInformationTests
     public void BugReportTargetsCurrentIssueForm()
     {
         Assert.Equal(
-            "https://github.com/GaBoron/steam-achievement-translation-installer/issues/new?template=bug_report_zh.yml",
+            "https://github.com/GaBoron/SATLI/issues/new?template=bug_report_zh.yml",
             ApplicationInformation.BugReportUri.AbsoluteUri);
     }
 

@@ -1,6 +1,6 @@
 # Third-Party Notices
 
-This document summarizes the third-party software and content distributed with or accessed by Steam Achievement Translation Installer (SATL). Each project retains its own copyright and license terms.
+This document summarizes the third-party software and content distributed with or accessed by SATLI (Steam Achievement Translation & Localization Integrator). Each project retains its own copyright and license terms.
 
 ## Desktop application
 
@@ -28,16 +28,16 @@ The embedded Python command-line payload includes:
 - Dulwich — dual-licensed under Apache-2.0 or GPL-2.0-or-later; used for local Git repository access
 - urllib3 — MIT License; used by Dulwich
 
-SATL uses Dulwich's pure-Python implementation and does not require Git for Windows or additional native libraries.
+SATLI uses Dulwich's pure-Python implementation and does not require Git for Windows or additional native libraries.
 
 ## Translation data and game content
 
-SATL downloads community-maintained achievement schema files from [GaBoron/steam-achievement-translation-library](https://github.com/GaBoron/steam-achievement-translation-library). That repository has its own mixed-rights notice.
+SATLI downloads community-maintained achievement schema files from [GaBoron/steam-achievement-translation-library](https://github.com/GaBoron/steam-achievement-translation-library). That repository has its own mixed-rights notice.
 
 Original game content, achievement text, Steam schema content, names, and trademarks remain the property of their respective rights holders.
 
 ## Acknowledgements
 
-Thanks to GitHub user [KneeArcher](https://github.com/KneeArcher) for sharing a prototype in translation-library Issue #94 and for helping define the desired workflow. The contributor explicitly licensed the source ZIP attached to that issue under the MIT License in [this comment](https://github.com/GaBoron/steam-achievement-translation-library/issues/94#issuecomment-4935293487). The initial SATL implementation remains an independent clean-room implementation and does not copy the prototype's source.
+Thanks to GitHub user [KneeArcher](https://github.com/KneeArcher) for sharing a prototype in translation-library Issue #94 and for helping define the desired workflow. The contributor explicitly licensed the source ZIP attached to that issue under the MIT License in [this comment](https://github.com/GaBoron/steam-achievement-translation-library/issues/94#issuecomment-4935293487). The initial SATLI implementation remains an independent clean-room implementation and does not copy the prototype's source.
 
-The separate MIT-licensed [PanVena/SteamAchievementLocalizer](https://github.com/PanVena/SteamAchievementLocalizer) project edits and authors Steam achievement localizations. SATL has a narrower role: discovering, installing, and restoring translations published by the translation library.
+The separate MIT-licensed [PanVena/SteamAchievementLocalizer](https://github.com/PanVena/SteamAchievementLocalizer) project edits and authors Steam achievement localizations. SATLI integrates translation discovery, import, editing, installation, restoration, and management in one Windows application.

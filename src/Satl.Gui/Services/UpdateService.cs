@@ -20,11 +20,11 @@ public sealed record UpdateCheckResult(
 
 public sealed class UpdateService
 {
-    public const string RepositoryUrl = "https://github.com/GaBoron/steam-achievement-translation-installer";
+    public const string RepositoryUrl = "https://github.com/GaBoron/SATLI";
     private static readonly Uri DefaultEndpoint = new($"{RepositoryUrl}/releases/latest");
     private static readonly Uri DefaultFeedEndpoint = new($"{RepositoryUrl}/releases.atom");
     private static readonly Uri DefaultApiEndpoint = new(
-        "https://api.github.com/repos/GaBoron/steam-achievement-translation-installer/releases/latest");
+        "https://api.github.com/repos/GaBoron/SATLI/releases/latest");
     private const long MaximumInstallerBytes = 1024L * 1024 * 1024;
 
     private HttpClient _client;

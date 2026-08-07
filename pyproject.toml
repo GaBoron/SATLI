@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "steam-achievement-translation-installer"
 version = "0.13.0"
-description = "Discover, edit, install, and restore Steam achievement translations."
+description = "Discover, import, edit, install, restore, and manage Steam achievement translations."
 readme = "README.md"
 requires-python = ">=3.13"
 license = { file = "LICENSE" }

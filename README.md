@@ -3,14 +3,17 @@
 </p>
 
 <h1 align="center">SATLI</h1>
-<p align="center"><strong>Steam 成就翻译管理器</strong></p>
-
 <p align="center">
-  在 Windows 上查找、编辑、安装并安全恢复 Steam 成就翻译。
+  <strong>Steam 成就翻译管理器</strong><br>
+  <sub>Steam Achievement Translation &amp; Localization Integrator</sub>
 </p>
 
 <p align="center">
-  <a href="https://github.com/GaBoron/steam-achievement-translation-installer/releases/latest"><img alt="最新版本" src="https://img.shields.io/github/v/release/GaBoron/steam-achievement-translation-installer?label=%E6%9C%80%E6%96%B0%E7%89%88%E6%9C%AC"></a>
+  在 Windows 上获取、导入、编辑、安装、恢复和管理 Steam 成就翻译。
+</p>
+
+<p align="center">
+  <a href="https://github.com/GaBoron/SATLI/releases/latest"><img alt="最新版本" src="https://img.shields.io/github/v/release/GaBoron/SATLI?label=%E6%9C%80%E6%96%B0%E7%89%88%E6%9C%AC"></a>
   <img alt="Windows 10 / 11" src="https://img.shields.io/badge/Windows-10%20%2F%2011-0078D4">
   <a href="LICENSE"><img alt="MIT License" src="https://img.shields.io/badge/License-MIT-green.svg"></a>
 </p>
@@ -20,7 +23,7 @@
   ·
   <a href="docs/USAGE.md">📖 使用指南</a>
   ·
-  <a href="https://github.com/GaBoron/steam-achievement-translation-installer/issues/new/choose">💬 反馈问题</a>
+  <a href="https://github.com/GaBoron/SATLI/issues/new/choose">💬 反馈问题</a>
   ·
   <a href="https://www.ifdian.net/a/gaboron">❤️ 赞助开发者</a>
 </p>
@@ -30,7 +33,7 @@
 > [!TIP]
 > **推荐从 [Microsoft Store](https://apps.microsoft.com/detail/9PB7V9S03K80) 安装。** Microsoft Store 会负责安装并自动提供软件更新，应用设置页也支持主动检查 Store 新版、查看发布说明并打开更新页面。
 
-Microsoft Store 的产品可用性可能因市场而异。产品页面在当前市场不可用、无法使用 Microsoft Store，或希望手动管理安装程序时，可从 [GitHub Releases](https://github.com/GaBoron/steam-achievement-translation-installer/releases/latest) 获取独立安装版。独立安装版通过应用内的 GitHub Releases 更新功能获取新版。
+Microsoft Store 的产品可用性可能因市场而异。产品页面在当前市场不可用、无法使用 Microsoft Store，或希望手动管理安装程序时，可从 [GitHub Releases](https://github.com/GaBoron/SATLI/releases/latest) 获取独立安装版。独立安装版通过应用内的 GitHub Releases 更新功能获取新版。
 
 两个渠道提供相同的翻译管理功能并使用相同的数据格式，但不会相互安装对方的更新包。通常只需安装其中一个版本；切换渠道前请先退出并卸载当前版本。更多安装与更新说明见 [使用指南](docs/USAGE.md#安装与首次运行)。
 
