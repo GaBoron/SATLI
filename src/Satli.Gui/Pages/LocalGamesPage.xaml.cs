@@ -71,6 +71,7 @@ public sealed partial class LocalGamesPage : Page
             {
                 return;
             }
+            App.ViewModel.Translations.SuppressSchemaMonitoring([preview.Replacement.AppId]);
             await _localImport.InstallAsync(
                 sourcePath,
                 preview.SchemaSha256,

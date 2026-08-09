@@ -26,8 +26,12 @@
                     <NavigationViewItem Content="云端" Tag="cloud" />
                 </NavigationViewItem.MenuItems>
             </NavigationViewItem>
-            <NavigationViewItem Content="已管理" Tag="managed">
+            <NavigationViewItem Content="已管理" SelectsOnInvoked="False" IsExpanded="True">
                 <NavigationViewItem.Icon><SymbolIcon Symbol="Save" /></NavigationViewItem.Icon>
+                <NavigationViewItem.MenuItems>
+                    <NavigationViewItem x:Name="ManagedAllItem" Content="全部" Tag="managed-all" />
+                    <NavigationViewItem Content="已锁定" Tag="managed-locked" />
+                </NavigationViewItem.MenuItems>
             </NavigationViewItem>
             <NavigationViewItem Content="日志" Tag="logs">
                 <NavigationViewItem.Icon><SymbolIcon Symbol="Document" /></NavigationViewItem.Icon>

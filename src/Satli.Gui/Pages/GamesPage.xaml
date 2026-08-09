@@ -99,8 +99,7 @@
                                 VerticalAlignment="Center"
                                 Header="翻译版本"
                                 ItemsSource="{x:Bind Variants}"
-                                SelectedValuePath="VariantId"
-                                SelectedValue="{x:Bind SelectedVariantId, Mode=TwoWay}"
+                                SelectedItem="{x:Bind SelectedVariant, Mode=TwoWay}"
                                 AutomationProperties.Name="选择翻译版本" />
                         </Grid>
                     </Border>

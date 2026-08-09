@@ -1,6 +1,7 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Satli_Gui.Pages;
+using Satli_Gui.Models;
 using Satli_Gui.ViewModels;
 
 namespace Satli_Gui;
@@ -47,11 +48,21 @@ public sealed partial class MainPage : Page
         {
             return;
         }
+        if (tag is "managed-all" or "managed-locked")
+        {
+            ContentFrame.Navigate(
+                typeof(ManagedPage),
+                tag == "managed-locked" ? ManagedGameFilter.Locked : ManagedGameFilter.All);
+            if (Navigation.DisplayMode == NavigationViewDisplayMode.Minimal)
+            {
+                Navigation.IsPaneOpen = false;
+            }
+            return;
+        }
         var destination = tag switch
         {
             "local" => typeof(LocalGamesPage),
             "cloud" => typeof(CloudGamesPage),
-            "managed" => typeof(ManagedPage),
             "logs" => typeof(LogsPage),
             "settings" => typeof(SettingsPage),
             _ => typeof(GamesPage),

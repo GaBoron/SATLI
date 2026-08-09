@@ -18,6 +18,7 @@ from satli.bkv import (
     serialize_binary_keyvalues,
 )
 from satli.errors import IntegrityError, PreflightError, TransactionError, UsageError
+from satli.file_replacement import replace_staged_file
 
 
 LANGUAGE_RE = re.compile(r"^[a-z][a-z0-9_]{1,31}$")
@@ -346,7 +347,7 @@ def apply_schema_payload(
         if sha256_path(stage) != output_sha256:
             raise IntegrityError("编辑暂存文件 SHA-256 校验失败")
         achievement_preview(stage.read_bytes())
-        os.replace(stage, source)
+        replace_staged_file(stage, source)
         replaced = True
         transaction = {
             "id": transaction_id,
@@ -584,7 +585,7 @@ def _copy_fsync(source: Path, destination: Path) -> None:
             shutil.copyfileobj(reader, writer, length=1024 * 1024)
             writer.flush()
             os.fsync(writer.fileno())
-        os.replace(temporary, destination)
+        replace_staged_file(temporary, destination)
     except OSError as exc:
         raise TransactionError(f"无法复制文件：{source} -> {destination}：{exc}") from exc
     finally:

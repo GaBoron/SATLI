@@ -87,17 +87,26 @@ public sealed partial class TranslationManagementViewModel
     public static ReplacementPreview ParseCurrentPreview(CliRunResult result, GameItem game) =>
         TranslationPreviewParser.ParseCurrent(result, game);
 
-    public async Task InstallAsync(IReadOnlyList<GameItem> selected)
+    public async Task<IReadOnlySet<string>> InstallAsync(IReadOnlyList<GameItem> selected)
     {
         if (!_operation.TryBegin())
         {
-            return;
+            return new HashSet<string>(StringComparer.Ordinal);
         }
         try
         {
+            SuppressSchemaMonitoring(selected.Select(item => item.AppId));
             var result = await RunCliAsync(
                 _arguments.Install(selected, dryRun: false, yes: true, previewContent: false),
                 "正在安装翻译…");
+            var succeededAppIds = result.Events
+                .Where(item => item.Operation == "install" && item.Event == "item-succeeded")
+                .Select(item => item.Payload.TryGetProperty("app_id", out var appId)
+                    ? appId.GetString()
+                    : null)
+                .Where(appId => !string.IsNullOrWhiteSpace(appId))
+                .Select(appId => appId!)
+                .ToHashSet(StringComparer.Ordinal);
             var summary = InstallOperationSummary.TryCreate(result);
             if (summary is not null)
             {
@@ -112,19 +121,21 @@ public sealed partial class TranslationManagementViewModel
                         : summary.HasSucceededItems
                             ? InfoBarSeverity.Warning
                             : InfoBarSeverity.Error);
-                return;
+                return succeededAppIds;
             }
             if (!result.IsSuccess)
             {
                 ShowResultError(result);
-                return;
+                return succeededAppIds;
             }
             await ReloadAfterMutationAsync();
             ShowInfo("所选翻译已安装。", InfoBarSeverity.Success);
+            return succeededAppIds;
         }
         catch (Exception exception)
         {
             ShowException("安装", exception);
+            return new HashSet<string>(StringComparer.Ordinal);
         }
         finally
         {
@@ -150,6 +161,7 @@ public sealed partial class TranslationManagementViewModel
         }
         try
         {
+            SuppressSchemaMonitoring(selected.Select(item => item.AppId));
             var result = await RunCliAsync(
                 _arguments.Restore(selected, dryRun: false, yes: true, force, previewContent: false),
                 force ? "正在强制恢复并归档当前文件…" : "正在恢复安装前文件…");
@@ -306,8 +318,10 @@ public sealed partial class TranslationManagementViewModel
                 scanned.InstalledSource = managed.InstalledSource;
                 scanned.InstalledAt = managed.InstalledAt;
                 scanned.InstalledSha256 = managed.InstalledSha256;
+                scanned.FileReadOnly = managed.FileReadOnly;
             }
         }
+        ApplyManagedFilter();
         OnPropertyChanged(nameof(ManagedEmptyStateVisibility));
         UpdateAvailableCount = GameInstallFiltering.CountUpdates(Games);
         ApplyFilter();

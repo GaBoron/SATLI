@@ -91,4 +91,20 @@ public sealed class TranslationCliArgumentsTests
         Assert.Contains(ReservedTestSteamId, arguments);
         Assert.DoesNotContain(apiKey, arguments);
     }
+
+    [Fact]
+    public void ProtectLockCarriesRiskConfirmationAndDetectedSteamDirectory()
+    {
+        var builder = new TranslationCliArguments(
+            () => new GuiSettings(),
+            () => @"D:\DetectedSteam");
+        var game = new GameItem { AppId = "123", GameName = "Game" };
+
+        var arguments = builder.Protect([game], enable: true);
+
+        Assert.Equal(["protect", "lock", "123"], arguments.Take(3));
+        Assert.Contains("--yes", arguments);
+        Assert.Contains("--jsonl", arguments);
+        Assert.Contains(@"D:\DetectedSteam", arguments);
+    }
 }

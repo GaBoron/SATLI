@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 import zipfile
+import stat
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -103,12 +104,32 @@ def test_scan_json_has_stable_fields(tmp_path: Path, capsys: pytest.CaptureFixtu
         "installed_source",
         "installed_at",
         "installed_sha256",
+        "file_read_only",
         "native_languages",
         "action",
         "error",
     }
     assert output[0]["contributors"] == []
     assert output[0]["discovery"] == ["installed"]
+
+
+def test_protect_lock_and_unlock_emit_verified_state(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    steam, _ = make_fixture(tmp_path)
+    target = steam / "appcache" / "stats" / "UserGameStatsSchema_123.bin"
+    target.parent.mkdir(parents=True)
+    target.write_bytes(b"schema")
+
+    assert main(["protect", "lock", "123", "--yes", "--jsonl", "--steam-dir", str(steam)]) == 0
+    locked_events = jsonl_events(capsys.readouterr().out)
+    assert locked_events[-2]["payload"]["file_read_only"] is True
+    assert not target.stat().st_mode & stat.S_IWRITE
+
+    assert main(["protect", "unlock", "123", "--jsonl", "--steam-dir", str(steam)]) == 0
+    unlocked_events = jsonl_events(capsys.readouterr().out)
+    assert unlocked_events[-2]["payload"]["file_read_only"] is False
+    assert target.stat().st_mode & stat.S_IWRITE
 
 
 def test_scan_jsonl_has_versioned_event_sequence(tmp_path: Path, capsys) -> None:

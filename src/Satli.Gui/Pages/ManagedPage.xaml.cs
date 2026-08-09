@@ -1,6 +1,7 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Xaml.Navigation;
 using Satli_Gui.Models;
 using Satli_Gui.Services;
 using Satli_Gui.ViewModels;
@@ -16,6 +17,13 @@ public sealed partial class ManagedPage : Page
     {
         InitializeComponent();
         AddShortcut(VirtualKey.F5, VirtualKeyModifiers.None, Refresh_Invoked);
+    }
+
+    protected override void OnNavigatedTo(NavigationEventArgs e)
+    {
+        base.OnNavigatedTo(e);
+        ViewModel.SetManagedFilter(
+            e.Parameter is ManagedGameFilter filter ? filter : ManagedGameFilter.All);
     }
 
     private async void Refresh_Click(object sender, RoutedEventArgs e) => await ViewModel.ScanAsync();
@@ -76,6 +84,15 @@ public sealed partial class ManagedPage : Page
         {
             await ConfirmRestoreAsync([game], force: game.RequiresForceRestore);
         }
+    }
+
+    private async void Protection_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not FrameworkElement { Tag: GameItem { FileReadOnly: true } game })
+        {
+            return;
+        }
+        await ViewModel.SetProtectionAsync([game], enable: false);
     }
 
     private void AddShortcut(

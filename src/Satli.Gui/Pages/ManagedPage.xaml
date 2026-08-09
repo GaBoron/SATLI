@@ -9,15 +9,15 @@
     <Grid Padding="32,24,32,16" RowSpacing="16">
         <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="*" /></Grid.RowDefinitions>
         <StackPanel Spacing="4">
-            <TextBlock Text="已管理" Style="{StaticResource TitleTextBlockStyle}" />
-            <TextBlock Text="查看社区安装、本地导入或本地编辑的当前译文，并恢复变更前文件。" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+            <TextBlock Text="{x:Bind ViewModel.ManagedPageTitle, Mode=OneWay}" Style="{StaticResource TitleTextBlockStyle}" />
+            <TextBlock Text="{x:Bind ViewModel.ManagedPageDescription, Mode=OneWay}" TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
         </StackPanel>
         <CommandBar Grid.Row="1" DefaultLabelPosition="Right">
             <AppBarButton Icon="Refresh" Label="刷新状态" Click="Refresh_Click" KeyboardAcceleratorTextOverride="F5" />
         </CommandBar>
         <Grid Grid.Row="2">
         <ListView
-            ItemsSource="{x:Bind ViewModel.ManagedGames, Mode=OneWay}"
+            ItemsSource="{x:Bind ViewModel.VisibleManagedGames, Mode=OneWay}"
             Visibility="{x:Bind ViewModel.ManagedGameListVisibility, Mode=OneWay}"
             SelectionMode="None">
             <ListView.ItemContainerStyle>
@@ -34,6 +34,11 @@
                                 <TextBlock Text="{x:Bind GameName}" Style="{StaticResource BodyStrongTextBlockStyle}" />
                                 <TextBlock Text="{x:Bind Subtitle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Style="{StaticResource CaptionTextBlockStyle}" />
                                 <TextBlock Text="{x:Bind ManagedSummaryText, Mode=OneWay}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Style="{StaticResource CaptionTextBlockStyle}" TextTrimming="CharacterEllipsis" />
+                                <TextBlock
+                                    Text="{x:Bind ProtectionStatusText, Mode=OneWay}"
+                                    Visibility="{x:Bind ProtectionVisibility, Mode=OneWay}"
+                                    Foreground="{ThemeResource SystemFillColorCriticalBrush}"
+                                    Style="{StaticResource CaptionTextBlockStyle}" />
                             </StackPanel>
                             <TextBlock Grid.Column="1" VerticalAlignment="Center" Text="{x:Bind StateText}" Style="{StaticResource BodyStrongTextBlockStyle}" />
                             <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
@@ -46,6 +51,10 @@
                                             </MenuFlyoutItem>
                                             <MenuFlyoutItem Text="修改历史" Click="History_Click" Tag="{x:Bind}">
                                                 <MenuFlyoutItem.Icon><SymbolIcon Symbol="Clock" /></MenuFlyoutItem.Icon>
+                                            </MenuFlyoutItem>
+                                            <MenuFlyoutSeparator />
+                                            <MenuFlyoutItem Text="解除强制锁定" Click="Protection_Click" Tag="{x:Bind}" Visibility="{x:Bind ProtectionVisibility, Mode=OneWay}">
+                                                <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE72E;" /></MenuFlyoutItem.Icon>
                                             </MenuFlyoutItem>
                                             <MenuFlyoutSeparator />
                                             <MenuFlyoutItem Text="恢复安装前文件" Click="RestoreItem_Click" Tag="{x:Bind}" IsEnabled="{x:Bind CanRestore}">
@@ -67,8 +76,8 @@
                 Spacing="8"
                 Visibility="{x:Bind ViewModel.ManagedEmptyStateVisibility, Mode=OneWay}">
                 <FontIcon Glyph="&#xE8FD;" FontSize="32" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                <TextBlock Text="暂无已管理的游戏" Style="{StaticResource SubtitleTextBlockStyle}" />
-                <TextBlock Text="安装、导入或保存本地编辑后会显示在这里。" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                <TextBlock Text="{x:Bind ViewModel.ManagedEmptyTitle, Mode=OneWay}" Style="{StaticResource SubtitleTextBlockStyle}" />
+                <TextBlock Text="{x:Bind ViewModel.ManagedEmptyDescription, Mode=OneWay}" TextWrapping="Wrap" HorizontalAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
             </StackPanel>
         </Grid>
     </Grid>
