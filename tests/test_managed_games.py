@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import stat
 from pathlib import Path
 
 from satli.managed_games import ManagedGameRegistry
@@ -56,6 +57,16 @@ def test_catalog_install_layer_restores_to_underlying_local_edit(tmp_path: Path)
     restored_record = registry.record("123")
     assert restored_record.installed_source == "local-edit"
     assert restored_record.installed_state == "installed"
+
+
+def test_managed_record_reports_read_only_schema(tmp_path: Path) -> None:
+    target, data_dir, original = _fixture(tmp_path)
+    _install(target, data_dir, original.replace("原始名称".encode(), "社区名称".encode()))
+    target.chmod(stat.S_IREAD)
+
+    record = ManagedGameRegistry(data_dir).record("123")
+
+    assert record.file_read_only is True
 
 
 def _fixture(tmp_path: Path) -> tuple[Path, Path, bytes]:

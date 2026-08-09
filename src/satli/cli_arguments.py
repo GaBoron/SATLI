@@ -9,6 +9,7 @@ from satli.data_paths import default_data_dir
 from satli.install_command import command_install
 from satli.local_import_command import command_local_import
 from satli.petition_command import command_petition_export
+from satli.protection_command import command_protect
 from satli.restore_command import command_restore
 from satli.schema_command import (
     command_schema_apply,
@@ -130,6 +131,20 @@ def build_parser() -> argparse.ArgumentParser:
     )
     restore.add_argument("--jsonl", action="store_true", help="输出供桌面应用使用的 JSON Lines 事件")
     restore.set_defaults(handler=command_restore)
+
+    protect = subparsers.add_parser("protect", help="强制锁定或解除 Steam 成就 schema 的只读属性")
+    protect_subparsers = protect.add_subparsers(dest="protection_command", required=True)
+    protect_lock = protect_subparsers.add_parser("lock", help="将指定 schema 强制设为只读（高风险）")
+    _add_steam_dir(protect_lock)
+    protect_lock.add_argument("app_ids", nargs="+", metavar="APP_ID")
+    protect_lock.add_argument("--yes", action="store_true", help="确认已理解巨大风险")
+    protect_lock.add_argument("--jsonl", action="store_true")
+    protect_lock.set_defaults(handler=command_protect)
+    protect_unlock = protect_subparsers.add_parser("unlock", help="清除指定 schema 的只读属性")
+    _add_steam_dir(protect_unlock)
+    protect_unlock.add_argument("app_ids", nargs="+", metavar="APP_ID")
+    protect_unlock.add_argument("--jsonl", action="store_true")
+    protect_unlock.set_defaults(handler=command_protect)
 
     cache = subparsers.add_parser("cache", help="管理本地 catalog/schema 缓存")
     cache_subparsers = cache.add_subparsers(dest="cache_command", required=True)

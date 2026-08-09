@@ -34,10 +34,28 @@ def replace_staged_file(stage: Path, target: Path) -> None:
                 f"{_system_error(exc)}"
             ) from exc
 
+    stage_mode: int | None = None
+    if target_was_read_only:
+        try:
+            stage_mode = stage.stat().st_mode
+            stage.chmod(stage_mode & ~stat.S_IWRITE)
+        except OSError as exc:
+            if target_mode is not None and target.exists():
+                target.chmod(target_mode)
+            raise FileReplacementError(
+                f"无法让暂存文件继承只读属性（阶段=prepare-read-only）：{stage}："
+                f"{_system_error(exc)}"
+            ) from exc
+
     try:
         os.replace(stage, target)
     except OSError as exc:
         restored_read_only = False
+        if stage_mode is not None and stage.exists():
+            try:
+                stage.chmod(stage_mode)
+            except OSError:
+                pass
         if target_was_read_only and target_mode is not None and target.exists():
             try:
                 target.chmod(target_mode)
@@ -53,6 +71,7 @@ def replace_staged_file(stage: Path, target: Path) -> None:
                 restored_read_only=restored_read_only,
             )
         ) from exc
+
 
 
 def _replacement_failure_message(

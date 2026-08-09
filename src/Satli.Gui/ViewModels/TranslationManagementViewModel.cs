@@ -31,6 +31,7 @@ public sealed partial class TranslationManagementViewModel : ObservableObject
         _operation = operation;
         _showInfo = showInfo;
         _arguments = new TranslationCliArguments(settings, () => DetectedSteamDirectory);
+        _schemaMonitor.SchemaChanged += SchemaMonitor_SchemaChanged;
     }
 
     public ObservableCollection<GameItem> Games { get; } = [];
@@ -57,8 +58,6 @@ public sealed partial class TranslationManagementViewModel : ObservableObject
                 OnPropertyChanged(nameof(LoadingVisibility));
                 OnPropertyChanged(nameof(GameListVisibility));
                 OnPropertyChanged(nameof(EmptyStateVisibility));
-                OnPropertyChanged(nameof(ManagedGameListVisibility));
-                OnPropertyChanged(nameof(ManagedEmptyStateVisibility));
             }
         }
     }
@@ -66,10 +65,6 @@ public sealed partial class TranslationManagementViewModel : ObservableObject
     public Visibility LoadingVisibility => IsLoading ? Visibility.Visible : Visibility.Collapsed;
     public Visibility GameListVisibility => IsLoading ? Visibility.Collapsed : Visibility.Visible;
     public Visibility EmptyStateVisibility => !IsLoading && VisibleGames.Count == 0
-        ? Visibility.Visible
-        : Visibility.Collapsed;
-    public Visibility ManagedGameListVisibility => IsLoading ? Visibility.Collapsed : Visibility.Visible;
-    public Visibility ManagedEmptyStateVisibility => !IsLoading && ManagedGames.Count == 0
         ? Visibility.Visible
         : Visibility.Collapsed;
 
@@ -90,7 +85,13 @@ public sealed partial class TranslationManagementViewModel : ObservableObject
     public string DetectedSteamDirectory
     {
         get => _detectedSteamDirectory;
-        private set => SetProperty(ref _detectedSteamDirectory, value);
+        private set
+        {
+            if (SetProperty(ref _detectedSteamDirectory, value))
+            {
+                _schemaMonitor.Configure(value);
+            }
+        }
     }
 
     public string SearchText

@@ -52,6 +52,19 @@ public sealed class TranslationCliArguments(
         return arguments;
     }
 
+    public List<string> Protect(IReadOnlyList<GameItem> selected, bool enable)
+    {
+        var arguments = new List<string> { "protect", enable ? "lock" : "unlock" };
+        arguments.AddRange(selected.Select(item => item.AppId));
+        if (enable)
+        {
+            arguments.Add("--yes");
+        }
+        arguments.Add("--jsonl");
+        AddSteamDirectory(arguments);
+        return arguments;
+    }
+
     public List<string> CacheRefresh()
     {
         var arguments = new List<string> { "cache", "refresh", "--jsonl" };

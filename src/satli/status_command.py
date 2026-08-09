@@ -54,6 +54,7 @@ def command_status(args: argparse.Namespace) -> int:
             "installed_source": managed.installed_source,
             "installed_at": managed.installed_at,
             "installed_sha256": managed.installed_sha256,
+            "file_read_only": managed.file_read_only,
         })
         records.append(record)
     if args.jsonl:

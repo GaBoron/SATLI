@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any, Literal
 
 from satli.errors import IntegrityError, PreflightError, TransactionError
+from satli.file_protection import is_read_only
 from satli.schema_edit import EditHistoryStore, restore_schema, sha256_path
 from satli.steam import discover_installed_games
 from satli.transaction import TransactionManager
@@ -23,6 +24,7 @@ class ManagedRecord:
     installed_at: str | None
     installed_sha256: str | None
     game_name: str | None
+    file_read_only: bool
 
 
 @dataclass(frozen=True, slots=True)
@@ -54,7 +56,7 @@ class ManagedGameRegistry:
         active = candidate is not None
         candidate = candidate or self._latest_historical_candidate(app_id)
         if candidate is None:
-            return ManagedRecord(app_id, "unmanaged", None, None, None, None, None)
+            return ManagedRecord(app_id, "unmanaged", None, None, None, None, None, False)
         if candidate.source == "local-edit":
             transaction = candidate.transaction
             edited_hash = _optional_string(transaction.get("edited_sha256"))
@@ -71,6 +73,7 @@ class ManagedGameRegistry:
                 installed_sha256=edited_hash,
                 game_name=_optional_string(transaction.get("game_name"))
                 or self._known_game_name(app_id, transaction),
+                file_read_only=self._transaction_is_read_only(transaction) if active else False,
             )
 
         transaction = candidate.transaction
@@ -86,7 +89,13 @@ class ManagedGameRegistry:
             installed_at=_optional_string(transaction.get("installed_at")),
             installed_sha256=_optional_string(transaction.get("installed_sha256")),
             game_name=_optional_string(transaction.get("game_name")),
+            file_read_only=self._transaction_is_read_only(transaction) if active else False,
         )
+
+    @staticmethod
+    def _transaction_is_read_only(transaction: dict[str, Any]) -> bool:
+        target = Path(str(transaction.get("target") or ""))
+        return is_read_only(target)
 
     def restore_preview_source(self, app_id: str, expected_target: Path) -> Path | None:
         candidate = self._required_active_candidate(app_id)

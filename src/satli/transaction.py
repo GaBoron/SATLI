@@ -10,6 +10,7 @@ from typing import Any
 from satli.catalog import sha256_file, verify_schema_file
 from satli.errors import IntegrityError, TransactionError
 from satli.file_replacement import replace_staged_file
+from satli.file_protection import delete_read_only_file
 from satli.models import SchemaVariant
 from satli.state import StateStore
 
@@ -174,7 +175,7 @@ class TransactionManager:
                     raise IntegrityError(f"安装前备份 SHA-256 不匹配：{snapshot}")
                 _copy_fsync(snapshot, target)
             else:
-                target.unlink(missing_ok=True)
+                delete_read_only_file(target)
 
             forced_value = self._relative(forced_archive) if forced_archive.is_file() else None
             try:
@@ -292,7 +293,7 @@ class TransactionManager:
             elif target.is_file():
                 if sha256_file(target) != installed_hash:
                     raise TransactionError("目标文件已变化，不能安全删除")
-                target.unlink()
+                delete_read_only_file(target)
         except (OSError, TransactionError) as exc:
             if isinstance(exc, TransactionError):
                 raise
@@ -306,7 +307,7 @@ class TransactionManager:
                     raise TransactionError(f"恢复回滚文件不存在：{rollback}")
                 _copy_fsync(rollback, target)
             else:
-                target.unlink(missing_ok=True)
+                delete_read_only_file(target)
         except (OSError, TransactionError) as exc:
             if isinstance(exc, TransactionError):
                 raise

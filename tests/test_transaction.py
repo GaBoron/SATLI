@@ -78,6 +78,7 @@ def test_install_clears_read_only_target_before_windows_replace(
     )
 
     assert target.read_bytes() == b"translated"
+    assert not target.stat().st_mode & stat.S_IWRITE
 
 
 def test_install_reports_replace_stage_and_permission_diagnosis(

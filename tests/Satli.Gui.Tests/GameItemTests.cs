@@ -139,4 +139,39 @@ public sealed class GameItemTests
         Assert.False(item.HasCatalogWarning);
         Assert.Equal("恢复", item.RestoreActionText);
     }
+
+    [Fact]
+    public void PresentsHighRiskFileProtectionState()
+    {
+        using var document = JsonDocument.Parse(
+            """{"app_id":"123","game_name":"Locked Game","installed_state":"installed","file_read_only":true}""");
+
+        var item = GameItem.FromPayload(document.RootElement);
+
+        Assert.True(item.FileReadOnly);
+        Assert.True(item.CanToggleProtection);
+        Assert.Equal("强制锁定（高风险）", item.ProtectionStatusText);
+        Assert.Equal("解除强制锁定", item.ProtectionActionText);
+    }
+
+    [Fact]
+    public void InstalledVariantChangeSelectsMatchingCatalogVariant()
+    {
+        var item = new GameItem { AppId = "123", GameName = "Branch Game" };
+        item.Variants.Add(new SchemaVariantOption
+        {
+            VariantId = "default",
+            Primary = true,
+        });
+        item.Variants.Add(new SchemaVariantOption
+        {
+            VariantId = "experimental",
+        });
+        item.SelectedVariantId = "default";
+
+        item.InstalledVariantId = "experimental";
+
+        Assert.Equal("experimental", item.SelectedVariantId);
+        Assert.Equal("experimental", item.SelectedVariant?.VariantId);
+    }
 }

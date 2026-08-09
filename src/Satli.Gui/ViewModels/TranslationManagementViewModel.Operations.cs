@@ -95,6 +95,8 @@ public sealed partial class TranslationManagementViewModel
         }
         try
         {
+            using var monitoringSuppression = BeginSchemaMonitoringSuppression(
+                selected.Select(item => item.AppId));
             var result = await RunCliAsync(
                 _arguments.Install(selected, dryRun: false, yes: true, previewContent: false),
                 "正在安装翻译…");
@@ -150,6 +152,8 @@ public sealed partial class TranslationManagementViewModel
         }
         try
         {
+            using var monitoringSuppression = BeginSchemaMonitoringSuppression(
+                selected.Select(item => item.AppId));
             var result = await RunCliAsync(
                 _arguments.Restore(selected, dryRun: false, yes: true, force, previewContent: false),
                 force ? "正在强制恢复并归档当前文件…" : "正在恢复安装前文件…");
@@ -306,9 +310,9 @@ public sealed partial class TranslationManagementViewModel
                 scanned.InstalledSource = managed.InstalledSource;
                 scanned.InstalledAt = managed.InstalledAt;
                 scanned.InstalledSha256 = managed.InstalledSha256;
+                scanned.FileReadOnly = managed.FileReadOnly;
             }
         }
-        OnPropertyChanged(nameof(ManagedEmptyStateVisibility));
         UpdateAvailableCount = GameInstallFiltering.CountUpdates(Games);
         ApplyFilter();
     }

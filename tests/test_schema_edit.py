@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import stat
 import zipfile
 from argparse import Namespace
 from pathlib import Path
@@ -98,6 +99,17 @@ def test_inspect_reports_hash_content_and_restore_state(tmp_path: Path) -> None:
     assert report["achievement_count"] == 2
     assert report["source_sha256"] == hashlib.sha256(_schema()).hexdigest()
     assert report["can_restore"] is False
+
+
+def test_apply_and_restore_preserve_read_only_schema(tmp_path: Path) -> None:
+    source, data_dir, edits = _fixture(tmp_path)
+    source.chmod(stat.S_IREAD)
+
+    apply_schema(source, "123", "japanese", edits, data_dir, allow_incomplete=True)
+    assert not source.stat().st_mode & stat.S_IWRITE
+
+    restore_schema(source, "123", data_dir, force=False)
+    assert not source.stat().st_mode & stat.S_IWRITE
 
 
 def test_render_changes_only_target_language_and_allows_incomplete(tmp_path: Path) -> None:

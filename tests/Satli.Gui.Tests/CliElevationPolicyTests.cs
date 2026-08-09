@@ -25,6 +25,8 @@ public sealed class CliElevationPolicyTests
         { ["schema", "apply", "730", "--yes", "--jsonl"], true },
         { ["schema", "restore", "730", "--yes", "--jsonl"], true },
         { ["schema", "revisions", "activate", "730", "abc123", "--yes", "--jsonl"], true },
+        { ["protect", "lock", "730", "--yes", "--jsonl"], true },
+        { ["protect", "unlock", "730", "--jsonl"], true },
     };
 
     [Theory]

@@ -136,6 +136,8 @@ public sealed partial class RevisionHistoryPage : Page
             {
                 return;
             }
+            using var monitoringSuppression = App.ViewModel.Translations
+                .BeginSchemaMonitoringSuppression([_game.AppId]);
             await _revisions.ActivateAsync(_game, revision, force: false);
             await App.ViewModel.Translations.ScanAsync(refreshCatalog: false);
             App.ViewModel.ShowInfo("所选修订已设为当前版本，并创建了新的 Git 提交。", InfoBarSeverity.Success);

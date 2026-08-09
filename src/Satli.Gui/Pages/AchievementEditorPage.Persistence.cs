@@ -28,6 +28,8 @@ public sealed partial class AchievementEditorPage
         var saved = false;
         await RunBusyAsync(async () =>
         {
+            using var monitoringSuppression = App.ViewModel.Translations
+                .BeginSchemaMonitoringSuppression([_inspection!.AppId]);
             var result = await _editor.ApplyAsync(
                 _inspection!, _targetLanguage, _inspection!.Rows, allowIncomplete: true);
             App.ViewModel.ShowInfo(

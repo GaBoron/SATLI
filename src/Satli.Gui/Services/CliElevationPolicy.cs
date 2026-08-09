@@ -11,7 +11,7 @@ public static class CliElevationPolicy
 
         return arguments[0] switch
         {
-            "install" or "restore" or "local-import" => true,
+            "install" or "restore" or "local-import" or "protect" => true,
             "schema" => RequiresSchemaElevation(arguments),
             _ => false,
         };

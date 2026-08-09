@@ -26,6 +26,7 @@ public sealed class GameItem : ObservableObject
     private string _installedSource = string.Empty;
     private string _installedAt = string.Empty;
     private string _installedSha256 = string.Empty;
+    private bool _fileReadOnly;
 
     public required string AppId { get; init; }
     public required string GameName { get; init; }
@@ -99,6 +100,7 @@ public sealed class GameItem : ObservableObject
                 OnPropertyChanged(nameof(NeedsAttention));
                 OnPropertyChanged(nameof(CanViewInstalledTranslation));
                 OnPropertyChanged(nameof(CanRestore));
+                OnPropertyChanged(nameof(CanToggleProtection));
                 OnPropertyChanged(nameof(RequiresForceRestore));
                 OnPropertyChanged(nameof(RestoreActionText));
             }
@@ -112,6 +114,10 @@ public sealed class GameItem : ObservableObject
         {
             if (SetProperty(ref _installedVariantId, value))
             {
+                if (Variants.Any(item => item.VariantId.Equals(value, StringComparison.Ordinal)))
+                {
+                    SelectedVariantId = value;
+                }
                 OnPropertyChanged(nameof(InstalledVersionText));
                 OnPropertyChanged(nameof(ManagedSummaryText));
                 OnPropertyChanged(nameof(IsUpdateAvailable));
@@ -161,6 +167,20 @@ public sealed class GameItem : ObservableObject
         }
     }
 
+    public bool FileReadOnly
+    {
+        get => _fileReadOnly;
+        set
+        {
+            if (SetProperty(ref _fileReadOnly, value))
+            {
+                OnPropertyChanged(nameof(ProtectionStatusText));
+                OnPropertyChanged(nameof(ProtectionActionText));
+                OnPropertyChanged(nameof(ProtectionVisibility));
+            }
+        }
+    }
+
     public string StateText => InstalledState switch
     {
         "installed" => "已安装",
@@ -179,6 +199,10 @@ public sealed class GameItem : ObservableObject
     public bool IsLocalEdit => InstalledSource == "local-edit";
     public bool CanViewInstalledTranslation => InstalledState is "installed" or "modified";
     public bool CanRestore => InstalledState is "installed" or "modified" or "missing";
+    public bool CanToggleProtection => InstalledState is "installed" or "modified" or "unreadable";
+    public string ProtectionStatusText => FileReadOnly ? "强制锁定（高风险）" : "未锁定";
+    public string ProtectionActionText => FileReadOnly ? "解除强制锁定" : "强制锁定文件（高风险）";
+    public Visibility ProtectionVisibility => FileReadOnly ? Visibility.Visible : Visibility.Collapsed;
     public bool RequiresForceRestore => InstalledState is "modified" or "missing";
     public bool IsUpdateAvailable
     {
@@ -276,6 +300,8 @@ public sealed class GameItem : ObservableObject
             InstalledSource = GetString(payload, "installed_source", string.Empty),
             InstalledAt = GetString(payload, "installed_at", string.Empty),
             InstalledSha256 = GetString(payload, "installed_sha256", string.Empty),
+            FileReadOnly = payload.TryGetProperty("file_read_only", out var fileReadOnly)
+                && fileReadOnly.ValueKind is JsonValueKind.True,
         };
 
         if (payload.TryGetProperty("variants", out var variants) && variants.ValueKind == JsonValueKind.Array)

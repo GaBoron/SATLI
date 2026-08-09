@@ -135,6 +135,7 @@ def command_scan(args: argparse.Namespace) -> int:
                 managed.installed_sha256 if managed is not None else None,
             )
             record["native_languages"] = list(native_languages)
+            record["file_read_only"] = managed.file_read_only if managed is not None else False
             records.append(record)
         else:
             game_name = discovery.game_name if discovery else ""
@@ -151,6 +152,7 @@ def command_scan(args: argparse.Namespace) -> int:
                     "installed_at": managed.installed_at if managed is not None else None,
                     "installed_sha256": managed.installed_sha256 if managed is not None else None,
                     "native_languages": list(native_languages),
+                    "file_read_only": managed.file_read_only if managed is not None else False,
                     "action": "unavailable",
                     "error": None,
                 }
