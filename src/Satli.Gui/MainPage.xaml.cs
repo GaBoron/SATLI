@@ -1,12 +1,14 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Satli_Gui.Pages;
+using Satli_Gui.Services;
 using Satli_Gui.ViewModels;
 
 namespace Satli_Gui;
 
 public sealed partial class MainPage : Page
 {
+    private readonly ExternalUriLauncher _externalUriLauncher = new();
     private bool _initialized;
     public MainViewModel ViewModel => App.ViewModel;
 
@@ -40,11 +42,22 @@ public sealed partial class MainPage : Page
         await ViewModel.InitializeAsync();
     }
 
-    private void Navigation_ItemInvoked(NavigationView sender, NavigationViewItemInvokedEventArgs args)
+    private async void Navigation_ItemInvoked(
+        NavigationView sender,
+        NavigationViewItemInvokedEventArgs args)
     {
         var tag = (args.InvokedItemContainer as NavigationViewItem)?.Tag?.ToString();
         if (string.IsNullOrWhiteSpace(tag))
         {
+            return;
+        }
+        if (tag == "sponsor")
+        {
+            if (!await _externalUriLauncher.LaunchAsync(ApplicationInformation.SponsorUri))
+            {
+                ViewModel.ShowInfo("无法打开赞助页面。", InfoBarSeverity.Warning);
+            }
+            CloseMinimalPane();
             return;
         }
         var destination = tag switch
@@ -61,6 +74,11 @@ public sealed partial class MainPage : Page
         {
             ContentFrame.Navigate(destination);
         }
+        CloseMinimalPane();
+    }
+
+    private void CloseMinimalPane()
+    {
         if (Navigation.DisplayMode == NavigationViewDisplayMode.Minimal)
         {
             Navigation.IsPaneOpen = false;

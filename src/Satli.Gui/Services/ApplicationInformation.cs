@@ -7,6 +7,7 @@ internal static class ApplicationInformation
     public const string SupportedPlatformText = "Windows 10 版本 2004（内部版本 19041）或更高 · x64";
 
     public static Uri RepositoryUri { get; } = new($"{UpdateService.RepositoryUrl}/");
+    public static Uri SponsorUri { get; } = new("https://www.ifdian.net/a/gaboron");
     public static Uri BugReportUri { get; } = new(
         $"{UpdateService.RepositoryUrl}/issues/new?template=bug_report_zh.yml");
     public static Uri LicenseUri { get; } = new($"{UpdateService.RepositoryUrl}/blob/main/LICENSE");

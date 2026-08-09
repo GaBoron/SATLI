@@ -6,6 +6,14 @@ namespace Satli_Gui.Tests;
 public sealed class ApplicationInformationTests
 {
     [Fact]
+    public void SponsorPageUsesOfficialAfdianProfile()
+    {
+        Assert.Equal(
+            "https://www.ifdian.net/a/gaboron",
+            ApplicationInformation.SponsorUri.AbsoluteUri);
+    }
+
+    [Fact]
     public void BugReportTargetsCurrentIssueForm()
     {
         Assert.Equal(

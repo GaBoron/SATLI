@@ -41,6 +41,13 @@
             <NavigationViewItem Content="设置" Tag="settings">
                 <NavigationViewItem.Icon><SymbolIcon Symbol="Setting" /></NavigationViewItem.Icon>
             </NavigationViewItem>
+            <NavigationViewItem
+                Content="赞助"
+                Tag="sponsor"
+                SelectsOnInvoked="False"
+                AutomationProperties.Name="赞助开发者">
+                <NavigationViewItem.Icon><SymbolIcon Symbol="Favorite" /></NavigationViewItem.Icon>
+            </NavigationViewItem>
         </NavigationView.FooterMenuItems>
         <Grid>
             <Grid.RowDefinitions>
