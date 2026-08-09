@@ -39,6 +39,7 @@ public sealed partial class TranslationManagementViewModel : ObservableObject
     public ObservableCollection<GameItem> ManagedGames { get; } = [];
     public IReadOnlyList<GameInstallFilterOption> FilterOptions => GameInstallFiltering.Options;
     public int SelectedCount => Games.Count(item => item.IsSelected);
+    public bool HasSelection => SelectedCount > 0;
     public string SelectedCountText => $"已选 {SelectedCount} 项";
     public string SelectionActionText =>
         GameSelectionOperations.AreAllSelected(VisibleGames) ? "取消全选" : "全选";
@@ -147,6 +148,7 @@ public sealed partial class TranslationManagementViewModel : ObservableObject
     public void RefreshSelectionCount()
     {
         OnPropertyChanged(nameof(SelectedCount));
+        OnPropertyChanged(nameof(HasSelection));
         OnPropertyChanged(nameof(SelectedCountText));
         OnPropertyChanged(nameof(SelectionActionText));
     }

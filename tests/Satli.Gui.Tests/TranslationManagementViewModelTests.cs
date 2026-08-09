@@ -36,6 +36,28 @@ public sealed class TranslationManagementViewModelTests
     }
 
     [Fact]
+    public void InstallActionBecomesAvailableWhenAnyGameIsSelected()
+    {
+        var viewModel = new TranslationManagementViewModel(
+            () => new GuiSettings(),
+            new ApplicationOperationState(),
+            (_, _) => { });
+        var game = new GameItem { AppId = "123", GameName = "Game" };
+        viewModel.Games.Add(game);
+
+        Assert.False(viewModel.HasSelection);
+
+        game.IsSelected = true;
+        viewModel.RefreshSelectionCount();
+
+        Assert.True(viewModel.HasSelection);
+
+        viewModel.ClearSelection();
+
+        Assert.False(viewModel.HasSelection);
+    }
+
+    [Fact]
     public void InstallSummaryReportsEveryFailureAndContinuedBatch()
     {
         using var firstFailure = JsonDocument.Parse(
