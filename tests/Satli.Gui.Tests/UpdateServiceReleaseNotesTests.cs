@@ -73,6 +73,50 @@ public sealed class UpdateServiceReleaseNotesTests
         Assert.Equal(1, feedRequests);
     }
 
+    [Fact]
+    public async Task FallsBackFromRateLimitedPageToAtomFeed()
+    {
+        var latest = new Uri("https://example.invalid/releases/latest");
+        var feed = new Uri("https://example.invalid/releases.atom");
+        var api = new Uri("https://api.example.invalid/releases/latest");
+        var atom = """
+            <?xml version="1.0" encoding="UTF-8"?>
+            <feed xmlns="http://www.w3.org/2005/Atom">
+              <entry>
+                <link rel="alternate" href="https://github.com/GaBoron/SATLI/releases/tag/v0.4.0" />
+                <content type="html">&lt;h2&gt;修复&lt;/h2&gt;&lt;ul&gt;&lt;li&gt;改进更新检查回退&lt;/li&gt;&lt;/ul&gt;</content>
+              </entry>
+            </feed>
+            """;
+        using var client = new HttpClient(new RoutingHttpHandler(request =>
+        {
+            if (request.RequestUri == latest)
+            {
+                return new HttpResponseMessage(HttpStatusCode.Forbidden);
+            }
+            if (request.RequestUri == feed)
+            {
+                return new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = new StringContent(atom),
+                };
+            }
+            return new HttpResponseMessage(HttpStatusCode.ServiceUnavailable);
+        }));
+        var service = new UpdateService(
+            client,
+            new Version(0, 3, 0),
+            latest,
+            feedEndpoint: feed,
+            apiEndpoint: api);
+
+        var result = await service.CheckAsync();
+
+        Assert.True(result.IsUpdateAvailable);
+        Assert.Equal("0.4.0", result.LatestVersion);
+        Assert.Contains("改进更新检查回退", result.ReleaseNotes);
+    }
+
     private static UpdateService CreateService(HttpClient client) => new(
         client,
         new Version(1, 0, 0),

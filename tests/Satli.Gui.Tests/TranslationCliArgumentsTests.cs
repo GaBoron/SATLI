@@ -6,6 +6,8 @@ namespace Satli_Gui.Tests;
 
 public sealed class TranslationCliArgumentsTests
 {
+    private const string ReservedTestSteamId = "76561197960265728";
+
     [Fact]
     public void SchemaInspectUsesConfiguredSteamAndDataDirectories()
     {
@@ -63,5 +65,30 @@ public sealed class TranslationCliArgumentsTests
 
         Assert.Contains(@"D:\DetectedSteam", arguments);
         Assert.Contains(SettingsService.DefaultDataDirectory, arguments);
+    }
+
+    [Fact]
+    public void ScanCanUseCachedCatalogWhileIncludingSteamInventory()
+    {
+        const string apiKey = "0123456789abcdef0123456789abcdef";
+        var settings = new GuiSettings
+        {
+            SteamLibrary = new SteamLibrarySettings
+            {
+                Enabled = true,
+                SteamId = ReservedTestSteamId,
+                ApiKey = apiKey,
+            },
+        };
+
+        var arguments = new TranslationCliArguments(() => settings)
+            .Scan(useCatalogCache: true, out var warning);
+
+        Assert.Null(warning);
+        Assert.Contains("--catalog-cache-only", arguments);
+        Assert.DoesNotContain("--offline", arguments);
+        Assert.Contains("--include-owned-games", arguments);
+        Assert.Contains(ReservedTestSteamId, arguments);
+        Assert.DoesNotContain(apiKey, arguments);
     }
 }
