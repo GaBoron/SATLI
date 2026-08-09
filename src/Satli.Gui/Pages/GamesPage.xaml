@@ -58,7 +58,7 @@
             <Button
                 Grid.Column="1"
                 Height="40"
-                MinWidth="148"
+                MinWidth="124"
                 HorizontalAlignment="Right"
                 VerticalAlignment="Center"
                 Style="{StaticResource AccentButtonStyle}"
@@ -67,7 +67,7 @@
                 AutomationProperties.Name="安装或更新所选游戏">
                 <StackPanel Orientation="Horizontal" Spacing="8">
                     <FontIcon Glyph="&#xE896;" FontSize="16" />
-                    <TextBlock Text="安装/更新所选" VerticalAlignment="Center" />
+                    <TextBlock Text="安装/更新" VerticalAlignment="Center" />
                 </StackPanel>
             </Button>
         </Grid>
