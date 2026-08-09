@@ -48,28 +48,26 @@ public sealed partial class MainPage : Page
         {
             return;
         }
-        if (tag is "managed-all" or "managed-locked")
-        {
-            ContentFrame.Navigate(
-                typeof(ManagedPage),
-                tag == "managed-locked" ? ManagedGameFilter.Locked : ManagedGameFilter.All);
-            if (Navigation.DisplayMode == NavigationViewDisplayMode.Minimal)
-            {
-                Navigation.IsPaneOpen = false;
-            }
-            return;
-        }
         var destination = tag switch
         {
+            "managed-all" or "managed-locked" => typeof(ManagedPage),
             "local" => typeof(LocalGamesPage),
             "cloud" => typeof(CloudGamesPage),
             "logs" => typeof(LogsPage),
             "settings" => typeof(SettingsPage),
             _ => typeof(GamesPage),
         };
-        if (ContentFrame.CurrentSourcePageType != destination)
+        var managedFilter = tag switch
         {
-            ContentFrame.Navigate(destination);
+            "managed-all" => ManagedGameFilter.All,
+            "managed-locked" => ManagedGameFilter.Locked,
+            _ => (ManagedGameFilter?)null,
+        };
+        var managedFilterChanged = managedFilter is ManagedGameFilter filter
+            && ViewModel.Translations.ManagedFilter != filter;
+        if (ContentFrame.CurrentSourcePageType != destination || managedFilterChanged)
+        {
+            ContentFrame.Navigate(destination, managedFilter);
         }
         if (Navigation.DisplayMode == NavigationViewDisplayMode.Minimal)
         {

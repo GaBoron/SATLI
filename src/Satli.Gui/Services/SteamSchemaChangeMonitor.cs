@@ -12,6 +12,7 @@ public sealed partial class SteamSchemaChangeMonitor : IDisposable
 {
     private static readonly TimeSpan DebounceDelay = TimeSpan.FromMilliseconds(700);
     private readonly ConcurrentDictionary<string, PendingChange> _pending = new();
+    private readonly ConcurrentDictionary<string, int> _activeSuppressions = new();
     private readonly ConcurrentDictionary<string, DateTimeOffset> _suppressedUntil = new();
     private readonly Timer _timer;
     private FileSystemWatcher? _watcher;
@@ -60,14 +61,19 @@ public sealed partial class SteamSchemaChangeMonitor : IDisposable
         _watcher.EnableRaisingEvents = true;
     }
 
-    public void Suppress(IEnumerable<string> appIds, TimeSpan? duration = null)
+    public IDisposable BeginSuppression(IEnumerable<string> appIds, TimeSpan? cooldown = null)
     {
-        var until = DateTimeOffset.UtcNow + (duration ?? TimeSpan.FromSeconds(3));
-        foreach (var appId in appIds)
+        ThrowIfDisposed();
+        var suppressedAppIds = appIds
+            .Where(appId => !string.IsNullOrWhiteSpace(appId))
+            .Distinct(StringComparer.Ordinal)
+            .ToArray();
+        foreach (var appId in suppressedAppIds)
         {
-            _suppressedUntil[appId] = until;
+            _activeSuppressions.AddOrUpdate(appId, 1, (_, count) => count + 1);
             _pending.TryRemove(appId, out _);
         }
+        return new SuppressionLease(this, suppressedAppIds, cooldown ?? TimeSpan.FromSeconds(3));
     }
 
     public static bool TryGetAppId(string? path, out string appId)
@@ -87,6 +93,7 @@ public sealed partial class SteamSchemaChangeMonitor : IDisposable
         DisposeWatcher();
         _timer.Dispose();
         _pending.Clear();
+        _activeSuppressions.Clear();
         _suppressedUntil.Clear();
     }
 
@@ -105,6 +112,11 @@ public sealed partial class SteamSchemaChangeMonitor : IDisposable
             return;
         }
         var now = DateTimeOffset.UtcNow;
+        if (_activeSuppressions.ContainsKey(appId))
+        {
+            _pending.TryRemove(appId, out _);
+            return;
+        }
         if (_suppressedUntil.TryGetValue(appId, out var until) && until > now)
         {
             return;
@@ -149,7 +161,43 @@ public sealed partial class SteamSchemaChangeMonitor : IDisposable
 
     private void ThrowIfDisposed() => ObjectDisposedException.ThrowIf(_disposed, this);
 
+    private void EndSuppression(IReadOnlyList<string> appIds, TimeSpan cooldown)
+    {
+        var until = DateTimeOffset.UtcNow + cooldown;
+        foreach (var appId in appIds)
+        {
+            while (_activeSuppressions.TryGetValue(appId, out var count))
+            {
+                if (count > 1 && _activeSuppressions.TryUpdate(appId, count - 1, count))
+                {
+                    break;
+                }
+                if (count == 1 && _activeSuppressions.TryRemove(
+                        new KeyValuePair<string, int>(appId, count)))
+                {
+                    break;
+                }
+            }
+            _suppressedUntil.AddOrUpdate(
+                appId,
+                until,
+                (_, existing) => existing > until ? existing : until);
+            _pending.TryRemove(appId, out _);
+        }
+    }
+
     private sealed record PendingChange(SteamSchemaChange Change, DateTimeOffset DueAt);
+
+    private sealed class SuppressionLease(
+        SteamSchemaChangeMonitor owner,
+        IReadOnlyList<string> appIds,
+        TimeSpan cooldown) : IDisposable
+    {
+        private SteamSchemaChangeMonitor? _owner = owner;
+
+        public void Dispose() =>
+            Interlocked.Exchange(ref _owner, null)?.EndSuppression(appIds, cooldown);
+    }
 
     [GeneratedRegex(@"^UserGameStatsSchema_([1-9][0-9]{0,19})\.bin$", RegexOptions.IgnoreCase)]
     private static partial Regex SchemaFileNameRegex();

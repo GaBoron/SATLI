@@ -115,36 +115,7 @@ public sealed partial class GamesPage : Page
             }
         }
 
-        var options = await InstallOptionsDialog.ShowAsync(
-            XamlRoot,
-            selected.Count,
-            selected.Count(item => item.FileReadOnly));
-        if (options is null)
-        {
-            return;
-        }
-        var lockCandidates = selected.Where(item => !item.FileReadOnly).ToArray();
-        if (options.LockAfterInstall
-            && lockCandidates.Length > 0
-            && !await SteamFileProtectionDialog.ConfirmLockAsync(XamlRoot, lockCandidates))
-        {
-            return;
-        }
-
-        var succeededAppIds = await ViewModel.InstallAsync(selected);
-        if (!options.LockAfterInstall || succeededAppIds.Count == 0)
-        {
-            return;
-        }
-        var installed = ViewModel.Games
-            .Where(item => succeededAppIds.Contains(item.AppId)
-                && item.CanToggleProtection
-                && !item.FileReadOnly)
-            .ToArray();
-        if (installed.Length > 0)
-        {
-            await ViewModel.SetProtectionAsync(installed, enable: true);
-        }
+        await ViewModel.InstallAsync(selected);
     }
 
     private void GameSelection_Click(object sender, RoutedEventArgs e)

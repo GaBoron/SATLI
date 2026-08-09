@@ -49,4 +49,40 @@ public sealed class SteamSchemaChangeMonitorTests
             Directory.Delete(root, recursive: true);
         }
     }
+
+    [Fact]
+    public async Task SuppressesChangesForEntireOwnedOperationAndCooldown()
+    {
+        var root = Path.Combine(Path.GetTempPath(), $"satli-monitor-{Guid.NewGuid():N}");
+        var stats = Path.Combine(root, "appcache", "stats");
+        var schema = Path.Combine(stats, "UserGameStatsSchema_730.bin");
+        Directory.CreateDirectory(stats);
+        try
+        {
+            using var monitor = new SteamSchemaChangeMonitor();
+            var observed = new TaskCompletionSource<SteamSchemaChange>(
+                TaskCreationOptions.RunContinuationsAsynchronously);
+            monitor.SchemaChanged += (_, change) => observed.TrySetResult(change);
+            monitor.Configure(root);
+
+            using (monitor.BeginSuppression(["730"], TimeSpan.FromMilliseconds(250)))
+            {
+                await File.WriteAllBytesAsync(schema, [1]);
+                await Task.Delay(1000);
+                Assert.False(observed.Task.IsCompleted);
+            }
+
+            await File.WriteAllBytesAsync(schema, [2]);
+            await Task.Delay(500);
+            Assert.False(observed.Task.IsCompleted);
+
+            await File.WriteAllBytesAsync(schema, [3]);
+            var change = await observed.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            Assert.Equal("730", change.AppId);
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
 }

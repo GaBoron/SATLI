@@ -16,6 +16,7 @@ public sealed partial class ManagedPage : Page
     public ManagedPage()
     {
         InitializeComponent();
+        AddShortcut(VirtualKey.A, VirtualKeyModifiers.Control, ToggleSelection_Invoked);
         AddShortcut(VirtualKey.F5, VirtualKeyModifiers.None, Refresh_Invoked);
     }
 
@@ -88,11 +89,51 @@ public sealed partial class ManagedPage : Page
 
     private async void Protection_Click(object sender, RoutedEventArgs e)
     {
-        if (sender is not FrameworkElement { Tag: GameItem { FileReadOnly: true } game })
+        if (sender is not FrameworkElement { Tag: GameItem game } || !game.CanToggleProtection)
         {
             return;
         }
-        await ViewModel.SetProtectionAsync([game], enable: false);
+        var enable = !game.FileReadOnly;
+        if (enable && !await SteamFileProtectionDialog.ConfirmLockAsync(XamlRoot, [game]))
+        {
+            return;
+        }
+        await ViewModel.SetProtectionAsync([game], enable);
+    }
+
+    private void ManagedSelection_Click(object sender, RoutedEventArgs e) =>
+        ViewModel.RefreshManagedSelectionCount();
+
+    private void ToggleSelection_Click(object sender, RoutedEventArgs e) =>
+        ViewModel.ToggleVisibleManagedSelection();
+
+    private async void LockSelected_Click(object sender, RoutedEventArgs e)
+    {
+        var selected = ViewModel.VisibleManagedGames
+            .Where(item => item.IsSelected && item.CanToggleProtection && !item.FileReadOnly)
+            .ToArray();
+        if (selected.Length == 0)
+        {
+            ViewModel.ShowInfo("请先选择至少一个尚未锁定的已管理游戏。", InfoBarSeverity.Warning);
+            return;
+        }
+        if (await SteamFileProtectionDialog.ConfirmLockAsync(XamlRoot, selected))
+        {
+            await ViewModel.SetProtectionAsync(selected, enable: true);
+        }
+    }
+
+    private async void UnlockSelected_Click(object sender, RoutedEventArgs e)
+    {
+        var selected = ViewModel.VisibleManagedGames
+            .Where(item => item.IsSelected && item.FileReadOnly)
+            .ToArray();
+        if (selected.Length == 0)
+        {
+            ViewModel.ShowInfo("请先选择至少一个已锁定的游戏。", InfoBarSeverity.Warning);
+            return;
+        }
+        await ViewModel.SetProtectionAsync(selected, enable: false);
     }
 
     private void AddShortcut(
@@ -109,5 +150,13 @@ public sealed partial class ManagedPage : Page
     {
         args.Handled = true;
         await ViewModel.ScanAsync();
+    }
+
+    private void ToggleSelection_Invoked(
+        KeyboardAccelerator sender,
+        KeyboardAcceleratorInvokedEventArgs args)
+    {
+        ViewModel.ToggleVisibleManagedSelection();
+        args.Handled = true;
     }
 }

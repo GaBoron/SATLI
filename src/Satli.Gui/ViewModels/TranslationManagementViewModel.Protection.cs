@@ -9,8 +9,8 @@ public sealed partial class TranslationManagementViewModel
     private readonly SteamSchemaChangeMonitor _schemaMonitor = new();
     private readonly SemaphoreSlim _schemaChangeRefresh = new(1, 1);
 
-    public void SuppressSchemaMonitoring(IEnumerable<string> appIds) =>
-        _schemaMonitor.Suppress(appIds);
+    public IDisposable BeginSchemaMonitoringSuppression(IEnumerable<string> appIds) =>
+        _schemaMonitor.BeginSuppression(appIds);
 
     public async Task SetProtectionAsync(IReadOnlyList<GameItem> selected, bool enable)
     {
@@ -19,7 +19,7 @@ public sealed partial class TranslationManagementViewModel
             return;
         }
         var appIds = selected.Select(item => item.AppId).ToArray();
-        _schemaMonitor.Suppress(appIds);
+        using var monitoringSuppression = _schemaMonitor.BeginSuppression(appIds);
         try
         {
             var result = await RunCliAsync(

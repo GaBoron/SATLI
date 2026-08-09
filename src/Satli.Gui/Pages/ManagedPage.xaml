@@ -13,6 +13,29 @@
             <TextBlock Text="{x:Bind ViewModel.ManagedPageDescription, Mode=OneWay}" TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
         </StackPanel>
         <CommandBar Grid.Row="1" DefaultLabelPosition="Right">
+            <CommandBar.Content>
+                <TextBlock
+                    VerticalAlignment="Center"
+                    Text="{x:Bind ViewModel.ManagedSelectedCountText, Mode=OneWay}"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+            </CommandBar.Content>
+            <AppBarButton
+                Icon="SelectAll"
+                Label="{x:Bind ViewModel.ManagedSelectionActionText, Mode=OneWay}"
+                Click="ToggleSelection_Click"
+                KeyboardAcceleratorTextOverride="Ctrl+A" />
+            <AppBarButton
+                Label="锁定所选"
+                Click="LockSelected_Click"
+                Visibility="{x:Bind ViewModel.ManagedLockActionVisibility, Mode=OneWay}"
+                AutomationProperties.Name="强制锁定所选完整成就文件">
+                <AppBarButton.Icon><FontIcon Glyph="&#xE72E;" /></AppBarButton.Icon>
+            </AppBarButton>
+            <AppBarButton
+                Icon="UnPin"
+                Label="解除所选"
+                Click="UnlockSelected_Click"
+                AutomationProperties.Name="解除所选成就文件的强制锁定" />
             <AppBarButton Icon="Refresh" Label="刷新状态" Click="Refresh_Click" KeyboardAcceleratorTextOverride="F5" />
         </CommandBar>
         <Grid Grid.Row="2">
@@ -29,8 +52,13 @@
                 <DataTemplate x:DataType="models:GameItem">
                     <Border Style="{StaticResource GameCardStyle}">
                         <Grid ColumnSpacing="16">
-                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                            <StackPanel Spacing="4">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                            <CheckBox
+                                VerticalAlignment="Center"
+                                IsChecked="{x:Bind IsSelected, Mode=TwoWay}"
+                                Click="ManagedSelection_Click"
+                                AutomationProperties.Name="{x:Bind GameName}" />
+                            <StackPanel Grid.Column="1" Spacing="4">
                                 <TextBlock Text="{x:Bind GameName}" Style="{StaticResource BodyStrongTextBlockStyle}" />
                                 <TextBlock Text="{x:Bind Subtitle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Style="{StaticResource CaptionTextBlockStyle}" />
                                 <TextBlock Text="{x:Bind ManagedSummaryText, Mode=OneWay}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Style="{StaticResource CaptionTextBlockStyle}" TextTrimming="CharacterEllipsis" />
@@ -40,8 +68,8 @@
                                     Foreground="{ThemeResource SystemFillColorCriticalBrush}"
                                     Style="{StaticResource CaptionTextBlockStyle}" />
                             </StackPanel>
-                            <TextBlock Grid.Column="1" VerticalAlignment="Center" Text="{x:Bind StateText}" Style="{StaticResource BodyStrongTextBlockStyle}" />
-                            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                            <TextBlock Grid.Column="2" VerticalAlignment="Center" Text="{x:Bind StateText}" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                            <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
                                 <Button Width="80" HorizontalContentAlignment="Center" Content="编辑" Click="Edit_Click" Tag="{x:Bind}" IsEnabled="{x:Bind CanViewInstalledTranslation}" AutomationProperties.Name="编辑当前翻译" />
                                 <Button Width="80" HorizontalContentAlignment="Center" Content="更多" AutomationProperties.Name="更多操作">
                                     <Button.Flyout>
@@ -53,7 +81,7 @@
                                                 <MenuFlyoutItem.Icon><SymbolIcon Symbol="Clock" /></MenuFlyoutItem.Icon>
                                             </MenuFlyoutItem>
                                             <MenuFlyoutSeparator />
-                                            <MenuFlyoutItem Text="解除强制锁定" Click="Protection_Click" Tag="{x:Bind}" Visibility="{x:Bind ProtectionVisibility, Mode=OneWay}">
+                                            <MenuFlyoutItem Text="{x:Bind ProtectionActionText, Mode=OneWay}" Click="Protection_Click" Tag="{x:Bind}" IsEnabled="{x:Bind CanToggleProtection}">
                                                 <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE72E;" /></MenuFlyoutItem.Icon>
                                             </MenuFlyoutItem>
                                             <MenuFlyoutSeparator />
