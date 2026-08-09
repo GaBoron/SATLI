@@ -1,6 +1,7 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.Web.WebView2.Core;
+using Satli_Gui.Services;
 using Windows.System;
 
 namespace Satli_Gui.Controls;
@@ -22,7 +23,7 @@ public sealed class ReleaseNotesMarkdownView : Grid
 
         _fallback = new TextBlock
         {
-            Text = _markdown,
+            Text = ReleaseNotesMarkdownFormatter.ToPlainText(_markdown),
             TextWrapping = TextWrapping.Wrap,
             IsTextSelectionEnabled = true,
         };
@@ -47,14 +48,18 @@ public sealed class ReleaseNotesMarkdownView : Grid
         _initialized = true;
         try
         {
-            await _webView.EnsureCoreWebView2Async();
+            var environment = await CoreWebView2Environment.CreateWithOptionsAsync(
+                string.Empty,
+                ApplicationDataPaths.WebViewUserDataDirectory,
+                new CoreWebView2EnvironmentOptions());
+            await _webView.EnsureCoreWebView2Async(environment);
             _webView.CoreWebView2.Settings.AreDefaultScriptDialogsEnabled = false;
             _webView.CoreWebView2.Settings.AreDevToolsEnabled = false;
             _webView.CoreWebView2.Settings.IsScriptEnabled = false;
             _webView.CoreWebView2.Settings.IsStatusBarEnabled = false;
             _webView.CoreWebView2.NavigationStarting += OnNavigationStarting;
             _webView.NavigationCompleted += OnNavigationCompleted;
-            Render();
+            RenderOrShowFallback();
         }
         catch
         {
@@ -67,18 +72,25 @@ public sealed class ReleaseNotesMarkdownView : Grid
     {
         if (_webView.CoreWebView2 is not null)
         {
-            Render();
+            RenderOrShowFallback();
         }
     }
 
-    private void Render()
+    private void RenderOrShowFallback()
     {
         _fallback.Visibility = Visibility.Visible;
         _webView.Visibility = Visibility.Collapsed;
-        _webView.NavigateToString(ReleaseNotesMarkdownFormatter.ToHtml(
-            _markdown,
-            _baseUri,
-            ActualTheme == ElementTheme.Dark));
+        try
+        {
+            _webView.NavigateToString(ReleaseNotesMarkdownFormatter.ToHtml(
+                _markdown,
+                _baseUri,
+                ActualTheme == ElementTheme.Dark));
+        }
+        catch
+        {
+            // The readable plain-text fallback remains visible.
+        }
     }
 
     private async void OnNavigationStarting(

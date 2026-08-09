@@ -84,13 +84,13 @@ public sealed class UpdateService
             failures.Add(exception);
         }
 
-        if (_feedEndpoint is not null
+        if (_apiEndpoint is not null
             && (metadata is null || string.IsNullOrWhiteSpace(metadata.ReleaseNotes)))
         {
             try
             {
-                var feed = await FetchReleaseMetadataAsync(_feedEndpoint, cancellationToken);
-                metadata = MergeMetadata(metadata, feed);
+                var api = await FetchReleaseMetadataAsync(_apiEndpoint, cancellationToken);
+                metadata = MergeMetadata(metadata, api);
             }
             catch (Exception exception) when (exception is not OperationCanceledException)
             {
@@ -98,14 +98,14 @@ public sealed class UpdateService
             }
         }
 
-        if (_apiEndpoint is not null
+        if (_feedEndpoint is not null
             && (metadata is null
                 || string.IsNullOrWhiteSpace(metadata.ReleaseNotes)))
         {
             try
             {
-                var api = await FetchReleaseMetadataAsync(_apiEndpoint, cancellationToken);
-                metadata = MergeMetadata(metadata, api);
+                var feed = await FetchReleaseMetadataAsync(_feedEndpoint, cancellationToken);
+                metadata = MergeMetadata(metadata, feed);
             }
             catch (Exception exception) when (exception is not OperationCanceledException)
             {

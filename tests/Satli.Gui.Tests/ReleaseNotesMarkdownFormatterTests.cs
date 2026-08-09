@@ -51,4 +51,18 @@ public sealed class ReleaseNotesMarkdownFormatterTests
         Assert.Contains("script-src", html);
         Assert.Contains("color-scheme: dark", html);
     }
+
+    [Fact]
+    public void PlainTextFallbackRemovesMarkdownSyntax()
+    {
+        const string markdown = "## 修复\n\n- 支持 **粗体**、`代码` 和 [链接](https://example.com)";
+
+        var text = ReleaseNotesMarkdownFormatter.ToPlainText(markdown);
+
+        Assert.Contains("修复", text);
+        Assert.Contains("支持 粗体、代码 和 链接", text);
+        Assert.DoesNotContain("##", text);
+        Assert.DoesNotContain("**", text);
+        Assert.DoesNotContain("`", text);
+    }
 }

@@ -68,4 +68,9 @@ public static class ReleaseNotesMarkdownFormatter
             </html>
             """;
     }
+
+    public static string ToPlainText(string markdown)
+    {
+        return Markdown.ToPlainText(markdown ?? string.Empty, Pipeline).Trim();
+    }
 }

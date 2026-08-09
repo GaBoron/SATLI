@@ -48,6 +48,16 @@ public sealed class BrandMigrationTests
     }
 
     [Fact]
+    public void WebViewUserDataUsesApplicationDataDirectory()
+    {
+        const string applicationData = @"C:\Users\Test\AppData\Local\SATLI";
+
+        var webViewData = ApplicationDataPaths.WebViewUserDataDirectoryFor(applicationData);
+
+        Assert.Equal(Path.Combine(applicationData, "WebView2"), webViewData);
+    }
+
+    [Fact]
     public void ProtectedDataIsRewrittenAfterReadingLegacyEntropy()
     {
         var currentEntropy = Encoding.UTF8.GetBytes("SATLI.TestSecret.v1");

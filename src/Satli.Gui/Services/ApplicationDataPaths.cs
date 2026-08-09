@@ -7,6 +7,14 @@ internal static class ApplicationDataPaths
     public static string DefaultDataDirectory => Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
         CurrentDirectoryName);
+    internal static string WebViewUserDataDirectory => WebViewUserDataDirectoryFor(
+        DefaultDataDirectory);
+
+    internal static string WebViewUserDataDirectoryFor(string applicationDataDirectory)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(applicationDataDirectory);
+        return Path.Combine(applicationDataDirectory, "WebView2");
+    }
 
     public static void MigrateDefaultDirectory() => MigrateDefaultDirectory(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData));
