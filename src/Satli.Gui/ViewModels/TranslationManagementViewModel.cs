@@ -58,8 +58,6 @@ public sealed partial class TranslationManagementViewModel : ObservableObject
                 OnPropertyChanged(nameof(LoadingVisibility));
                 OnPropertyChanged(nameof(GameListVisibility));
                 OnPropertyChanged(nameof(EmptyStateVisibility));
-                OnPropertyChanged(nameof(ManagedGameListVisibility));
-                OnPropertyChanged(nameof(ManagedEmptyStateVisibility));
             }
         }
     }
@@ -67,10 +65,6 @@ public sealed partial class TranslationManagementViewModel : ObservableObject
     public Visibility LoadingVisibility => IsLoading ? Visibility.Visible : Visibility.Collapsed;
     public Visibility GameListVisibility => IsLoading ? Visibility.Collapsed : Visibility.Visible;
     public Visibility EmptyStateVisibility => !IsLoading && VisibleGames.Count == 0
-        ? Visibility.Visible
-        : Visibility.Collapsed;
-    public Visibility ManagedGameListVisibility => IsLoading ? Visibility.Collapsed : Visibility.Visible;
-    public Visibility ManagedEmptyStateVisibility => !IsLoading && VisibleManagedGames.Count == 0
         ? Visibility.Visible
         : Visibility.Collapsed;
 

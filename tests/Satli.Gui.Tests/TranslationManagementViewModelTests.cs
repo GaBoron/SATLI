@@ -20,8 +20,6 @@ public sealed class TranslationManagementViewModelTests
         Assert.Equal(Microsoft.UI.Xaml.Visibility.Visible, viewModel.LoadingVisibility);
         Assert.Equal(Microsoft.UI.Xaml.Visibility.Collapsed, viewModel.GameListVisibility);
         Assert.Equal(Microsoft.UI.Xaml.Visibility.Collapsed, viewModel.EmptyStateVisibility);
-        Assert.Equal(Microsoft.UI.Xaml.Visibility.Collapsed, viewModel.ManagedGameListVisibility);
-        Assert.Equal(Microsoft.UI.Xaml.Visibility.Collapsed, viewModel.ManagedEmptyStateVisibility);
 
         viewModel.CompleteLoading();
 
@@ -29,8 +27,6 @@ public sealed class TranslationManagementViewModelTests
         Assert.Equal(Microsoft.UI.Xaml.Visibility.Collapsed, viewModel.LoadingVisibility);
         Assert.Equal(Microsoft.UI.Xaml.Visibility.Visible, viewModel.GameListVisibility);
         Assert.Equal(Microsoft.UI.Xaml.Visibility.Visible, viewModel.EmptyStateVisibility);
-        Assert.Equal(Microsoft.UI.Xaml.Visibility.Visible, viewModel.ManagedGameListVisibility);
-        Assert.Equal(Microsoft.UI.Xaml.Visibility.Visible, viewModel.ManagedEmptyStateVisibility);
 
         viewModel.VisibleGames.Add(new GameItem { AppId = "123", GameName = "Game" });
         viewModel.BeginLoading();

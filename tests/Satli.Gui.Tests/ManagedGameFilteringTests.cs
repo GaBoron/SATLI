@@ -18,66 +18,57 @@ public sealed class ManagedGameFilteringTests
     }
 
     [Fact]
-    public void ViewModelSwitchesBetweenAllAndLockedCollections()
+    public void PageStatesKeepAllAndLockedCollectionsIndependent()
     {
-        var viewModel = new TranslationManagementViewModel(
-            () => new GuiSettings(),
-            new ApplicationOperationState(),
-            (_, _) => { });
-        viewModel.ManagedGames.Add(
-            new GameItem { AppId = "123", GameName = "Locked", FileReadOnly = true });
-        viewModel.ManagedGames.Add(
-            new GameItem { AppId = "456", GameName = "Unlocked" });
+        var source = CreateManagedGames();
+        var all = new ManagedGamesPageState(ManagedGameFilter.All, source, isLoading: false);
+        var locked = new ManagedGamesPageState(ManagedGameFilter.Locked, source, isLoading: false);
 
-        Assert.True(viewModel.SetManagedFilter(ManagedGameFilter.Locked));
-        Assert.Single(viewModel.VisibleManagedGames);
-        Assert.Equal("123", viewModel.VisibleManagedGames[0].AppId);
-        Assert.Equal("已锁定", viewModel.ManagedPageTitle);
+        Assert.Equal(2, all.Items.Count);
+        Assert.Equal("全部已管理", all.Title);
+        Assert.Single(locked.Items);
+        Assert.Equal("123", locked.Items[0].Game.AppId);
+        Assert.Equal("已锁定", locked.Title);
 
-        Assert.True(viewModel.SetManagedFilter(ManagedGameFilter.All));
-        Assert.Equal(2, viewModel.VisibleManagedGames.Count);
-        Assert.Equal("全部已管理", viewModel.ManagedPageTitle);
+        locked.ToggleSelection();
+        Assert.Equal(1, locked.SelectedCount);
+        Assert.Equal(0, all.SelectedCount);
     }
 
     [Fact]
-    public void ReSelectingCurrentFilterDoesNotRebuildCollectionOrReplayAnimations()
+    public void SynchronizingUnchangedStateDoesNotRebuildCollectionOrReplayAnimations()
     {
-        var viewModel = CreateViewModelWithManagedGames();
-        Assert.True(viewModel.SetManagedFilter(ManagedGameFilter.Locked));
+        var source = CreateManagedGames();
+        var state = new ManagedGamesPageState(ManagedGameFilter.Locked, source, isLoading: false);
         var collectionChanges = 0;
-        viewModel.VisibleManagedGames.CollectionChanged += (_, _) => collectionChanges++;
+        state.Items.CollectionChanged += (_, _) => collectionChanges++;
 
-        Assert.False(viewModel.SetManagedFilter(ManagedGameFilter.Locked));
+        state.Synchronize(source, isLoading: false);
 
         Assert.Equal(0, collectionChanges);
-        Assert.Single(viewModel.VisibleManagedGames);
+        Assert.Single(state.Items);
     }
 
     [Fact]
-    public void ManagedSelectionTogglesVisibleItemsAndClearsWhenFilterChanges()
+    public void PageSelectionTogglesOnlyItsOwnVisibleItems()
     {
-        var viewModel = CreateViewModelWithManagedGames();
-        viewModel.SetManagedFilter(ManagedGameFilter.Locked);
+        var state = new ManagedGamesPageState(
+            ManagedGameFilter.Locked,
+            CreateManagedGames(),
+            isLoading: false);
 
-        viewModel.ToggleVisibleManagedSelection();
-        Assert.Equal(1, viewModel.ManagedSelectedCount);
-        Assert.Equal("已选 1 项", viewModel.ManagedSelectedCountText);
+        state.ToggleSelection();
+        Assert.Equal(1, state.SelectedCount);
+        Assert.Equal("已选 1 项", state.SelectedCountText);
 
-        viewModel.SetManagedFilter(ManagedGameFilter.All);
-        Assert.Equal(0, viewModel.ManagedSelectedCount);
-        Assert.All(viewModel.VisibleManagedGames, item => Assert.False(item.IsSelected));
+        state.ToggleSelection();
+        Assert.Equal(0, state.SelectedCount);
+        Assert.All(state.Items, item => Assert.False(item.IsSelected));
     }
 
-    private static TranslationManagementViewModel CreateViewModelWithManagedGames()
-    {
-        var viewModel = new TranslationManagementViewModel(
-            () => new GuiSettings(),
-            new ApplicationOperationState(),
-            (_, _) => { });
-        viewModel.ManagedGames.Add(
-            new GameItem { AppId = "123", GameName = "Locked", FileReadOnly = true });
-        viewModel.ManagedGames.Add(
-            new GameItem { AppId = "456", GameName = "Unlocked" });
-        return viewModel;
-    }
+    private static GameItem[] CreateManagedGames() =>
+        [
+            new GameItem { AppId = "123", GameName = "Locked", FileReadOnly = true },
+            new GameItem { AppId = "456", GameName = "Unlocked" },
+        ];
 }

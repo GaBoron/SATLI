@@ -313,8 +313,6 @@ public sealed partial class TranslationManagementViewModel
                 scanned.FileReadOnly = managed.FileReadOnly;
             }
         }
-        ApplyManagedFilter();
-        OnPropertyChanged(nameof(ManagedEmptyStateVisibility));
         UpdateAvailableCount = GameInstallFiltering.CountUpdates(Games);
         ApplyFilter();
     }

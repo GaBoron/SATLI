@@ -1,33 +1,93 @@
+using System.Collections.Specialized;
+using System.ComponentModel;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
-using Microsoft.UI.Xaml.Navigation;
 using Satli_Gui.Models;
+using Satli_Gui.Pages;
 using Satli_Gui.Services;
 using Satli_Gui.ViewModels;
 using Windows.Foundation;
 using Windows.System;
 
-namespace Satli_Gui.Pages;
+namespace Satli_Gui.Controls;
 
-public sealed partial class ManagedPage : Page
+public sealed partial class ManagedGamesView : UserControl
 {
+    private readonly Action<Type, object> _navigate;
+    private bool _stateSyncQueued;
+    private bool _subscribed;
+
     public TranslationManagementViewModel ViewModel => App.ViewModel.Translations;
-    public ManagedPage()
+    public ManagedGamesPageState State { get; }
+
+    internal ManagedGamesView(ManagedGameFilter filter, Action<Type, object> navigate)
     {
+        _navigate = navigate;
+        State = new ManagedGamesPageState(filter, ViewModel.ManagedGames, ViewModel.IsLoading);
         InitializeComponent();
+        Loaded += ManagedGamesView_Loaded;
+        Unloaded += ManagedGamesView_Unloaded;
         AddShortcut(VirtualKey.A, VirtualKeyModifiers.Control, ToggleSelection_Invoked);
         AddShortcut(VirtualKey.F5, VirtualKeyModifiers.None, Refresh_Invoked);
     }
 
-    protected override void OnNavigatedTo(NavigationEventArgs e)
+    private void ManagedGamesView_Loaded(object sender, RoutedEventArgs e)
     {
-        base.OnNavigatedTo(e);
-        ViewModel.SetManagedFilter(
-            e.Parameter is ManagedGameFilter filter ? filter : ManagedGameFilter.All);
+        if (_subscribed)
+        {
+            return;
+        }
+        _subscribed = true;
+        ViewModel.ManagedGames.CollectionChanged += ManagedGames_CollectionChanged;
+        ViewModel.PropertyChanged += ViewModel_PropertyChanged;
+        State.Synchronize(ViewModel.ManagedGames, ViewModel.IsLoading);
     }
 
-    private async void Refresh_Click(object sender, RoutedEventArgs e) => await ViewModel.ScanAsync();
+    private void ManagedGamesView_Unloaded(object sender, RoutedEventArgs e)
+    {
+        if (!_subscribed)
+        {
+            return;
+        }
+        _subscribed = false;
+        ViewModel.ManagedGames.CollectionChanged -= ManagedGames_CollectionChanged;
+        ViewModel.PropertyChanged -= ViewModel_PropertyChanged;
+    }
+
+    private void ManagedGames_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e) =>
+        QueueStateSynchronization();
+
+    private void ViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(TranslationManagementViewModel.IsLoading))
+        {
+            QueueStateSynchronization();
+        }
+    }
+
+    private void QueueStateSynchronization()
+    {
+        if (_stateSyncQueued)
+        {
+            return;
+        }
+        _stateSyncQueued = true;
+        if (!DispatcherQueue.TryEnqueue(() =>
+            {
+                _stateSyncQueued = false;
+                State.Synchronize(ViewModel.ManagedGames, ViewModel.IsLoading);
+            }))
+        {
+            _stateSyncQueued = false;
+        }
+    }
+
+    private async void Refresh_Click(object sender, RoutedEventArgs e)
+    {
+        await ViewModel.ScanAsync();
+        State.Synchronize(ViewModel.ManagedGames, ViewModel.IsLoading);
+    }
     private async Task ConfirmRestoreAsync(IReadOnlyList<GameItem> selected, bool force)
     {
         var previews = await ViewModel.PreviewRestoreAsync(selected, force);
@@ -44,6 +104,7 @@ public sealed partial class ManagedPage : Page
                 force ? "确认归档并恢复" : "确认恢复"))
         {
             await ViewModel.RestoreAsync(selected, force);
+            State.Synchronize(ViewModel.ManagedGames, ViewModel.IsLoading);
         }
     }
 
@@ -67,7 +128,7 @@ public sealed partial class ManagedPage : Page
     {
         if (sender is Button { Tag: GameItem game } && game.CanViewInstalledTranslation)
         {
-            Frame.Navigate(typeof(AchievementEditorPage), game);
+            _navigate(typeof(AchievementEditorPage), game);
         }
     }
 
@@ -75,7 +136,7 @@ public sealed partial class ManagedPage : Page
     {
         if (sender is FrameworkElement { Tag: GameItem game })
         {
-            Frame.Navigate(typeof(RevisionHistoryPage), game);
+            _navigate(typeof(RevisionHistoryPage), game);
         }
     }
 
@@ -99,18 +160,19 @@ public sealed partial class ManagedPage : Page
             return;
         }
         await ViewModel.SetProtectionAsync([game], enable);
+        State.Synchronize(ViewModel.ManagedGames, ViewModel.IsLoading);
     }
 
     private void ManagedSelection_Click(object sender, RoutedEventArgs e) =>
-        ViewModel.RefreshManagedSelectionCount();
+        State.RefreshSelection();
 
     private void ToggleSelection_Click(object sender, RoutedEventArgs e) =>
-        ViewModel.ToggleVisibleManagedSelection();
+        State.ToggleSelection();
 
     private async void LockSelected_Click(object sender, RoutedEventArgs e)
     {
-        var selected = ViewModel.VisibleManagedGames
-            .Where(item => item.IsSelected && item.CanToggleProtection && !item.FileReadOnly)
+        var selected = State.SelectedGames
+            .Where(item => item.CanToggleProtection && !item.FileReadOnly)
             .ToArray();
         if (selected.Length == 0)
         {
@@ -120,13 +182,14 @@ public sealed partial class ManagedPage : Page
         if (await SteamFileProtectionDialog.ConfirmLockAsync(XamlRoot, selected))
         {
             await ViewModel.SetProtectionAsync(selected, enable: true);
+            State.Synchronize(ViewModel.ManagedGames, ViewModel.IsLoading);
         }
     }
 
     private async void UnlockSelected_Click(object sender, RoutedEventArgs e)
     {
-        var selected = ViewModel.VisibleManagedGames
-            .Where(item => item.IsSelected && item.FileReadOnly)
+        var selected = State.SelectedGames
+            .Where(item => item.FileReadOnly)
             .ToArray();
         if (selected.Length == 0)
         {
@@ -134,6 +197,7 @@ public sealed partial class ManagedPage : Page
             return;
         }
         await ViewModel.SetProtectionAsync(selected, enable: false);
+        State.Synchronize(ViewModel.ManagedGames, ViewModel.IsLoading);
     }
 
     private void AddShortcut(
@@ -150,13 +214,14 @@ public sealed partial class ManagedPage : Page
     {
         args.Handled = true;
         await ViewModel.ScanAsync();
+        State.Synchronize(ViewModel.ManagedGames, ViewModel.IsLoading);
     }
 
     private void ToggleSelection_Invoked(
         KeyboardAccelerator sender,
         KeyboardAcceleratorInvokedEventArgs args)
     {
-        ViewModel.ToggleVisibleManagedSelection();
+        State.ToggleSelection();
         args.Handled = true;
     }
 }
