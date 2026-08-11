@@ -1,11 +1,11 @@
 name: Bug 报告
-description: 报告 Steam 成就翻译管理器的启动、扫描、安装、编辑、设置或更新问题
+description: 报告 SATLI 的启动、扫描、安装、编辑、设置或更新问题
 title: "[Bug] "
 body:
   - type: markdown
     attributes:
       value: |
-        感谢你帮助改进 Steam 成就翻译管理器。提交前请先更新到最新版本、搜索已有 Issue，并尽量完整填写以下信息。
+        感谢你帮助改进 SATLI。提交前请先更新到最新版本、搜索已有 Issue，并尽量完整填写以下信息。
 
         如果问题只涉及某个云端译本的内容、过期状态或是否生效，请优先在应用“云端”页对应游戏的“报告”按钮中提交。请勿上传 Steam Web API Key、GitHub 令牌、账号信息或其他隐私数据。
 

@@ -294,7 +294,7 @@
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
                         <StackPanel VerticalAlignment="Center" Spacing="3">
-                            <TextBlock Text="Steam 成就翻译管理器" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                            <TextBlock Text="SATLI" Style="{StaticResource BodyStrongTextBlockStyle}" />
                             <TextBlock Text="扫描、安装、管理与恢复社区维护的 Steam 成就翻译。项目源代码托管于 GitHub。" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
                         </StackPanel>
                         <Button Grid.Column="1" Content="查看项目主页" VerticalAlignment="Center" Click="OpenProjectPage_Click" AutomationProperties.Name="打开项目 GitHub 主页" />

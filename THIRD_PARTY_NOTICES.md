@@ -1,6 +1,6 @@
 # Third-Party Notices
 
-This document summarizes the third-party software and content distributed with or accessed by SATLI (Steam Achievement Translation & Localization Integrator). Each project retains its own copyright and license terms.
+This document summarizes the third-party software and content distributed with or accessed by SATLI. Each project retains its own copyright and license terms.
 
 ## Desktop application
 

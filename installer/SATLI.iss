@@ -11,7 +11,7 @@
   #error MyAppIcon is required
 #endif
 
-#define MyAppName "Steam 成就翻译管理器"
+#define MyAppName "SATLI"
 #define MyAppExeName "SATLI.exe"
 #define MyAppPublisher "GaBoron"
 #define MyAppUrl "https://github.com/GaBoron/SATLI"

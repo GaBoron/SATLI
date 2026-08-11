@@ -27,6 +27,6 @@ public sealed class ApplicationInformationTests
         var text = ApplicationInformation.CreateSupportEmailCopyText("0.13.0");
 
         Assert.Contains("SATLI.support@proton.me", text);
-        Assert.Contains("Steam 成就翻译管理器 v0.13.0 反馈", text);
+        Assert.Contains("SATLI v0.13.0 反馈", text);
     }
 }

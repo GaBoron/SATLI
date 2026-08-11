@@ -15,7 +15,7 @@ internal static class ApplicationInformation
         $"{UpdateService.RepositoryUrl}/blob/main/THIRD_PARTY_NOTICES.md");
 
     public static string CreateSupportEmailSubject(string version) =>
-        $"Steam 成就翻译管理器 v{version} 反馈";
+        $"SATLI v{version} 反馈";
 
     public static string CreateSupportEmailCopyText(string version) =>
         $"收件地址：{SupportEmailAddress}{Environment.NewLine}" +
