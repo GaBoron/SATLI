@@ -37,6 +37,61 @@ public sealed class BrandMigrationTests
     }
 
     [Fact]
+    public void ApplicationDataDirectoryCopiesWhenMoveIsUnavailable()
+    {
+        var root = Path.Combine(Path.GetTempPath(), $"satli-data-copy-{Guid.NewGuid():N}");
+        var legacy = Path.Combine(root, "SteamAchievementTranslationInstaller");
+        var nested = Path.Combine(legacy, "cache");
+        Directory.CreateDirectory(nested);
+        File.WriteAllText(Path.Combine(nested, "index.json"), "{}");
+        try
+        {
+            var current = ApplicationDataPaths.MigrateDefaultDirectory(
+                root,
+                (_, _) => throw new IOException("Simulated MSIX move failure."));
+
+            Assert.True(File.Exists(Path.Combine(current, "cache", "index.json")));
+            Assert.True(Directory.Exists(legacy));
+        }
+        finally
+        {
+            if (Directory.Exists(root))
+            {
+                Directory.Delete(root, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
+    public void ApplicationDataDirectoryMergesWithoutOverwritingCurrentContent()
+    {
+        var root = Path.Combine(Path.GetTempPath(), $"satli-data-merge-{Guid.NewGuid():N}");
+        var legacy = Path.Combine(root, "SteamAchievementTranslationInstaller");
+        var current = Path.Combine(root, "SATLI");
+        Directory.CreateDirectory(Path.Combine(legacy, "cache"));
+        Directory.CreateDirectory(current);
+        File.WriteAllText(Path.Combine(legacy, "gui-settings.json"), "legacy");
+        File.WriteAllText(Path.Combine(legacy, "cache", "index.json"), "{}");
+        File.WriteAllText(Path.Combine(current, "gui-settings.json"), "current");
+        try
+        {
+            var migrated = ApplicationDataPaths.MigrateDefaultDirectory(root);
+
+            Assert.Equal(current, migrated);
+            Assert.Equal("current", File.ReadAllText(Path.Combine(current, "gui-settings.json")));
+            Assert.True(File.Exists(Path.Combine(current, "cache", "index.json")));
+            Assert.True(Directory.Exists(legacy));
+        }
+        finally
+        {
+            if (Directory.Exists(root))
+            {
+                Directory.Delete(root, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
     public void StoredLegacyDefaultDirectoryMovesToCurrentDefault()
     {
         var root = Path.Combine(Path.GetTempPath(), $"satli-stored-path-{Guid.NewGuid():N}");

@@ -49,8 +49,16 @@ public partial class App : Application
     /// </summary>
     public App()
     {
-        ApplicationDataPaths.MigrateDefaultDirectory();
         UnhandledException += App_UnhandledException;
+        try
+        {
+            ApplicationDataPaths.MigrateDefaultDirectory();
+        }
+        catch (Exception exception) when (
+            exception is IOException or UnauthorizedAccessException)
+        {
+            LogStartupException(exception);
+        }
         try
         {
             InitializeComponent();

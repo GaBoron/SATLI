@@ -19,7 +19,9 @@ internal static class ApplicationDataPaths
     public static void MigrateDefaultDirectory() => MigrateDefaultDirectory(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData));
 
-    internal static string MigrateDefaultDirectory(string localAppData)
+    internal static string MigrateDefaultDirectory(
+        string localAppData,
+        Action<string, string>? moveDirectory = null)
     {
         var current = Path.Combine(localAppData, CurrentDirectoryName);
         var legacy = Path.Combine(localAppData, LegacyDirectoryName);
@@ -28,19 +30,59 @@ internal static class ApplicationDataPaths
             return current;
         }
 
-        if (Directory.Exists(current))
+        var shouldTryMove = !Directory.Exists(current)
+            || !Directory.EnumerateFileSystemEntries(current).Any();
+        if (shouldTryMove)
         {
-            if (Directory.EnumerateFileSystemEntries(current).Any())
+            try
             {
-                throw new IOException(
-                    $"无法迁移旧数据目录：目标目录已包含文件：{current}");
+                if (Directory.Exists(current))
+                {
+                    Directory.Delete(current);
+                }
+                (moveDirectory ?? Directory.Move)(legacy, current);
+                DeleteLegacyUpdatePackages(current);
+                return current;
             }
-            Directory.Delete(current);
+            catch (IOException)
+            {
+                // MSIX can reject moving an AppData directory across its
+                // virtualized view. Fall back to a non-destructive copy.
+            }
+            catch (UnauthorizedAccessException)
+            {
+                // Preserve the legacy directory and copy what is accessible.
+            }
         }
 
-        Directory.Move(legacy, current);
+        CopyDirectoryContents(legacy, current);
         DeleteLegacyUpdatePackages(current);
         return current;
+    }
+
+    private static void CopyDirectoryContents(string source, string destination)
+    {
+        Directory.CreateDirectory(destination);
+        var options = new EnumerationOptions
+        {
+            RecurseSubdirectories = true,
+            AttributesToSkip = FileAttributes.ReparsePoint,
+        };
+        foreach (var directory in Directory.EnumerateDirectories(source, "*", options))
+        {
+            Directory.CreateDirectory(Path.Combine(
+                destination,
+                Path.GetRelativePath(source, directory)));
+        }
+        foreach (var file in Directory.EnumerateFiles(source, "*", options))
+        {
+            var target = Path.Combine(destination, Path.GetRelativePath(source, file));
+            Directory.CreateDirectory(Path.GetDirectoryName(target)!);
+            if (!File.Exists(target))
+            {
+                File.Copy(file, target);
+            }
+        }
     }
 
     internal static string MigrateStoredDataDirectory(
