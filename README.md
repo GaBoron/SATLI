@@ -100,6 +100,10 @@ Localizer Skill 生成的标准 BIN/ZIP 可直接导入管理器，也可提交�
 | [数据与隐私](docs/PRIVACY.md) | 本地数据、凭据、日志和网络请求说明 |
 | [第三方声明](THIRD_PARTY_NOTICES.md) | 随软件分发的第三方组件和权利说明 |
 
+## 联系与支持
+
+遇到使用问题时，可通过 [GitHub Issues](https://github.com/GaBoron/SATLI/issues/new/choose) 反馈，或发送邮件至 [SATLI.support@proton.me](mailto:SATLI.support@proton.me)。
+
 ## 许可证
 
 程序代码采用 [MIT License](LICENSE)。第三方组件和翻译数据的权利说明见 [第三方声明](THIRD_PARTY_NOTICES.md)。
