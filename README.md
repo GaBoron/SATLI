@@ -30,6 +30,8 @@
   <a href="https://github.com/GaBoron/SATLI/issues/new/choose">💬 反馈问题</a>
   ·
   <a href="https://www.ifdian.net/a/gaboron">❤️ 赞助开发者</a>
+  ·
+  <a href="mailto:SATLI.support@proton.me">📧 获取支持</a>
 </p>
 
 ## 下载与安装
