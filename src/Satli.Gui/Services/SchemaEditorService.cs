@@ -211,7 +211,14 @@ public sealed class SchemaEditorService
             : string.Empty,
         payload.TryGetProperty("revision_warning", out var warning)
             ? warning.GetString() ?? string.Empty
-            : string.Empty);
+            : string.Empty,
+        payload.TryGetProperty("submission_languages", out var submissionLanguages)
+            ? submissionLanguages.EnumerateArray()
+                .Select(item => item.GetString())
+                .Where(item => !string.IsNullOrWhiteSpace(item))
+                .Select(item => item!)
+                .ToArray()
+            : null);
 
     private static void AddConfiguredPaths(List<string> arguments)
     {

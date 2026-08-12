@@ -104,9 +104,9 @@ public sealed partial class AchievementEditorPage
         {
             XamlRoot = XamlRoot,
             Title = "投稿到社区",
-            Content = $"ZIP 已完成结构、语言和 SHA-256 校验。\n\n"
+            Content = $"ZIP 已完成结构、语言字段和 SHA-256 校验。\n\n"
                 + $"类型：{(draft.IsUpdate ? "更新已有译本" : "新译本投稿")}\n"
-                + $"完整语言：{draft.Languages}\n"
+                + $"检测到的语言：{draft.Languages}\n"
                 + $"摘要：{draft.Summary}\n\n"
                 + "打开表单后，请把资源管理器中选中的 ZIP 拖入附件区域，并由你确认提交。",
             PrimaryButtonText = "打开投稿表单",

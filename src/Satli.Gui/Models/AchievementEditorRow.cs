@@ -78,4 +78,5 @@ public sealed record SchemaEditResult(
     int ChangedDescriptions = 0,
     IReadOnlyList<string>? CompleteLanguages = null,
     string RevisionCommit = "",
-    string RevisionWarning = "");
+    string RevisionWarning = "",
+    IReadOnlyList<string>? SubmissionLanguages = null);

@@ -40,7 +40,7 @@ public sealed class ContributionWorkflowService
         {
             throw new InvalidDataException("投稿 ZIP 内 schema 的 SHA-256 与导出结果不一致。");
         }
-        var languages = (result.CompleteLanguages ?? [])
+        var languages = (result.SubmissionLanguages ?? result.CompleteLanguages ?? [])
             .Where(value => !string.IsNullOrWhiteSpace(value))
             .Select(value => value.Trim().ToLowerInvariant())
             .Distinct(StringComparer.OrdinalIgnoreCase)
@@ -48,7 +48,7 @@ public sealed class ContributionWorkflowService
             .ToArray();
         if (languages.Length == 0)
         {
-            throw new InvalidDataException("投稿文件没有任何名称和说明都完整的语言。");
+            throw new InvalidDataException("投稿文件没有任何可识别的语言字段。");
         }
 
         var isUpdate = game.Variants.Count > 0;

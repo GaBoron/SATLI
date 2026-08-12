@@ -174,11 +174,13 @@ def test_export_writes_verified_bin_and_single_member_zip(tmp_path: Path) -> Non
     export_schema(
         source, "123", "japanese", edits, bin_path, "bin", allow_incomplete=True
     )
-    export_schema(
+    report = export_schema(
         source, "123", "japanese", edits, zip_path, "zip", allow_incomplete=True
     )
 
     assert achievement_preview(bin_path.read_bytes())["achievement_count"] == 2
+    assert "japanese" not in report["complete_languages"]
+    assert report["submission_languages"] == ["schinese", "english", "japanese"]
     with zipfile.ZipFile(zip_path) as archive:
         assert archive.namelist() == ["UserGameStatsSchema_123.bin"]
         assert archive.read(archive.namelist()[0]) == bin_path.read_bytes()

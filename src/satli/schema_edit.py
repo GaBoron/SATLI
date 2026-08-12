@@ -132,6 +132,7 @@ def render_schema(
         "incomplete": bool(missing_names or missing_descriptions),
         "roundtrip_equal": True,
         "complete_languages": _complete_languages(localized_preview),
+        "submission_languages": _submission_languages(localized_preview),
     }
 
 
@@ -188,6 +189,17 @@ def _complete_languages(preview: dict[str, Any]) -> list[str]:
         ):
             complete.append(language)
     return complete
+
+
+def _submission_languages(preview: dict[str, Any]) -> list[str]:
+    languages = preview.get("languages")
+    if not isinstance(languages, list):
+        return []
+    return [
+        language
+        for language in languages
+        if isinstance(language, str) and language.strip()
+    ]
 
 
 class EditHistoryStore:
@@ -328,6 +340,7 @@ def apply_schema_payload(
         "incomplete": False,
         "roundtrip_equal": True,
         "complete_languages": _complete_languages(preview),
+        "submission_languages": _submission_languages(preview),
         **(report or {}),
     }
     effective_report["source_sha256"] = current_sha256

@@ -38,7 +38,8 @@ public sealed class ContributionWorkflowTests
                 1, 3, 0, 0, false, path, null,
                 ChangedNames: 1,
                 ChangedDescriptions: 2,
-                CompleteLanguages: ["schinese", "english"]);
+                CompleteLanguages: ["english"],
+                SubmissionLanguages: ["schinese", "english"]);
 
             var draft = new ContributionWorkflowService().Prepare(game, result);
 
