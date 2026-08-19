@@ -46,6 +46,23 @@ public sealed class StoreUpdateServiceTests
     }
 
     [Fact]
+    public async Task StoreUpdateUsesReleaseVersionWhenPackageReportsInstalledVersion()
+    {
+        var service = new StoreUpdateService(
+            new FakeStorePackageUpdateSource(new Version(1, 1, 0, 0)),
+            _ => Task.FromResult(GitHubRelease("1.1.1", "- 修复 Store 更新")),
+            new Version(1, 1, 0));
+
+        var result = await service.CheckAsync();
+
+        Assert.True(result.IsUpdateAvailable);
+        Assert.Equal("1.1.0", result.CurrentVersion);
+        Assert.Equal("1.1.1", result.LatestVersion);
+        Assert.Equal("- 修复 Store 更新", result.ReleaseNotes);
+        Assert.Equal("Microsoft Store 中有新版本 v1.1.1。", result.Message);
+    }
+
+    [Fact]
     public async Task StoreUpdateDoesNotShowNotesFromADifferentVersion()
     {
         var service = new StoreUpdateService(
@@ -58,6 +75,22 @@ public sealed class StoreUpdateServiceTests
         Assert.True(result.IsUpdateAvailable);
         Assert.Equal("0.13.0", result.LatestVersion);
         Assert.DoesNotContain("不应显示的内容", result.ReleaseNotes);
+        Assert.Contains("详细更新内容暂时无法读取", result.ReleaseNotes);
+    }
+
+    [Fact]
+    public async Task StoreUpdateDoesNotRepeatCurrentVersionWhenTargetIsUnknown()
+    {
+        var service = new StoreUpdateService(
+            new FakeStorePackageUpdateSource(new Version(1, 1, 0, 0)),
+            _ => throw new HttpRequestException("offline"),
+            new Version(1, 1, 0));
+
+        var result = await service.CheckAsync();
+
+        Assert.True(result.IsUpdateAvailable);
+        Assert.Empty(result.LatestVersion);
+        Assert.Equal("Microsoft Store 中有可用更新。", result.Message);
         Assert.Contains("详细更新内容暂时无法读取", result.ReleaseNotes);
     }
 

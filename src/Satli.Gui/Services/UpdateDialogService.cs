@@ -124,6 +124,7 @@ public static class UpdateDialogService
         XamlRoot xamlRoot,
         UpdateCheckResult update)
     {
+        var hasKnownVersion = !string.IsNullOrWhiteSpace(update.LatestVersion);
         var notes = new ReleaseNotesMarkdownView(
             update.ReleaseNotes,
             new Uri($"{UpdateService.RepositoryUrl}/"));
@@ -136,7 +137,9 @@ public static class UpdateDialogService
         var content = new StackPanel { Spacing = 12, MinWidth = 560 };
         content.Children.Add(new TextBlock
         {
-            Text = $"v{update.CurrentVersion} → v{update.LatestVersion}",
+            Text = hasKnownVersion
+                ? $"v{update.CurrentVersion} → v{update.LatestVersion}"
+                : $"当前版本 v{update.CurrentVersion} → Microsoft Store 更新",
             Style = Application.Current.Resources["SubtitleTextBlockStyle"] as Style,
         });
         content.Children.Add(new Border
@@ -149,7 +152,9 @@ public static class UpdateDialogService
         var dialog = new ContentDialog
         {
             XamlRoot = xamlRoot,
-            Title = $"Microsoft Store 中有新版本 v{update.LatestVersion}",
+            Title = hasKnownVersion
+                ? $"Microsoft Store 中有新版本 v{update.LatestVersion}"
+                : "Microsoft Store 中有可用更新",
             Content = content,
             PrimaryButtonText = "在 Microsoft Store 中更新",
             CloseButtonText = "稍后",

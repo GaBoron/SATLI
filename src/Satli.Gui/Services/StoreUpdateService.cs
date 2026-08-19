@@ -91,11 +91,26 @@ internal sealed class StoreUpdateService
                 IsMicrosoftStoreUpdate: true);
         }
 
-        var latestVersion = updates
+        var normalizedCurrentVersion = UpdateService.Normalize(_currentVersion);
+        var storeVersion = updates
             .Select(update => update.Version)
-            .Max() ?? _currentVersion;
-        var latestText = UpdateService.FormatVersion(latestVersion);
-        var releaseNotes = await TryGetMatchingReleaseNotesAsync(latestText, cancellationToken);
+            .Select(UpdateService.Normalize)
+            .Where(version => version > normalizedCurrentVersion)
+            .Max();
+        var release = await TryGetReleaseMetadataAsync(cancellationToken);
+        var releaseVersion = TryGetNewerReleaseVersion(
+            release,
+            normalizedCurrentVersion);
+        var latestVersion = storeVersion ?? releaseVersion;
+        var latestText = latestVersion is null
+            ? string.Empty
+            : UpdateService.FormatVersion(latestVersion);
+        var releaseNotes = release is not null
+            && latestVersion is not null
+            && releaseVersion == latestVersion
+            && !string.IsNullOrWhiteSpace(release.ReleaseNotes)
+                ? release.ReleaseNotes
+                : MissingReleaseNotesMessage;
         return new UpdateCheckResult(
             true,
             currentText,
@@ -103,22 +118,22 @@ internal sealed class StoreUpdateService
             ProductPageUri,
             null,
             releaseNotes,
-            $"Microsoft Store 中有新版本 v{latestText}。",
+            string.IsNullOrWhiteSpace(latestText)
+                ? "Microsoft Store 中有可用更新。"
+                : $"Microsoft Store 中有新版本 v{latestText}。",
             IsMicrosoftStoreUpdate: true);
     }
 
-    private async Task<string> TryGetMatchingReleaseNotesAsync(
-        string latestVersion,
+    private const string MissingReleaseNotesMessage =
+        "已检测到 Microsoft Store 软件包更新。此版本的详细更新内容暂时无法读取，"
+        + "请在 Microsoft Store 产品页查看。";
+
+    private async Task<UpdateCheckResult?> TryGetReleaseMetadataAsync(
         CancellationToken cancellationToken)
     {
         try
         {
-            var release = await _releaseMetadataProvider(cancellationToken);
-            if (release.LatestVersion.Equals(latestVersion, StringComparison.Ordinal)
-                && !string.IsNullOrWhiteSpace(release.ReleaseNotes))
-            {
-                return release.ReleaseNotes;
-            }
+            return await _releaseMetadataProvider(cancellationToken);
         }
         catch (OperationCanceledException)
         {
@@ -129,7 +144,20 @@ internal sealed class StoreUpdateService
             // Store package discovery is the source of truth. Release notes are supplemental.
         }
 
-        return "已检测到 Microsoft Store 软件包更新。此版本的详细更新内容暂时无法读取，"
-            + "请在 Microsoft Store 产品页查看。";
+        return null;
+    }
+
+    private static Version? TryGetNewerReleaseVersion(
+        UpdateCheckResult? release,
+        Version currentVersion)
+    {
+        if (release is null
+            || !Version.TryParse(release.LatestVersion, out var parsed))
+        {
+            return null;
+        }
+
+        var normalized = UpdateService.Normalize(parsed);
+        return normalized > currentVersion ? normalized : null;
     }
 }
