@@ -47,6 +47,7 @@
                         Width="170"
                         Header="对照语言"
                         Style="{StaticResource ToolbarComboBoxStyle}"
+                        DisplayMemberPath="DisplayName"
                         SelectionChanged="ReferenceLanguageBox_SelectionChanged" />
                     <ComboBox
                         x:Name="TargetLanguageBox"

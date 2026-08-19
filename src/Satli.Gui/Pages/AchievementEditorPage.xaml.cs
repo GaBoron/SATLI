@@ -65,13 +65,17 @@ public sealed partial class AchievementEditorPage : Page
         TitleText.Text = $"编辑 {game.GameName}";
         MetadataText.Text =
             $"App ID {_game.AppId} · {_inspection.Rows.Count} 个成就 · SHA-256 {_inspection.SourceSha256}";
-        ReferenceLanguageBox.ItemsSource = _inspection.Languages;
+        var referenceLanguageOptions = _inspection.Languages
+            .Select(SteamLanguageCatalog.CreateOption)
+            .ToArray();
+        ReferenceLanguageBox.ItemsSource = referenceLanguageOptions;
         TargetLanguageBox.ItemsSource = SteamLanguageCatalog.CreateEditorOptions(
             _inspection.Languages);
         var reference = _inspection.Languages.Contains("english", StringComparer.OrdinalIgnoreCase)
             ? "english"
             : _inspection.Languages.FirstOrDefault() ?? string.Empty;
-        ReferenceLanguageBox.SelectedItem = reference;
+        ReferenceLanguageBox.SelectedItem = referenceLanguageOptions.FirstOrDefault(option =>
+            option.Code.Equals(reference, StringComparison.OrdinalIgnoreCase));
         _targetLanguage = _inspection.Languages.Contains("schinese", StringComparer.OrdinalIgnoreCase)
             ? "schinese"
             : _inspection.Languages.FirstOrDefault() ?? "schinese";

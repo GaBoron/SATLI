@@ -35,13 +35,14 @@ public sealed partial class AchievementEditorPage
 
     private void ReferenceLanguageBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        if (_inspection is null || ReferenceLanguageBox.SelectedItem is not string language)
+        if (_inspection is null
+            || ReferenceLanguageBox.SelectedItem is not SteamLanguageOption option)
         {
             return;
         }
         foreach (var row in _inspection.Rows)
         {
-            row.SelectReference(language);
+            row.SelectReference(option.Code);
         }
     }
 
