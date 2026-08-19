@@ -47,11 +47,13 @@ public sealed partial class AchievementEditorPage
 
     private async void TargetLanguageBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        if (_changingLanguage || _inspection is null || TargetLanguageBox.SelectedItem is not string language)
+        if (_changingLanguage
+            || _inspection is null
+            || TargetLanguageBox.SelectedItem is not SteamLanguageOption option)
         {
             return;
         }
-        await SelectTargetLanguageAsync(language);
+        await SelectTargetLanguageAsync(option.Code);
     }
 
     private async void TargetLanguageBox_LostFocus(object sender, RoutedEventArgs e)
@@ -60,7 +62,13 @@ public sealed partial class AchievementEditorPage
         {
             return;
         }
-        var value = TargetLanguageBox.Text.Trim().ToLowerInvariant();
+        var input = TargetLanguageBox.Text.Trim();
+        var value = TargetLanguageBox.SelectedItem is SteamLanguageOption option
+            && (input.Length == 0
+                || input.Equals(option.Code, StringComparison.OrdinalIgnoreCase)
+                || input.Equals(option.DisplayName, StringComparison.CurrentCulture))
+                    ? option.Code
+                    : input.ToLowerInvariant();
         if (!string.IsNullOrWhiteSpace(value) && value != _targetLanguage)
         {
             await SelectTargetLanguageAsync(value);
@@ -94,8 +102,7 @@ public sealed partial class AchievementEditorPage
                     "当前未保存的修改将被放弃。是否继续？",
                     "继续"))
             {
-                TargetLanguageBox.SelectedItem = _targetLanguage;
-                TargetLanguageBox.Text = _targetLanguage;
+                SelectTargetLanguageOption(_targetLanguage);
                 return;
             }
             _targetLanguage = normalizedLanguage;

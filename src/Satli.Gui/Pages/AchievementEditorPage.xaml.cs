@@ -66,7 +66,8 @@ public sealed partial class AchievementEditorPage : Page
         MetadataText.Text =
             $"App ID {_game.AppId} · {_inspection.Rows.Count} 个成就 · SHA-256 {_inspection.SourceSha256}";
         ReferenceLanguageBox.ItemsSource = _inspection.Languages;
-        TargetLanguageBox.ItemsSource = _inspection.Languages;
+        TargetLanguageBox.ItemsSource = SteamLanguageCatalog.CreateEditorOptions(
+            _inspection.Languages);
         var reference = _inspection.Languages.Contains("english", StringComparer.OrdinalIgnoreCase)
             ? "english"
             : _inspection.Languages.FirstOrDefault() ?? string.Empty;
@@ -74,7 +75,7 @@ public sealed partial class AchievementEditorPage : Page
         _targetLanguage = _inspection.Languages.Contains("schinese", StringComparer.OrdinalIgnoreCase)
             ? "schinese"
             : _inspection.Languages.FirstOrDefault() ?? "schinese";
-        TargetLanguageBox.SelectedItem = _targetLanguage;
+        SelectTargetLanguageOption(_targetLanguage);
         foreach (var row in _inspection.Rows)
         {
             row.PropertyChanged += Row_PropertyChanged;
@@ -113,9 +114,7 @@ public sealed partial class AchievementEditorPage : Page
 
         _changingLanguage = true;
         _targetLanguage = draft.TargetLanguage;
-        TargetLanguageBox.SelectedItem = _inspection!.Languages.FirstOrDefault(language =>
-            string.Equals(language, _targetLanguage, StringComparison.OrdinalIgnoreCase));
-        TargetLanguageBox.Text = _targetLanguage;
+        SelectTargetLanguageOption(_targetLanguage);
         var values = draft.Rows.ToDictionary(row => row.ApiName, StringComparer.Ordinal);
         foreach (var row in _inspection.Rows)
         {
@@ -127,5 +126,14 @@ public sealed partial class AchievementEditorPage : Page
         App.ViewModel.ShowInfo(
             $"已恢复 {_targetLanguage} 草稿（保存于 {draft.SavedAt.ToLocalTime():g}）。",
             InfoBarSeverity.Informational);
+    }
+
+    private void SelectTargetLanguageOption(string language)
+    {
+        var option = (TargetLanguageBox.ItemsSource as IEnumerable<SteamLanguageOption>)
+            ?.FirstOrDefault(item =>
+                item.Code.Equals(language, StringComparison.OrdinalIgnoreCase));
+        TargetLanguageBox.SelectedItem = option;
+        TargetLanguageBox.Text = option?.DisplayName ?? language;
     }
 }

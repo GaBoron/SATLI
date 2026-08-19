@@ -54,6 +54,7 @@
                         Header="目标语言"
                         Style="{StaticResource ToolbarComboBoxStyle}"
                         IsEditable="True"
+                        DisplayMemberPath="DisplayName"
                         SelectionChanged="TargetLanguageBox_SelectionChanged"
                         LostFocus="TargetLanguageBox_LostFocus" />
                 </StackPanel>

@@ -12,41 +12,6 @@ public static class ReplacementConfirmationDialog
     private const double DialogViewportMargin = 48;
     private const double DialogChromeHeight = 180;
 
-    private static readonly IReadOnlyDictionary<string, string> LanguageNames =
-        new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
-        {
-            ["schinese"] = "简体中文",
-            ["tchinese"] = "繁体中文",
-            ["english"] = "英语",
-            ["japanese"] = "日语",
-            ["koreana"] = "韩语",
-            ["french"] = "法语",
-            ["italian"] = "意大利语",
-            ["german"] = "德语",
-            ["spanish"] = "西班牙语",
-            ["latam"] = "拉丁美洲西班牙语",
-            ["russian"] = "俄语",
-            ["thai"] = "泰语",
-            ["portuguese"] = "葡萄牙语",
-            ["brazilian"] = "巴西葡萄牙语",
-            ["polish"] = "波兰语",
-            ["danish"] = "丹麦语",
-            ["dutch"] = "荷兰语",
-            ["finnish"] = "芬兰语",
-            ["norwegian"] = "挪威语",
-            ["swedish"] = "瑞典语",
-            ["czech"] = "捷克语",
-            ["hungarian"] = "匈牙利语",
-            ["romanian"] = "罗马尼亚语",
-            ["turkish"] = "土耳其语",
-            ["ukrainian"] = "乌克兰语",
-            ["vietnamese"] = "越南语",
-            ["indonesian"] = "印度尼西亚语",
-            ["arabic"] = "阿拉伯语",
-            ["bulgarian"] = "保加利亚语",
-            ["greek"] = "希腊语",
-        };
-
     public static Task<bool> ShowAsync(
         XamlRoot xamlRoot,
         IReadOnlyList<ReplacementPreview> previews,
@@ -98,7 +63,7 @@ public static class ReplacementConfirmationDialog
         var languageBox = new ComboBox
         {
             MinWidth = 220,
-            DisplayMemberPath = nameof(LanguageOption.DisplayName),
+            DisplayMemberPath = nameof(SteamLanguageOption.DisplayName),
             HorizontalAlignment = HorizontalAlignment.Left,
         };
         AutomationProperties.SetName(languageBox, "选择成就显示语言");
@@ -146,7 +111,7 @@ public static class ReplacementConfirmationDialog
             next.IsEnabled = page + 1 < previews.Count;
 
             var options = preview.Languages
-                .Select(code => new LanguageOption(code, DisplayLanguage(code)))
+                .Select(SteamLanguageCatalog.CreateOption)
                 .ToList();
             languageBar.Visibility = preview.DeletesTarget || options.Count == 0
                 ? Visibility.Collapsed
@@ -164,7 +129,7 @@ public static class ReplacementConfirmationDialog
 
         languageBox.SelectionChanged += (_, _) =>
         {
-            if (languageBox.SelectedItem is LanguageOption option)
+            if (languageBox.SelectedItem is SteamLanguageOption option)
             {
                 selectedLanguages[page] = option.Code;
                 RenderTable();
@@ -339,10 +304,4 @@ public static class ReplacementConfirmationDialog
         return grid;
     }
 
-    private static string DisplayLanguage(string code) =>
-        LanguageNames.TryGetValue(code, out var displayName)
-            ? $"{displayName} ({code})"
-            : code;
-
-    private sealed record LanguageOption(string Code, string DisplayName);
 }
