@@ -22,11 +22,12 @@ public sealed class ApplicationInformationTests
     }
 
     [Fact]
-    public void SupportEmailCopyTextIncludesAddressAndVersionedSubject()
+    public void SupportEmailUriIncludesAddressAndVersionedSubject()
     {
-        var text = ApplicationInformation.CreateSupportEmailCopyText("0.13.0");
+        var uri = ApplicationInformation.CreateSupportEmailUri("1.1.1");
 
-        Assert.Contains("SATLI.support@proton.me", text);
-        Assert.Contains("SATLI v0.13.0 反馈", text);
+        Assert.Equal("mailto", uri.Scheme);
+        Assert.StartsWith("mailto:SATLI.support@proton.me?", uri.AbsoluteUri);
+        Assert.Equal("?subject=SATLI v1.1.1 反馈", Uri.UnescapeDataString(uri.Query));
     }
 }

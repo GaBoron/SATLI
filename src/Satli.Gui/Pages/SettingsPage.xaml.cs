@@ -5,7 +5,6 @@ using Microsoft.UI.Xaml.Controls;
 using Satli_Gui.Models;
 using Satli_Gui.Services;
 using Satli_Gui.ViewModels;
-using Windows.ApplicationModel.DataTransfer;
 
 namespace Satli_Gui.Pages;
 
@@ -129,70 +128,10 @@ public sealed partial class SettingsPage : Page
     private async void OpenIssueFeedback_Click(object sender, RoutedEventArgs e) =>
         await OpenUriAsync(ApplicationInformation.BugReportUri, "无法打开 GitHub Issue 反馈页面。");
 
-    private async void OpenEmailFeedback_Click(object sender, RoutedEventArgs e)
-    {
-        var version = UpdateService.CurrentVersionText;
-        var content = new StackPanel { Spacing = 12, MaxWidth = 520 };
-        content.Children.Add(new TextBlock
-        {
-            Text = "复制以下信息后，可使用 QQ 邮箱、163、Outlook、Gmail 或任何其他邮箱发送反馈。",
-            TextWrapping = TextWrapping.Wrap,
-        });
-        content.Children.Add(new TextBox
-        {
-            Header = "收件地址",
-            Text = ApplicationInformation.SupportEmailAddress,
-            IsReadOnly = true,
-        });
-        content.Children.Add(new TextBox
-        {
-            Header = "建议主题",
-            Text = ApplicationInformation.CreateSupportEmailSubject(version),
-            IsReadOnly = true,
-        });
-
-        var dialog = new ContentDialog
-        {
-            XamlRoot = XamlRoot,
-            Title = "邮件反馈",
-            Content = content,
-            PrimaryButtonText = "复制邮箱地址",
-            SecondaryButtonText = "复制地址和主题",
-            CloseButtonText = "取消",
-            DefaultButton = ContentDialogButton.Primary,
-        };
-        var result = await dialog.ShowAsync();
-        if (result == ContentDialogResult.Primary)
-        {
-            CopyFeedbackText(
-                ApplicationInformation.SupportEmailAddress,
-                "反馈邮箱地址已复制。");
-        }
-        else if (result == ContentDialogResult.Secondary)
-        {
-            CopyFeedbackText(
-                ApplicationInformation.CreateSupportEmailCopyText(version),
-                "反馈邮箱地址和建议主题已复制。");
-        }
-    }
-
-    private void CopyFeedbackText(string text, string successMessage)
-    {
-        try
-        {
-            var data = new DataPackage();
-            data.SetText(text);
-            Clipboard.SetContent(data);
-            ViewModel.ShowInfo(successMessage, InfoBarSeverity.Success);
-        }
-        catch (Exception exception)
-        {
-            _ = App.Logs.WriteExceptionDetailsAsync("复制反馈邮箱", exception);
-            ViewModel.ShowInfo(
-                $"无法复制邮箱信息，请手动复制 {ApplicationInformation.SupportEmailAddress}。",
-                InfoBarSeverity.Warning);
-        }
-    }
+    private async void OpenEmailFeedback_Click(object sender, RoutedEventArgs e) =>
+        await OpenUriAsync(
+            ApplicationInformation.CreateSupportEmailUri(UpdateService.CurrentVersionText),
+            $"无法打开邮件应用，请手动发送至 {ApplicationInformation.SupportEmailAddress}。");
 
     private async void OpenProjectPage_Click(object sender, RoutedEventArgs e) =>
         await OpenUriAsync(ApplicationInformation.RepositoryUri, "无法打开项目主页。");

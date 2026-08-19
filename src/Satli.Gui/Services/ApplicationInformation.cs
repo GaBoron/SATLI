@@ -17,7 +17,7 @@ internal static class ApplicationInformation
     public static string CreateSupportEmailSubject(string version) =>
         $"SATLI v{version} 反馈";
 
-    public static string CreateSupportEmailCopyText(string version) =>
-        $"收件地址：{SupportEmailAddress}{Environment.NewLine}" +
-        $"邮件主题：{CreateSupportEmailSubject(version)}";
+    public static Uri CreateSupportEmailUri(string version) => new(
+        $"mailto:{SupportEmailAddress}?subject="
+        + Uri.EscapeDataString(CreateSupportEmailSubject(version)));
 }
