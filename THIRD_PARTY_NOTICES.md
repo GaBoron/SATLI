@@ -13,8 +13,6 @@ The Windows desktop interface uses the following dependencies:
 - CommunityToolkit.Mvvm — MIT License
 - Markdig — BSD 2-Clause License; used to render GitHub Release Markdown
 
-Test-only dependencies include the MIT-licensed xUnit.net runner and Microsoft.NET.Test.Sdk.
-
 ### Distribution packaging
 
 The independently distributed Windows installer is built with Inno Setup and includes the official Simplified Chinese message file from the Inno Setup source repository. Inno Setup and its message files remain subject to the Inno Setup license and their respective copyright notices.

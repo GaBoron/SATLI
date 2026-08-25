@@ -20,36 +20,51 @@ public sealed partial class AchievementEditorPage
         }
         if (!await ConfirmAsync(
                 "写回本地成就文件",
-                "请先从系统托盘正常退出 Steam。应用会在写回前创建可恢复备份。",
+                "应用会在写回前创建可恢复备份。",
                 "确认写回"))
         {
             return false;
         }
         var saved = false;
-        await RunBusyAsync(async () =>
+        await _steamMutations.ExecuteAsync(XamlRoot, async () =>
         {
-            using var monitoringSuppression = App.ViewModel.Translations
-                .BeginSchemaMonitoringSuppression([_inspection!.AppId]);
-            var result = await _editor.ApplyAsync(
-                _inspection!, _targetLanguage, _inspection!.Rows, allowIncomplete: true);
-            App.ViewModel.ShowInfo(
-                string.IsNullOrWhiteSpace(result.RevisionWarning)
-                    ? $"已保存本地编辑并记录 Git 修订：修改 {result.ChangedFields} 个字段；备份位于 {result.Backup}"
-                    : $"已保存本地编辑：修改 {result.ChangedFields} 个字段；{result.RevisionWarning}",
-                string.IsNullOrWhiteSpace(result.RevisionWarning)
-                    ? InfoBarSeverity.Success
-                    : InfoBarSeverity.Warning);
-            try
+            await RunBusyAsync(async () =>
             {
-                _drafts.Delete(_inspection.AppId);
-            }
-            catch (Exception exception)
-            {
-                await App.Logs.WriteAsync("警告", "成就草稿", $"本机写回成功，但删除草稿失败：{exception.Message}");
-                await App.Logs.WriteExceptionDetailsAsync("成就草稿", exception);
-            }
-            await LoadCoreAsync();
-            saved = true;
+                using var monitoringSuppression = App.ViewModel.Translations
+                    .BeginSchemaMonitoringSuppression([_inspection!.AppId]);
+                var result = await _editor.ApplyAsync(
+                    _inspection!, _targetLanguage, _inspection!.Rows, allowIncomplete: true);
+                await App.Logs.WriteAsync(
+                    "信息",
+                    "成就编辑",
+                    $"本地编辑已写回；修改 {result.ChangedFields} 个字段。" +
+                    (string.IsNullOrWhiteSpace(result.RevisionWarning) ? "" : $" {result.RevisionWarning}"));
+                await App.Logs.WriteAsync(
+                    "详细",
+                    "成就编辑",
+                    $"写回完成。App ID={_inspection.AppId}；目标语言={_targetLanguage}；" +
+                    $"备份文件={Path.GetFileName(result.Backup)}。",
+                    detailed: true);
+                App.ViewModel.ShowInfo(
+                    string.IsNullOrWhiteSpace(result.RevisionWarning)
+                        ? $"已保存本地编辑并记录 Git 修订：修改 {result.ChangedFields} 个字段；备份位于 {result.Backup}"
+                        : $"已保存本地编辑：修改 {result.ChangedFields} 个字段；{result.RevisionWarning}",
+                    string.IsNullOrWhiteSpace(result.RevisionWarning)
+                        ? InfoBarSeverity.Success
+                        : InfoBarSeverity.Warning);
+                try
+                {
+                    _drafts.Delete(_inspection.AppId);
+                }
+                catch (Exception exception)
+                {
+                    await App.Logs.WriteAsync("警告", "成就草稿", $"本机写回成功，但删除草稿失败：{exception.Message}");
+                    await App.Logs.WriteExceptionDetailsAsync("成就草稿", exception);
+                }
+                await LoadCoreAsync();
+                saved = true;
+            });
+            return saved;
         });
         return saved;
     }
@@ -83,6 +98,17 @@ public sealed partial class AchievementEditorPage
         {
             var result = await _editor.ExportAsync(
                 _inspection!, _targetLanguage, _inspection!.Rows, true, format, output);
+            await App.Logs.WriteAsync(
+                "信息",
+                "成就导出",
+                $"已导出 {format.ToUpperInvariant()} 文件。" +
+                (string.IsNullOrWhiteSpace(result.RevisionWarning) ? "" : $" {result.RevisionWarning}"));
+            await App.Logs.WriteAsync(
+                "详细",
+                "成就导出",
+                $"导出完成。App ID={_inspection.AppId}；目标语言={_targetLanguage}；" +
+                $"文件={Path.GetFileName(result.Output)}。",
+                detailed: true);
             App.ViewModel.ShowInfo(
                 string.IsNullOrWhiteSpace(result.RevisionWarning)
                     ? $"已导出并记录 Git 修订：{result.Output}"
@@ -116,6 +142,22 @@ public sealed partial class AchievementEditorPage
         if (await dialog.ShowAsync() == ContentDialogResult.Primary)
         {
             await _contributions.OpenAsync(draft);
+            await App.Logs.WriteAsync("信息", "翻译投稿", "已打开预填的 GitHub 投稿表单。");
+            await App.Logs.WriteAsync(
+                "详细",
+                "翻译投稿",
+                $"投稿已准备。App ID={_game!.AppId}；游戏={_game.GameName}；" +
+                $"类型={(draft.IsUpdate ? "更新" : "新投稿")}；语言={draft.Languages}；" +
+                $"文件={Path.GetFileName(draft.ZipPath)}。",
+                detailed: true);
+        }
+        else
+        {
+            await App.Logs.WriteAsync(
+                "详细",
+                "翻译投稿",
+                $"用户稍后投稿。App ID={_game!.AppId}。",
+                detailed: true);
         }
     }
 
@@ -144,6 +186,16 @@ public sealed partial class AchievementEditorPage
             _editState.Accept(_targetLanguage, _inspection.Rows);
             UpdateStatus();
             saved = true;
+            await App.Logs.WriteAsync(
+                "信息",
+                "成就草稿",
+                $"草稿已保存；包含 {draft.Rows.Count} 个成就。" +
+                (string.IsNullOrWhiteSpace(result.RevisionWarning) ? "" : $" {result.RevisionWarning}"));
+            await App.Logs.WriteAsync(
+                "详细",
+                "成就草稿",
+                $"草稿检查点已保存。App ID={_inspection.AppId}；目标语言={_targetLanguage}。",
+                detailed: true);
             App.ViewModel.ShowInfo(
                 string.IsNullOrWhiteSpace(result.RevisionWarning)
                     ? $"已自动保存 {_targetLanguage} 草稿并记录修改历史（{draft.Rows.Count} 个成就）。"

@@ -12,6 +12,7 @@ public sealed partial class LocalGamesPage : Page
     private static readonly Uri LocalizerUri = new(
         "https://github.com/GaBoron/steam-achievement-localizer-skill");
     private readonly LocalImportService _localImport = new();
+    private readonly SteamMutationDialogService _steamMutations = new();
     private bool _isImporting;
 
     public GameInventoryViewModel ViewModel { get; } = new(GameInventoryScope.Local);
@@ -71,17 +72,21 @@ public sealed partial class LocalGamesPage : Page
             {
                 return;
             }
-            using var monitoringSuppression = App.ViewModel.Translations
-                .BeginSchemaMonitoringSuppression([preview.Replacement.AppId]);
-            await _localImport.InstallAsync(
-                sourcePath,
-                preview.SchemaSha256,
-                App.ViewModel.Settings);
-            await ViewModel.RefreshAsync();
-            await App.ViewModel.Translations.ScanAsync(refreshCatalog: false);
-            App.ViewModel.ShowInfo(
-                $"已导入并安装 {preview.Replacement.GameName}（App ID {preview.Replacement.AppId}）。",
-                InfoBarSeverity.Success);
+            await _steamMutations.ExecuteAsync(XamlRoot, async () =>
+            {
+                using var monitoringSuppression = App.ViewModel.Translations
+                    .BeginSchemaMonitoringSuppression([preview.Replacement.AppId]);
+                await _localImport.InstallAsync(
+                    sourcePath,
+                    preview.SchemaSha256,
+                    App.ViewModel.Settings);
+                await ViewModel.RefreshAsync();
+                await App.ViewModel.Translations.ScanAsync(refreshCatalog: false);
+                App.ViewModel.ShowInfo(
+                    $"已导入并安装 {preview.Replacement.GameName}（App ID {preview.Replacement.AppId}）。",
+                    InfoBarSeverity.Success);
+                return true;
+            });
         }
         catch (Exception exception)
         {

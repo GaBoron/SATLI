@@ -16,12 +16,6 @@ artifacts/
 *.log
 *.binlog
 
-# Test results
-[Tt]est[Rr]esult*/
-*.trx
-*.coverage
-*.coveragexml
-
 # NuGet
 *.nupkg
 *.snupkg
@@ -46,7 +40,6 @@ PublishScripts/
 # Code analysis and tooling
 _ReSharper*/
 *.DotSettings.user
-*.dotCover
 .idea/
 
 # Generated files

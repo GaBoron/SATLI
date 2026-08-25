@@ -14,9 +14,6 @@ public sealed record ContributionDraft(
 
 public sealed class ContributionWorkflowService
 {
-    private const string IssueBase =
-        "https://github.com/GaBoron/steam-achievement-translation-library/issues/new";
-
     public ContributionDraft Prepare(GameItem game, SchemaEditResult result)
     {
         if (string.IsNullOrWhiteSpace(result.Output))
@@ -55,17 +52,15 @@ public sealed class ContributionWorkflowService
         var summary = result.ChangedNames == 0 && result.ChangedDescriptions == 0
             ? "重新导出并校验现有译本。"
             : $"修正 {result.ChangedNames} 项成就名称和 {result.ChangedDescriptions} 项成就说明。";
-        var fields = new Dictionary<string, string>
+        var template = isUpdate
+            ? "translation_update_zh.yml"
+            : "translation_contribution_zh.yml";
+        var title = $"[{(isUpdate ? "翻译更新" : "翻译投稿")}] {game.GameName} ({game.AppId})";
+        var fields = new Dictionary<string, string?>
         {
-            ["template"] = isUpdate
-                ? "translation_update_zh.yml"
-                : "translation_contribution_zh.yml",
-            ["title"] = $"[{(isUpdate ? "翻译更新" : "翻译投稿")}] {game.GameName} ({game.AppId})",
             ["game_name"] = game.GameName,
             ["app_id"] = game.AppId,
-            ["store_url"] = $"https://store.steampowered.com/app/{game.AppId}/",
-            ["languages"] = string.Join(", ", languages),
-            ["notes"] = $"由 SATLI 校验并导出；schema SHA-256：{schemaSha256}",
+            ["notes"] = "由 SATLI 上传。",
         };
         if (isUpdate)
         {
@@ -75,13 +70,9 @@ public sealed class ContributionWorkflowService
                 fields["variant_id"] = game.SelectedVariantId;
             }
         }
-        var query = string.Join(
-            "&",
-            fields.Select(pair =>
-                $"{Uri.EscapeDataString(pair.Key)}={Uri.EscapeDataString(pair.Value)}"));
         return new ContributionDraft(
             zipPath,
-            new Uri($"{IssueBase}?{query}"),
+            GitHubIssueFormUriBuilder.Build(template, title, fields),
             isUpdate,
             string.Join(", ", languages),
             summary);

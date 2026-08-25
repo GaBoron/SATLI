@@ -10,6 +10,7 @@ namespace Satli_Gui.Pages;
 public sealed partial class RevisionHistoryPage : Page
 {
     private readonly SchemaRevisionService _revisions = new();
+    private readonly SteamMutationDialogService _steamMutations = new();
     private GameItem? _game;
     private bool _isBusy;
 
@@ -50,6 +51,11 @@ public sealed partial class RevisionHistoryPage : Page
         StatusText.Text = items.Count == 0
             ? "尚无正式修订；保存或导出不同内容后会创建 Git 提交。"
             : $"共 {items.Count} 个 Git 修订。";
+        await App.Logs.WriteAsync(
+            "详细",
+            "Git 修订",
+            $"修订历史已加载。App ID={_game!.AppId}；修订数={items.Count}。",
+            detailed: true);
     }
 
     private async void Preview_Click(object sender, RoutedEventArgs e)
@@ -61,6 +67,11 @@ public sealed partial class RevisionHistoryPage : Page
         await RunBusyAsync(async () =>
         {
             var diff = await _revisions.PreviewDiffAsync(_game, revision);
+            await App.Logs.WriteAsync(
+                "详细",
+                "Git 修订",
+                $"正在预览修订差异。App ID={_game.AppId}；修订={revision.ShortCommit}。",
+                detailed: true);
             await SchemaRevisionDiffDialog.ShowAsync(
                 XamlRoot,
                 diff,
@@ -104,6 +115,7 @@ public sealed partial class RevisionHistoryPage : Page
         catch (Exception exception)
         {
             App.ViewModel.ShowInfo($"无法打开保存位置选择器：{exception.Message}", InfoBarSeverity.Error);
+            await App.Logs.WriteExceptionDetailsAsync("文件选择器", exception);
             return;
         }
         if (output is null)
@@ -113,6 +125,13 @@ public sealed partial class RevisionHistoryPage : Page
         await RunBusyAsync(async () =>
         {
             await _revisions.ExportAsync(_game, revision, format, output);
+            await App.Logs.WriteAsync("信息", "Git 修订", $"已导出修订 {revision.ShortCommit}。");
+            await App.Logs.WriteAsync(
+                "详细",
+                "Git 修订",
+                $"修订导出完成。App ID={_game.AppId}；修订={revision.ShortCommit}；" +
+                $"格式={format}；文件={Path.GetFileName(output)}。",
+                detailed: true);
             App.ViewModel.ShowInfo($"已导出修订：{output}", InfoBarSeverity.Success);
         });
     }
@@ -136,12 +155,22 @@ public sealed partial class RevisionHistoryPage : Page
             {
                 return;
             }
-            using var monitoringSuppression = App.ViewModel.Translations
-                .BeginSchemaMonitoringSuppression([_game.AppId]);
-            await _revisions.ActivateAsync(_game, revision, force: false);
-            await App.ViewModel.Translations.ScanAsync(refreshCatalog: false);
-            App.ViewModel.ShowInfo("所选修订已设为当前版本，并创建了新的 Git 提交。", InfoBarSeverity.Success);
-            await LoadCoreAsync();
+            await _steamMutations.ExecuteAsync(XamlRoot, async () =>
+            {
+                using var monitoringSuppression = App.ViewModel.Translations
+                    .BeginSchemaMonitoringSuppression([_game.AppId]);
+                await _revisions.ActivateAsync(_game, revision, force: false);
+                await App.ViewModel.Translations.ScanAsync(refreshCatalog: false);
+                await App.Logs.WriteAsync("信息", "Git 修订", $"修订 {revision.ShortCommit} 已设为当前版本。");
+                await App.Logs.WriteAsync(
+                    "详细",
+                    "Git 修订",
+                    $"修订已激活。App ID={_game.AppId}；修订={revision.ShortCommit}。",
+                    detailed: true);
+                App.ViewModel.ShowInfo("所选修订已设为当前版本，并创建了新的 Git 提交。", InfoBarSeverity.Success);
+                await LoadCoreAsync();
+                return true;
+            });
         });
     }
 

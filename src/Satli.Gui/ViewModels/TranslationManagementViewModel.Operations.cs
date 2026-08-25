@@ -87,11 +87,11 @@ public sealed partial class TranslationManagementViewModel
     public static ReplacementPreview ParseCurrentPreview(CliRunResult result, GameItem game) =>
         TranslationPreviewParser.ParseCurrent(result, game);
 
-    public async Task InstallAsync(IReadOnlyList<GameItem> selected)
+    public async Task<bool> InstallAsync(IReadOnlyList<GameItem> selected)
     {
         if (!_operation.TryBegin())
         {
-            return;
+            return false;
         }
         try
         {
@@ -114,19 +114,21 @@ public sealed partial class TranslationManagementViewModel
                         : summary.HasSucceededItems
                             ? InfoBarSeverity.Warning
                             : InfoBarSeverity.Error);
-                return;
+                return summary.Failed == 0;
             }
             if (!result.IsSuccess)
             {
                 ShowResultError(result);
-                return;
+                return false;
             }
             await ReloadAfterMutationAsync();
             ShowInfo("所选翻译已安装。", InfoBarSeverity.Success);
+            return true;
         }
         catch (Exception exception)
         {
             ShowException("安装", exception);
+            return false;
         }
         finally
         {
@@ -144,11 +146,11 @@ public sealed partial class TranslationManagementViewModel
         return result is null ? null : TryParsePreviews(result, selected);
     }
 
-    public async Task RestoreAsync(IReadOnlyList<GameItem> selected, bool force)
+    public async Task<bool> RestoreAsync(IReadOnlyList<GameItem> selected, bool force)
     {
         if (!_operation.TryBegin())
         {
-            return;
+            return false;
         }
         try
         {
@@ -160,14 +162,16 @@ public sealed partial class TranslationManagementViewModel
             if (!result.IsSuccess)
             {
                 ShowResultError(result);
-                return;
+                return false;
             }
             await ReloadAfterMutationAsync();
             ShowInfo(force ? "已归档当前文件并完成恢复。" : "已恢复安装前文件。", InfoBarSeverity.Success);
+            return true;
         }
         catch (Exception exception)
         {
             ShowException("恢复", exception);
+            return false;
         }
         finally
         {

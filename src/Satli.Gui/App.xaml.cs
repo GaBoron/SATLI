@@ -33,8 +33,6 @@ public partial class App : Application
     public static Microsoft.UI.Dispatching.DispatcherQueue DispatcherQueue { get; private set; } = null!;
     public static MainViewModel ViewModel { get; } = new();
     public static LogService Logs { get; } = new();
-    public static GitHubIntegrationService GitHub { get; } =
-        new(() => ViewModel.Settings.Network);
 
     /// <summary>
     /// The native window handle (HWND). Use for file pickers,
@@ -98,12 +96,29 @@ public partial class App : Application
             _mainInstance.Activated += MainInstance_Activated;
             Window = new MainWindow();
             WindowActivationService.ShowAndActivate(Window);
+            _ = CleanupLegacyGitHubCredentialsAsync();
             _ = CleanupCompletedUpdatesAsync();
         }
         catch (Exception exception)
         {
             LogStartupException(exception);
             throw;
+        }
+    }
+
+    private static async Task CleanupLegacyGitHubCredentialsAsync()
+    {
+        var result = new LegacyGitHubCredentialCleanupService().Cleanup();
+        if (result.RecycledFiles.Count > 0)
+        {
+            await Logs.WriteAsync(
+                "信息",
+                "GitHub",
+                $"已将 {result.RecycledFiles.Count} 个旧 GitHub 本地凭据文件移入回收站。");
+        }
+        foreach (var failure in result.Failures)
+        {
+            await Logs.WriteAsync("警告", "GitHub", failure);
         }
     }
 

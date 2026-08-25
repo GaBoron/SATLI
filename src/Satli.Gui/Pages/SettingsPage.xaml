@@ -125,9 +125,6 @@
                 TestConnectionRequested="SteamLibrarySettingsEditor_TestConnectionRequested"
                 OpenApiKeyPageRequested="SteamLibrarySettingsEditor_OpenApiKeyPageRequested" />
 
-            <TextBlock Text="GitHub" Style="{StaticResource SubtitleTextBlockStyle}" Margin="0,12,0,0" />
-            <controls:GitHubSettingsControl />
-
             <TextBlock Text="日志" Style="{StaticResource SubtitleTextBlockStyle}" Margin="0,12,0,0" />
             <StackPanel Spacing="8">
                 <Border Style="{StaticResource SettingsCardStyle}">
@@ -138,7 +135,7 @@
                         </Grid.ColumnDefinitions>
                         <StackPanel VerticalAlignment="Center" Spacing="3">
                             <TextBlock Text="记录运行日志" Style="{StaticResource BodyStrongTextBlockStyle}" />
-                            <TextBlock Text="记录扫描、安装、恢复、缓存和异常信息，不记录成就文件内容。" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
+                            <TextBlock Text="记录启动与设置、扫描与缓存、安装与恢复、本地编辑、草稿、修订、导出、Steam 进程保护、网络与更新、GitHub 表单和异常；不记录凭据或成就文件正文。" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
                         </StackPanel>
                         <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
                             <TextBlock x:Name="LoggingStateText" Style="{StaticResource SettingsToggleStateTextStyle}" />
@@ -160,7 +157,7 @@
                             <TextBlock Text="详细程度" Style="{StaticResource BodyStrongTextBlockStyle}" />
                             <TextBlock
                                 x:Name="LogLevelDescriptionText"
-                                Text="仅记录关键结果、警告和错误摘要，适合日常使用。"
+                                Text="记录各功能的关键开始与结果、用户取消、警告和错误摘要，适合日常使用。"
                                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                 TextWrapping="Wrap" />
                         </StackPanel>

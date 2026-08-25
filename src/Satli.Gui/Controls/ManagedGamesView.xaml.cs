@@ -15,6 +15,7 @@ namespace Satli_Gui.Controls;
 public sealed partial class ManagedGamesView : UserControl
 {
     private readonly Action<Type, object> _navigate;
+    private readonly SteamMutationDialogService _steamMutations = new();
     private bool _stateSyncQueued;
     private bool _subscribed;
 
@@ -103,7 +104,9 @@ public sealed partial class ManagedGamesView : UserControl
                     : $"确认恢复 {selected.Count} 个游戏",
                 force ? "确认归档并恢复" : "确认恢复"))
         {
-            await ViewModel.RestoreAsync(selected, force);
+            await _steamMutations.ExecuteAsync(
+                XamlRoot,
+                () => ViewModel.RestoreAsync(selected, force));
             State.Synchronize(ViewModel.ManagedGames, ViewModel.IsLoading);
         }
     }

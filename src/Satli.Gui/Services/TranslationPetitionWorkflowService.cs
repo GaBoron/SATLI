@@ -1,6 +1,5 @@
 using System.Diagnostics;
 using System.Globalization;
-using System.Security.Cryptography;
 using Satli_Gui.Models;
 using Windows.System;
 
@@ -19,9 +18,6 @@ public sealed record TranslationPetitionDraft(
 
 public sealed class TranslationPetitionWorkflowService
 {
-    private const string IssueBase =
-        "https://github.com/GaBoron/steam-achievement-translation-library/issues/new";
-
     public TranslationPetitionInput NormalizeInput(TranslationPetitionInput input)
     {
         var gameName = SingleLine(input.GameName);
@@ -71,29 +67,20 @@ public sealed class TranslationPetitionWorkflowService
             throw new FileNotFoundException("找不到刚导出的请愿 ZIP。", fullPath);
         }
 
-        var schema = SchemaZipArchive.ReadSingleSchema(fullPath, normalized.AppId);
-        var sha256 = Convert.ToHexString(SHA256.HashData(schema)).ToLowerInvariant();
-        var generatedNote = $"由 SATLI 校验并导出；schema SHA-256：{sha256}";
-        var notes = string.IsNullOrWhiteSpace(normalized.Notes)
-            ? generatedNote
-            : $"{normalized.Notes}{Environment.NewLine}{Environment.NewLine}{generatedNote}";
-        var fields = new Dictionary<string, string>
+        _ = SchemaZipArchive.ReadSingleSchema(fullPath, normalized.AppId);
+        var fields = new Dictionary<string, string?>
         {
-            ["template"] = "translation_petition_zh.yml",
-            ["title"] = $"[翻译请愿] {normalized.GameName} ({normalized.AppId})",
             ["game_name"] = normalized.GameName,
             ["app_id"] = normalized.AppId,
-            ["store_url"] = $"https://store.steampowered.com/app/{normalized.AppId}/",
             ["target_languages"] = normalized.TargetLanguages,
-            ["notes"] = notes,
+            ["notes"] = normalized.Notes,
         };
-        var query = string.Join(
-            "&",
-            fields.Select(pair =>
-                $"{Uri.EscapeDataString(pair.Key)}={Uri.EscapeDataString(pair.Value)}"));
         return new TranslationPetitionDraft(
             fullPath,
-            new Uri($"{IssueBase}?{query}"),
+            GitHubIssueFormUriBuilder.Build(
+                "translation_petition_zh.yml",
+                $"[翻译请愿] {normalized.GameName} ({normalized.AppId})",
+                fields),
             normalized);
     }
 

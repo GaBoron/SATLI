@@ -21,10 +21,14 @@ public static class TranslationPetitionDialogService
 
         try
         {
-            var account = await App.GitHub.GetAccountAsync();
-            var input = await EditAsync(xamlRoot, game, account);
+            var input = await EditAsync(xamlRoot, game);
             if (input is null)
             {
+                await App.Logs.WriteAsync(
+                    "详细",
+                    "翻译请愿",
+                    $"用户取消翻译请愿。App ID={game?.AppId ?? "未填写"}。",
+                    detailed: true);
                 return;
             }
 
@@ -39,6 +43,13 @@ public static class TranslationPetitionDialogService
 
             var draft = workflow.Prepare(normalized, output);
             await workflow.OpenAsync(draft);
+            await App.Logs.WriteAsync("信息", "翻译请愿", "已导出请愿 ZIP，并打开预填的 GitHub 表单。");
+            await App.Logs.WriteAsync(
+                "详细",
+                "翻译请愿",
+                $"请愿已准备。App ID={normalized.AppId}；游戏={normalized.GameName}；" +
+                $"目标语言={normalized.TargetLanguages}；文件={Path.GetFileName(draft.ZipPath)}。",
+                detailed: true);
             App.ViewModel.ShowInfo(
                 "翻译请愿表单已自动填写，ZIP 也已在资源管理器中选中；请将 ZIP 拖到上传区域后提交 Issue。",
                 InfoBarSeverity.Success);
@@ -52,8 +63,7 @@ public static class TranslationPetitionDialogService
 
     private static async Task<TranslationPetitionInput?> EditAsync(
         XamlRoot xamlRoot,
-        GameItem? game,
-        GitHubAccount? account)
+        GameItem? game)
     {
         var workflow = new TranslationPetitionWorkflowService();
         var gameName = new TextBox
@@ -100,10 +110,10 @@ public static class TranslationPetitionDialogService
         {
             IsOpen = true,
             IsClosable = false,
-            Severity = account is null ? InfoBarSeverity.Informational : InfoBarSeverity.Success,
-            Title = account is null ? "使用 GitHub 网页表单" : $"已绑定 GitHub：@{account.Login}",
-            Message = "应用会导出并校验原始 schema ZIP，自动填写 Issue 字段并打开附件位置。"
-                + "GitHub Issue API 不支持附件上传，最后只需把选中的 ZIP 拖到上传区域并提交。",
+            Severity = InfoBarSeverity.Informational,
+            Title = "使用 GitHub 网页表单",
+            Message = "应用会导出并校验原始 schema ZIP，自动填写确定的 Issue 字段并打开附件位置。"
+                + "最后请把选中的 ZIP 拖到上传区域，并在浏览器中确认提交。",
         });
         content.Children.Add(gameName);
         content.Children.Add(appId);

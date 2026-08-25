@@ -3,13 +3,13 @@ using Microsoft.UI.Xaml.Controls;
 using Satli_Gui.Models;
 using Satli_Gui.Services;
 using Satli_Gui.ViewModels;
-using Windows.System;
 
 namespace Satli_Gui.Pages;
 
 public sealed partial class CloudGamesPage : Page
 {
     private readonly Dictionary<string, GitHubReportDraft> _reportDrafts = [];
+    private readonly GitHubReportWorkflowService _reports = new();
 
     public GameInventoryViewModel ViewModel { get; } = new(GameInventoryScope.Cloud);
 
@@ -56,28 +56,28 @@ public sealed partial class CloudGamesPage : Page
         }
         try
         {
-            if (await App.GitHub.GetAccountAsync() is null)
-            {
-                var account = await GitHubBindingDialog.BindAsync(XamlRoot, App.GitHub);
-                if (account is null)
-                {
-                    return;
-                }
-            }
             var draft = await EditReportAsync(game);
             if (draft is null)
             {
+                await App.Logs.WriteAsync(
+                    "详细",
+                    "GitHub 报告",
+                    $"用户取消文件错误报告。App ID={game.AppId}。",
+                    detailed: true);
                 return;
             }
             _reportDrafts[game.AppId] = draft;
-            if (!await ConfirmReportAsync(draft))
-            {
-                return;
-            }
-            var issueUrl = await App.GitHub.CreateReportIssueAsync(draft);
-            _reportDrafts.Remove(game.AppId);
-            await ShowSubmittedAsync(issueUrl);
-            App.ViewModel.ShowInfo("GitHub 文件错误报告已提交。", InfoBarSeverity.Success);
+            var issueFormUri = _reports.Prepare(draft);
+            await _reports.OpenAsync(issueFormUri);
+            await App.Logs.WriteAsync("信息", "GitHub 报告", "已打开预填的文件错误报告表单。");
+            await App.Logs.WriteAsync(
+                "详细",
+                "GitHub 报告",
+                $"表单已准备。App ID={draft.AppId}；游戏={draft.GameName}；错误类型={draft.ErrorType}。",
+                detailed: true);
+            App.ViewModel.ShowInfo(
+                "GitHub 文件错误报告表单已预填；请在浏览器中确认后提交。",
+                InfoBarSeverity.Success);
         }
         catch (Exception exception)
         {
@@ -125,7 +125,7 @@ public sealed partial class CloudGamesPage : Page
             XamlRoot = XamlRoot,
             Title = "报告成就文件错误",
             Content = content,
-            PrimaryButtonText = "预览",
+            PrimaryButtonText = "打开网页表单",
             CloseButtonText = "取消",
             DefaultButton = ContentDialogButton.Primary,
             IsPrimaryButtonEnabled = !string.IsNullOrWhiteSpace(reason.Text),
@@ -140,60 +140,8 @@ public sealed partial class CloudGamesPage : Page
         return new GitHubReportDraft(
             game.GameName,
             game.AppId,
-            $"https://store.steampowered.com/app/{game.AppId}/",
             errorType.SelectedItem?.ToString() ?? "文件可能过期",
             reason.Text,
             reference.Text);
-    }
-
-    private async Task<bool> ConfirmReportAsync(GitHubReportDraft draft)
-    {
-        GitHubReportFormatter.Validate(draft);
-        var preview = new TextBlock
-        {
-            Text =
-                $"{GitHubReportFormatter.Title(draft)}{Environment.NewLine}{Environment.NewLine}" +
-                GitHubReportFormatter.Body(draft),
-            TextWrapping = TextWrapping.Wrap,
-            IsTextSelectionEnabled = true,
-        };
-        var scroll = new ScrollViewer
-        {
-            Content = preview,
-            MaxHeight = 460,
-            MaxWidth = 680,
-        };
-        var dialog = new ContentDialog
-        {
-            XamlRoot = XamlRoot,
-            Title = "确认提交 GitHub Issue",
-            Content = scroll,
-            PrimaryButtonText = "提交报告",
-            CloseButtonText = "返回修改",
-            DefaultButton = ContentDialogButton.Close,
-        };
-        dialog.Resources["ContentDialogMaxWidth"] = 720d;
-        return await dialog.ShowAsync() == ContentDialogResult.Primary;
-    }
-
-    private async Task ShowSubmittedAsync(Uri issueUrl)
-    {
-        var dialog = new ContentDialog
-        {
-            XamlRoot = XamlRoot,
-            Title = "报告已提交",
-            Content = new TextBlock
-            {
-                Text = issueUrl.ToString(),
-                IsTextSelectionEnabled = true,
-                TextWrapping = TextWrapping.Wrap,
-            },
-            PrimaryButtonText = "打开 Issue",
-            CloseButtonText = "完成",
-        };
-        if (await dialog.ShowAsync() == ContentDialogResult.Primary)
-        {
-            await Launcher.LaunchUriAsync(issueUrl);
-        }
     }
 }

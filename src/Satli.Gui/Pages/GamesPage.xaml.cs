@@ -14,6 +14,7 @@ namespace Satli_Gui.Pages;
 public sealed partial class GamesPage : Page
 {
     private readonly TranslationUpdateDiffService _updateDiffs = new();
+    private readonly SteamMutationDialogService _steamMutations = new();
     private int? _selectionAnchorIndex;
 
     public TranslationManagementViewModel ViewModel => App.ViewModel.Translations;
@@ -115,7 +116,9 @@ public sealed partial class GamesPage : Page
             }
         }
 
-        await ViewModel.InstallAsync(selected);
+        await _steamMutations.ExecuteAsync(
+            XamlRoot,
+            () => ViewModel.InstallAsync(selected));
     }
 
     private void GameSelection_Click(object sender, RoutedEventArgs e)

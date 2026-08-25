@@ -247,9 +247,9 @@ public sealed partial class SettingsPage : Page
         var level = (LogLevelBox.SelectedItem as ComboBoxItem)?.Tag?.ToString();
         LogLevelDescriptionText.Text = level switch
         {
-            "detailed" => "包含基础日志，并增加逐项处理事件和异常类型，适合排查具体项目。",
-            "debug" => "包含详细日志，并记录参数、原始事件、耗时、完整异常和环境；重启后自动恢复为“详细”。",
-            _ => "仅记录关键结果、警告和错误摘要，适合日常使用。",
+            "detailed" => "包含基础日志，并增加 App ID、游戏名、语言、数量、文件名、逐项事件和异常类型，适合排查具体项目。",
+            "debug" => "包含详细日志，并记录参数、原始 CLI 事件、标准错误、耗时、完整路径、异常堆栈和运行环境；重启后自动恢复为“详细”。",
+            _ => "记录各功能的关键开始与结果、用户取消、警告和错误摘要，适合日常使用。",
         };
     }
 
@@ -377,6 +377,10 @@ public sealed partial class SettingsPage : Page
             SteamLibrarySettingsEditor.ReadSettings(),
             NetworkSettingsEditor.ReadSettings());
         SteamLibrarySettingsEditor.SetTestState(false, result.Message);
+        await App.Logs.WriteAsync(
+            result.IsSuccess ? "信息" : "警告",
+            "Steam 游戏库",
+            result.Message);
         if (!result.IsSuccess)
         {
             ViewModel.ShowInfo(result.Message, InfoBarSeverity.Warning);
@@ -422,6 +426,7 @@ public sealed partial class SettingsPage : Page
         catch (Exception exception)
         {
             ViewModel.ShowInfo($"无法打开文件夹选择器：{exception.Message}", InfoBarSeverity.Error);
+            await App.Logs.WriteExceptionDetailsAsync("文件夹选择器", exception);
             return null;
         }
     }

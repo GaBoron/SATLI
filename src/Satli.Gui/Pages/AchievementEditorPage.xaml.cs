@@ -9,6 +9,7 @@ namespace Satli_Gui.Pages;
 public sealed partial class AchievementEditorPage : Page
 {
     private readonly SchemaEditorService _editor = new();
+    private readonly SteamMutationDialogService _steamMutations = new();
     private readonly SchemaDraftStore _drafts = new();
     private readonly ContributionWorkflowService _contributions = new();
     private readonly AchievementEditState _editState = new();
@@ -90,6 +91,12 @@ public sealed partial class AchievementEditorPage : Page
         ApplyFilter();
         _editState.Accept(_targetLanguage, _inspection.Rows);
         UpdateStatus();
+        await App.Logs.WriteAsync(
+            "详细",
+            "成就编辑",
+            $"编辑器已加载。App ID={game.AppId}；游戏={game.GameName}；成就数={_inspection.Rows.Count}；" +
+            $"语言={string.Join(", ", _inspection.Languages)}；目标语言={_targetLanguage}。",
+            detailed: true);
     }
 
     private async Task RestoreDraftAsync()

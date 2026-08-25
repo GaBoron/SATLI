@@ -5,10 +5,10 @@
     <TargetPlatformMinVersion>10.0.19041.0</TargetPlatformMinVersion>
     <RootNamespace>Satli_Gui</RootNamespace>
     <AssemblyName>SATLI</AssemblyName>
-    <Version>1.1.1</Version>
-    <AssemblyVersion>1.1.1.0</AssemblyVersion>
-    <FileVersion>1.1.1.0</FileVersion>
-    <InformationalVersion>1.1.1</InformationalVersion>
+    <Version>2.0.0</Version>
+    <AssemblyVersion>2.0.0.0</AssemblyVersion>
+    <FileVersion>2.0.0.0</FileVersion>
+    <InformationalVersion>2.0.0</InformationalVersion>
     <Product>SATLI</Product>
     <AssemblyTitle>SATLI</AssemblyTitle>
     <Description>SATLI</Description>
@@ -25,16 +25,7 @@
     <ApplicationIcon>$(MSBuildProjectDirectory)\Assets\AppIcon.ico</ApplicationIcon>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <GitHubClientId Condition="'$(GitHubClientId)' == ''">$(SATLI_GITHUB_CLIENT_ID)</GitHubClientId>
-    <GitHubClientId Condition="'$(GitHubClientId)' == ''">Iv23liRKwdJVLeXkGuXe</GitHubClientId>
   </PropertyGroup>
-
-  <ItemGroup>
-    <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
-      <_Parameter1>GitHubClientId</_Parameter1>
-      <_Parameter2>$(GitHubClientId)</_Parameter2>
-    </AssemblyAttribute>
-  </ItemGroup>
 
   <ItemGroup>
     <Content Include="Assets\AppIcon.ico" />

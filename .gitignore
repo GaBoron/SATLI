@@ -2,16 +2,8 @@
 __pycache__/
 *.py[cod]
 *.egg-info/
-.pytest_cache/
 .mypy_cache/
 .ruff_cache/
-.hypothesis/
-.tox/
-.nox/
-.coverage
-.coverage.*
-coverage.xml
-htmlcov/
 .venv/
 venv/
 
@@ -20,9 +12,6 @@ venv/
 **/[Oo]bj/
 .vs/
 artifacts/
-TestResults/
-*.trx
-*.coveragexml
 *.binlog
 *.user
 *.suo
@@ -58,17 +47,13 @@ PublishScripts/
 *.rar
 *.sha256
 
-# IDE and local AI tooling
+# IDE tooling and local editor configuration
 .idea/
 .vscode/
-.agents/
-.codex/
 .codexrc
 .cursor/
 .cursorrules
 .claude/
-AGENTS.md
-agents.md
 CLAUDE.md
 GEMINI.md
 
@@ -95,7 +80,6 @@ appsettings.Local.json
 store/
 scripts/build.ps1
 scripts/StoreMsixPackage.psm1
-tests/test_packaging.py
 
 # Logs, crash dumps, and temporary files
 *.log

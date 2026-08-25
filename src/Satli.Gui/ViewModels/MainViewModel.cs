@@ -179,6 +179,15 @@ public sealed class MainViewModel : ObservableObject
         {
             await WriteDebugSessionHeaderAsync();
         }
+        await App.Logs.WriteAsync("信息", "设置", "设置已保存并应用。");
+        await App.Logs.WriteAsync(
+            "详细",
+            "设置",
+            $"离线模式={settings.Offline}；主题={settings.Theme}；日志级别={settings.LogLevel}；" +
+            $"保留天数={settings.LogRetentionDays}；启动检查更新={settings.CheckForUpdatesOnStartup}；" +
+            $"DNS 模式={settings.Network.DnsMode}；代理模式={settings.Network.ProxyMode}；" +
+            $"Steam 游戏库={settings.SteamLibrary.Enabled}。",
+            detailed: true);
         await App.Logs.WriteAsync(
             "调试",
             "设置",
