@@ -57,29 +57,12 @@ internal sealed partial class CommandDispatcher
         var scope = args.Value("--scope") ?? "manageable";
         if (scope is not ("manageable" or "local" or "cloud"))
             throw new UsageException($"无效扫描范围：{scope}");
-        TranslationCatalog catalog;
-        var available = true;
-        try
-        {
-            catalog = await Repository(args).LoadAsync(
-                args.Has("--offline") || args.Has("--catalog-cache-only"));
-        }
-        catch (CatalogException exception) when (scope == "local")
-        {
-            catalog = new TranslationCatalog(0, new Dictionary<string, CatalogEntry>());
-            available = false;
-            _events.Emit("scan", "warning", new JsonObject
-            {
-                ["message"] = $"翻译目录不可用，已继续扫描本地游戏；收录状态暂时未知：{exception.Message}",
-            });
-        }
+        var preparation = await PrepareScanAsync(args, scope);
+        var catalog = preparation.Catalog;
+        var available = preparation.CatalogAvailable;
         if (catalog.Version == 1) WarnV1("scan");
-        var steam = scope == "cloud"
-            ? null
-            : SteamLocator.FindSteamDirectory(args.SteamDirectory);
-        var discovered = steam is null
-            ? new Dictionary<string, DiscoveryRecord>()
-            : SteamLocator.DiscoverLocalGames(steam, args.Value("--account"));
+        var steam = preparation.SteamDirectory;
+        var discovered = preparation.Discovered;
         using var webClient = NetworkClient();
         if (steam is not null && args.Has("--include-owned-games"))
         {
@@ -167,6 +150,9 @@ internal sealed partial class CommandDispatcher
             ["catalog_version"] = catalog.Version,
             ["catalog_from_cache"] = catalog.FromCache,
             ["catalog_source"] = catalog.Source,
+            ["parallel_preparation"] = preparation.UsedParallelPreparation,
+            ["catalog_elapsed_ms"] = preparation.CatalogElapsedMilliseconds,
+            ["steam_discovery_elapsed_ms"] = preparation.SteamDiscoveryElapsedMilliseconds,
         });
         if (ordered.Length > 0)
         {

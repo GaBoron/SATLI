@@ -43,10 +43,15 @@ try {
             Out-Null
     }
     $ExecutableInfo = Get-Item -LiteralPath $Executable
+    $RuntimeFiles = @(
+        Get-ChildItem -LiteralPath $ExecutableInfo.DirectoryName -File -Recurse
+    )
     [pscustomobject] @{
         runtime = "self-contained-csharp"
         executable = $Executable
         executable_bytes = $ExecutableInfo.Length
+        runtime_file_count = $RuntimeFiles.Count
+        runtime_bytes = ($RuntimeFiles | Measure-Object Length -Sum).Sum
         startup_ms = $Startup
         startup_median_ms = ($Startup | Sort-Object)[[math]::Floor($Startup.Count / 2)]
         catalog_refresh_ms = $Refresh

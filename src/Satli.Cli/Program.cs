@@ -15,10 +15,10 @@ internal static class Program
                 && !args.Contains("-h")
                 && !args.Contains("--version"))
                 DataDirectoryMigration.MigrateDefault();
-            if (args.Contains("--version")) { Console.WriteLine("satli 2.1.0"); return 0; }
+            if (args.Contains("--version")) { Console.WriteLine("satli 2.2.0"); return 0; }
             if (args.Length == 0 || args.Contains("--help") || args.Contains("-h"))
             {
-                Console.WriteLine("SATLI 2.1.0 - 安全安装、管理和恢复 Steam 成就翻译");
+                Console.WriteLine("SATLI 2.2.0 - 安全安装、管理和恢复 Steam 成就翻译");
                 Console.WriteLine("命令：scan, install, local-import, status, restore, protect, cache, petition, schema");
                 return args.Length == 0 ? 2 : 0;
             }

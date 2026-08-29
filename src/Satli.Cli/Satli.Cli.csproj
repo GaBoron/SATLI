@@ -5,13 +5,25 @@
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <SelfContained>true</SelfContained>
     <AssemblyName>satli</AssemblyName>
-    <Version>2.1.0</Version>
+    <Version>2.2.0</Version>
+    <AssemblyVersion>2.2.0.0</AssemblyVersion>
+    <FileVersion>2.2.0.0</FileVersion>
+    <InformationalVersion>2.2.0</InformationalVersion>
+    <Product>SATLI</Product>
+    <AssemblyTitle>SATLI Command Line</AssemblyTitle>
+    <Description>SATLI command-line runtime</Description>
+    <Company>GaBoron</Company>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <PublishSingleFile>true</PublishSingleFile>
-    <PublishTrimmed>false</PublishTrimmed>
-    <PublishReadyToRun>false</PublishReadyToRun>
-    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+    <!--
+      Keep the self-contained runtime as ordinary files. A compressed single-file
+      bundle must unpack assemblies into memory at process startup, adding a
+      packer-like behavior that complicates antivirus inspection.
+    -->
+    <PublishSingleFile>false</PublishSingleFile>
+    <PublishTrimmed>true</PublishTrimmed>
+    <TrimMode>full</TrimMode>
+    <PublishReadyToRun>true</PublishReadyToRun>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Satli.Core\Satli.Core.csproj" />

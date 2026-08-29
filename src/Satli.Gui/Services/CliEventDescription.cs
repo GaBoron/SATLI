@@ -15,6 +15,11 @@ public static class CliEventDescription
         var message = satliEvent.Payload.TryGetProperty("message", out var messageValue)
             ? $"：{messageValue.GetString()}"
             : string.Empty;
-        return $"事件 {satliEvent.Event}{appId}{variant}{message}";
+        var preparation = satliEvent.Payload.TryGetProperty("parallel_preparation", out var parallelValue)
+            && satliEvent.Payload.TryGetProperty("catalog_elapsed_ms", out var catalogElapsedValue)
+            && satliEvent.Payload.TryGetProperty("steam_discovery_elapsed_ms", out var steamElapsedValue)
+            ? $"，并行准备={parallelValue.GetBoolean()}，目录={catalogElapsedValue.GetInt64()} ms，Steam 发现={steamElapsedValue.GetInt64()} ms"
+            : string.Empty;
+        return $"事件 {satliEvent.Event}{appId}{variant}{preparation}{message}";
     }
 }

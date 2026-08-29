@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using Satli.Core.FileSystem;
+using Satli.Core.Serialization;
 
 namespace Satli.Core.SchemaEditing;
 
@@ -40,7 +41,9 @@ public sealed class EditHistoryStore
 
     public void Save(JsonObject state)
     {
-        var payload = JsonSerializer.SerializeToUtf8Bytes(state, new JsonSerializerOptions { WriteIndented = true });
+        var payload = JsonSerializer.SerializeToUtf8Bytes(
+            state,
+            SatliCoreJsonSerializerContext.Default.JsonObject);
         FileOperations.WriteDurable(Path, [.. payload, (byte)'\n']);
     }
 
@@ -56,7 +59,7 @@ public sealed class EditHistoryStore
         }
         var transactions = app["transactions"] as JsonArray
             ?? throw new TransactionException($"{appId} 的编辑事务记录无效");
-        transactions.Add(transaction);
+        transactions.Add(transaction.DeepClone());
         Save(state);
     }
 

@@ -5,6 +5,7 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using Satli.Core.FileSystem;
 using Satli.Core.Formats;
+using Satli.Core.Serialization;
 
 namespace Satli.Core.SchemaEditing;
 
@@ -54,7 +55,9 @@ public sealed class SchemaRevisionStore
             ["changed_names"] = changedNames, ["changed_descriptions"] = changedDescriptions,
             ["variant_id"] = variantId,
         };
-        var metadataBytes = JsonSerializer.SerializeToUtf8Bytes(metadata, new JsonSerializerOptions { WriteIndented = true });
+        var metadataBytes = JsonSerializer.SerializeToUtf8Bytes(
+            metadata,
+            SatliCoreJsonSerializerContext.Default.JsonObject);
         var commitInput = metadataBytes.Concat(schema).ToArray();
         var commit = Convert.ToHexString(SHA256.HashData(commitInput)).ToLowerInvariant();
         var directory = Path.Combine(Root, appId, commit);
@@ -67,7 +70,9 @@ public sealed class SchemaRevisionStore
         var index = File.Exists(indexPath) ? JsonNode.Parse(File.ReadAllText(indexPath)) as JsonArray : new JsonArray();
         index ??= new JsonArray();
         if (!index.Any(item => item?.GetValue<string>() == commit)) index.Insert(0, commit);
-        var indexBytes = JsonSerializer.SerializeToUtf8Bytes(index, new JsonSerializerOptions { WriteIndented = true });
+        var indexBytes = JsonSerializer.SerializeToUtf8Bytes(
+            index,
+            SatliCoreJsonSerializerContext.Default.JsonArray);
         FileOperations.WriteDurable(indexPath, [.. indexBytes, (byte)'\n']);
         return Read(appId, commit);
     }

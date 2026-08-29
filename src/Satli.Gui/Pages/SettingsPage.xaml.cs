@@ -247,7 +247,7 @@ public sealed partial class SettingsPage : Page
         var level = (LogLevelBox.SelectedItem as ComboBoxItem)?.Tag?.ToString();
         LogLevelDescriptionText.Text = level switch
         {
-            "detailed" => "包含基础日志，并增加 App ID、游戏名、语言、数量、文件名、逐项事件和异常类型，适合排查具体项目。",
+            "detailed" => "包含基础日志，并增加 App ID、游戏名、语言、数量、文件名、逐项事件、后台预加载与并行准备耗时和异常类型，适合排查具体项目。",
             "debug" => "包含详细日志，并记录参数、原始 CLI 事件、标准错误、耗时、完整路径、异常堆栈和运行环境；重启后自动恢复为“详细”。",
             _ => "记录各功能的关键开始与结果、用户取消、警告和错误摘要，适合日常使用。",
         };

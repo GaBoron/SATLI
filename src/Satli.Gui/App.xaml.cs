@@ -31,8 +31,9 @@ public partial class App : Application
     /// <see cref="Windows.System.DispatcherQueue"/>.
     /// </summary>
     public static Microsoft.UI.Dispatching.DispatcherQueue DispatcherQueue { get; private set; } = null!;
-    public static MainViewModel ViewModel { get; } = new();
     public static LogService Logs { get; } = new();
+    internal static GameInventoryPreloader InventoryPreloader { get; } = new(logs: Logs);
+    public static MainViewModel ViewModel { get; } = new();
 
     /// <summary>
     /// The native window handle (HWND). Use for file pickers,

@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using Satli.Core.FileSystem;
+using Satli.Core.Serialization;
 
 namespace Satli.Core.State;
 
@@ -54,7 +55,7 @@ public sealed class StateStore
     {
         var payload = JsonSerializer.SerializeToUtf8Bytes(
             state,
-            new JsonSerializerOptions { WriteIndented = true });
+            SatliCoreJsonSerializerContext.Default.JsonObject);
         FileOperations.WriteDurable(Path, payload.Concat(new byte[] { (byte)'\n' }).ToArray());
     }
 

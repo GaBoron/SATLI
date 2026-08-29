@@ -123,6 +123,7 @@ public sealed class MainViewModel : ObservableObject
         await App.Logs.WriteAsync("信息", "应用", "设置已加载，开始初始化。");
         ApplyTheme();
         await Translations.ScanAsync(refreshCatalog: true);
+        App.InventoryPreloader.Start(Settings);
         if (Settings.CheckForUpdatesOnStartup)
         {
             await CheckForUpdatesCoreAsync(showCurrentResult: false);
