@@ -24,6 +24,11 @@
     <PublishTrimmed>true</PublishTrimmed>
     <TrimMode>full</TrimMode>
     <PublishReadyToRun>true</PublishReadyToRun>
+    <Optimize>true</Optimize>
+    <Deterministic>true</Deterministic>
+    <PathMap>$(MSBuildProjectDirectory)=/_/Satli.Cli</PathMap>
+    <DebugSymbols>false</DebugSymbols>
+    <DebugType>None</DebugType>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Satli.Core\Satli.Core.csproj" />
