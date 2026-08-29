@@ -11,7 +11,8 @@ public static class CatalogStatusPresentation
         "pending" or "pending-review" or "under-review" or "reviewing" => "审核中",
         "unavailable" or "disabled" => "不可用",
         "deprecated" or "retired" => "已停用",
-        "unknown" or "unlisted" or "missing" => "未收录",
+        "unlisted" or "missing" => "未收录",
+        "unknown" => "收录状态未知",
         _ => "未知状态",
     };
 
@@ -29,8 +30,10 @@ public static class CatalogStatusPresentation
             "该翻译当前不可用。",
         "deprecated" or "retired" =>
             "该翻译已经停用，不建议继续安装。",
-        "unknown" or "unlisted" or "missing" =>
+        "unlisted" or "missing" =>
             "云端索引未收录，当前没有可安装的社区翻译。",
+        "unknown" =>
+            "当前无法读取云端翻译目录，因此不能确认该游戏是否已经收录。",
         _ => "云端索引返回了未识别的状态，当前不建议安装。",
     };
 

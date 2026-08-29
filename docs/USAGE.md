@@ -133,7 +133,9 @@
 - 连接测试
 - 离线模式和最近成功加载的云端列表
 
-“设置 → 下载源”可分别拖动调整 `index.json` 与翻译 BIN 文件的来源顺序，应用会从上到下依次尝试。默认索引顺序为 GitHub Raw、jsDelivr、jsDelivr Fastly、StaticDelivr；默认文件顺序为 jsDelivr、jsDelivr Fastly、GitHub Raw。StaticDelivr 只提供索引候选，因为实际验证中其二进制文件响应不适合作为安装器下载源。两个列表可分别恢复默认顺序。
+“设置 → 下载源”可分别拖动调整翻译目录与翻译 BIN 文件的来源顺序。每个目录源会先请求 `index-v2.json`，不可用或不兼容时再回退同源 `index.json`，然后继续下一个来源。默认目录顺序为 GitHub Raw、jsDelivr、jsDelivr Fastly、StaticDelivr；默认文件顺序为 jsDelivr、jsDelivr Fastly、GitHub Raw。StaticDelivr 只提供目录候选，因为实际验证中其二进制文件响应不适合作为安装器下载源。两个列表可分别恢复默认顺序。
+
+本地游戏扫描不以在线翻译目录为前提。无网络且没有目录缓存时，本地页仍会列出扫描到的游戏，并将收录状态显示为“未知”；只有已确认目录未收录的游戏才会显示请求翻译入口。V2 译本下载固定限制为 32 MiB，并在预览、安装和更新判断前使用 SHA-256 校验内容。
 
 独立安装版无法访问 GitHub 时，软件更新检查失败不会影响扫描、安装、编辑或恢复。Microsoft Store 版的软件更新状态可在 Store 中查看。
 

@@ -33,12 +33,12 @@ public sealed partial class CloudGamesPage : Page
             return;
         }
 
-        var preview = await App.ViewModel.Translations.PreviewCatalogAsync(game);
-        if (preview is not null)
+        var previews = await App.ViewModel.Translations.PreviewCatalogAsync(game);
+        if (previews is { Count: > 0 })
         {
             await ReplacementConfirmationDialog.ShowCatalogReadOnlyAsync(
                 XamlRoot,
-                [preview],
+                previews,
                 $"查看云端成就 · {game.GameName}");
         }
     }
@@ -56,6 +56,10 @@ public sealed partial class CloudGamesPage : Page
         }
         try
         {
+            await App.Logs.WriteAsync(
+                "信息",
+                "GitHub 报告",
+                $"开始准备文件错误报告。App ID={game.AppId}。");
             var draft = await EditReportAsync(game);
             if (draft is null)
             {
@@ -69,14 +73,14 @@ public sealed partial class CloudGamesPage : Page
             _reportDrafts[game.AppId] = draft;
             var issueFormUri = _reports.Prepare(draft);
             await _reports.OpenAsync(issueFormUri);
-            await App.Logs.WriteAsync("信息", "GitHub 报告", "已打开预填的文件错误报告表单。");
+            await App.Logs.WriteAsync("信息", "GitHub 报告", "已打开预填的文件错误报告草稿。");
             await App.Logs.WriteAsync(
                 "详细",
                 "GitHub 报告",
-                $"表单已准备。App ID={draft.AppId}；游戏={draft.GameName}；错误类型={draft.ErrorType}。",
+                $"草稿已准备。App ID={draft.AppId}；游戏={draft.GameName}；错误类型={draft.ErrorType}。",
                 detailed: true);
             App.ViewModel.ShowInfo(
-                "GitHub 文件错误报告表单已预填；请在浏览器中确认后提交。",
+                "GitHub 文件错误报告草稿已预填；请在浏览器中确认后提交。",
                 InfoBarSeverity.Success);
         }
         catch (Exception exception)
@@ -125,7 +129,7 @@ public sealed partial class CloudGamesPage : Page
             XamlRoot = XamlRoot,
             Title = "报告成就文件错误",
             Content = content,
-            PrimaryButtonText = "打开网页表单",
+            PrimaryButtonText = "打开网页草稿",
             CloseButtonText = "取消",
             DefaultButton = ContentDialogButton.Primary,
             IsPrimaryButtonEnabled = !string.IsNullOrWhiteSpace(reason.Text),

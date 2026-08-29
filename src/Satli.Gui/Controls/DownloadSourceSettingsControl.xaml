@@ -23,7 +23,7 @@
                     <StackPanel Spacing="3">
                         <TextBlock Text="索引下载顺序" Style="{StaticResource BodyStrongTextBlockStyle}" />
                         <TextBlock
-                            Text="拖动调整顺序；获取 index.json 时从上到下尝试，默认优先 GitHub Raw。"
+                            Text="拖动调整顺序；获取翻译目录时从上到下尝试，并优先使用 v2 Catalog。"
                             Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                             TextWrapping="Wrap" />
                     </StackPanel>

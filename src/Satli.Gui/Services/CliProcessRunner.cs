@@ -119,39 +119,40 @@ internal sealed class CliProcessRunner
         }
 
         var applicationDirectory = ResolveApplicationDirectory();
-        var runtimeDirectory = Path.Combine(applicationDirectory, "_runtime");
-        var embeddedPython = Path.Combine(runtimeDirectory, "python.exe");
-        var applicationArchive = Path.Combine(runtimeDirectory, "satli.pyz");
-        if (File.Exists(embeddedPython) && File.Exists(applicationArchive))
+        var commandLine = Path.Combine(applicationDirectory, "cli", "satli.exe");
+        if (File.Exists(commandLine))
         {
             return new LaunchInfo(
-                embeddedPython,
+                commandLine,
                 applicationDirectory,
-                [applicationArchive],
+                [],
                 new Dictionary<string, string>());
         }
 
         for (var directory = new DirectoryInfo(applicationDirectory); directory is not null; directory = directory.Parent)
         {
-            if (!File.Exists(Path.Combine(directory.FullName, "pyproject.toml")))
+            var localCommandLine = Path.Combine(
+                directory.FullName,
+                "src",
+                "Satli.Cli",
+                "bin",
+                "x64",
+                "Debug",
+                "net10.0-windows10.0.19041.0",
+                "win-x64",
+                "satli.exe");
+            if (!File.Exists(localCommandLine))
             {
                 continue;
             }
-            var python = Path.Combine(directory.FullName, ".venv", "Scripts", "python.exe");
-            if (File.Exists(python))
-            {
-                return new LaunchInfo(
-                    python,
-                    directory.FullName,
-                    ["-m", "satli"],
-                    new Dictionary<string, string>
-                    {
-                        ["PYTHONPATH"] = Path.Combine(directory.FullName, "src"),
-                    });
-            }
+            return new LaunchInfo(
+                localCommandLine,
+                directory.FullName,
+                [],
+                new Dictionary<string, string>());
         }
 
-        throw new FileNotFoundException("SATLI 运行文件不完整，请重新安装此软件。", applicationArchive);
+        throw new FileNotFoundException("SATLI 运行文件不完整，请重新安装此软件。", commandLine);
     }
 
     private static string ResolveApplicationDirectory()

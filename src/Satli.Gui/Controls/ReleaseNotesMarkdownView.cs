@@ -13,6 +13,7 @@ public sealed class ReleaseNotesMarkdownView : Grid
     private readonly TextBlock _fallback;
     private readonly WebView2 _webView;
     private bool _initialized;
+    private bool _awaitingDocumentNavigation;
 
     public ReleaseNotesMarkdownView(string markdown, Uri baseUri)
     {
@@ -46,6 +47,11 @@ public sealed class ReleaseNotesMarkdownView : Grid
         }
 
         _initialized = true;
+        await App.Logs.WriteAsync(
+            "调试",
+            "更新说明",
+            "开始初始化 Markdown 更新说明渲染器。",
+            debug: true);
         try
         {
             var environment = await CoreWebView2Environment.CreateWithOptionsAsync(
@@ -61,10 +67,15 @@ public sealed class ReleaseNotesMarkdownView : Grid
             _webView.NavigationCompleted += OnNavigationCompleted;
             RenderOrShowFallback();
         }
-        catch
+        catch (Exception exception)
         {
             _webView.Visibility = Visibility.Collapsed;
             _fallback.Visibility = Visibility.Visible;
+            await App.Logs.WriteAsync(
+                "警告",
+                "更新说明",
+                "Markdown 渲染组件初始化失败，已使用可读的纯文本更新说明。");
+            await App.Logs.WriteExceptionDetailsAsync("更新说明", exception);
         }
     }
 
@@ -82,14 +93,21 @@ public sealed class ReleaseNotesMarkdownView : Grid
         _webView.Visibility = Visibility.Collapsed;
         try
         {
+            _awaitingDocumentNavigation = true;
             _webView.NavigateToString(ReleaseNotesMarkdownFormatter.ToHtml(
                 _markdown,
                 _baseUri,
                 ActualTheme == ElementTheme.Dark));
         }
-        catch
+        catch (Exception exception)
         {
+            _awaitingDocumentNavigation = false;
             // The readable plain-text fallback remains visible.
+            _ = App.Logs.WriteAsync(
+                "警告",
+                "更新说明",
+                "Markdown 更新说明导航失败，已使用可读的纯文本内容。");
+            _ = App.Logs.WriteExceptionDetailsAsync("更新说明", exception);
         }
     }
 
@@ -97,11 +115,15 @@ public sealed class ReleaseNotesMarkdownView : Grid
         CoreWebView2 sender,
         CoreWebView2NavigationStartingEventArgs args)
     {
-        if (args.Uri.Equals("about:blank", StringComparison.OrdinalIgnoreCase))
+        if (_awaitingDocumentNavigation
+            && (args.Uri.Equals("about:blank", StringComparison.OrdinalIgnoreCase)
+                || args.Uri.StartsWith("data:text/html", StringComparison.OrdinalIgnoreCase)))
         {
+            _awaitingDocumentNavigation = false;
             return;
         }
 
+        _awaitingDocumentNavigation = false;
         args.Cancel = true;
         if (Uri.TryCreate(args.Uri, UriKind.Absolute, out var uri)
             && uri.Scheme is "http" or "https" or "mailto")
@@ -114,10 +136,21 @@ public sealed class ReleaseNotesMarkdownView : Grid
     {
         if (!args.IsSuccess)
         {
+            _fallback.Visibility = Visibility.Visible;
+            _webView.Visibility = Visibility.Collapsed;
+            _ = App.Logs.WriteAsync(
+                "警告",
+                "更新说明",
+                $"Markdown 更新说明渲染失败，已使用纯文本内容。状态={args.WebErrorStatus}。");
             return;
         }
 
         _fallback.Visibility = Visibility.Collapsed;
         _webView.Visibility = Visibility.Visible;
+        _ = App.Logs.WriteAsync(
+            "详细",
+            "更新说明",
+            "Markdown 更新说明渲染完成。",
+            detailed: true);
     }
 }

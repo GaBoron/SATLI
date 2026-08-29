@@ -9,6 +9,11 @@ public sealed record DownloadSourceDefinition(
     string Root)
 {
     public Uri CatalogEndpoint => new($"{Root}/index.json");
+    public IReadOnlyList<Uri> CatalogEndpoints =>
+    [
+        new($"{Root}/index-v2.json"),
+        CatalogEndpoint,
+    ];
 }
 
 public static class DownloadSourceCatalog
@@ -65,7 +70,7 @@ public static class DownloadSourceCatalog
     {
         var normalized = Normalize(settings);
         return normalized.IndexSourceOrder
-            .Select(sourceId => ById[sourceId].CatalogEndpoint)
+            .SelectMany(sourceId => ById[sourceId].CatalogEndpoints)
             .ToList();
     }
 

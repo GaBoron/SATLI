@@ -27,6 +27,29 @@ public sealed class TranslationCliArguments(
         return arguments;
     }
 
+    public List<string> InstallVariant(
+        GameItem game,
+        string variantId,
+        bool dryRun,
+        bool yes,
+        bool previewContent)
+    {
+        var arguments = new List<string>
+        {
+            "install",
+            game.AppId,
+            "--variant",
+            $"{game.AppId}={variantId}",
+        };
+        if (!game.IsCurrent)
+        {
+            arguments.Add("--allow-outdated");
+        }
+        AppendFlags(arguments, dryRun, yes, previewContent);
+        AddCommon(arguments, includeSteamDirectory: true, includeOffline: true);
+        return arguments;
+    }
+
     public List<string> Restore(
         IReadOnlyList<GameItem> selected,
         bool dryRun,

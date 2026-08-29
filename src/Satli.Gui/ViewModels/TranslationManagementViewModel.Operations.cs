@@ -48,10 +48,38 @@ public sealed partial class TranslationManagementViewModel
         IReadOnlyList<GameItem> selected) =>
         await PreviewCatalogEntriesAsync(selected, "正在读取待安装文件内容…");
 
-    public async Task<ReplacementPreview?> PreviewCatalogAsync(GameItem game)
+    public async Task<IReadOnlyList<ReplacementPreview>?> PreviewCatalogAsync(GameItem game)
     {
-        var previews = await PreviewCatalogEntriesAsync([game], "正在读取云端成就…");
-        return previews?.SingleOrDefault();
+        if (game.Variants.Count <= 1)
+        {
+            return await PreviewCatalogEntriesAsync([game], "正在读取云端成就…");
+        }
+
+        var previews = new List<ReplacementPreview>(game.Variants.Count);
+        foreach (var variant in game.Variants)
+        {
+            var result = await RunPreviewAsync(
+                _arguments.InstallVariant(
+                    game,
+                    variant.VariantId,
+                    dryRun: true,
+                    yes: false,
+                    previewContent: true),
+                $"正在读取云端成就（{variant.VariantId}）…");
+            if (result is null)
+            {
+                return null;
+            }
+
+            var parsed = TryParsePreviews(result, [game]);
+            if (parsed is null)
+            {
+                return null;
+            }
+            previews.AddRange(parsed);
+        }
+
+        return previews;
     }
 
     private async Task<IReadOnlyList<ReplacementPreview>?> PreviewCatalogEntriesAsync(

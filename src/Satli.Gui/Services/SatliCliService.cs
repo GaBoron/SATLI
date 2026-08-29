@@ -46,8 +46,6 @@ public sealed class SatliCliService
         var downloads = DownloadSourceCatalog.Normalize(rawDownloadSourceSettings);
         var environment = new Dictionary<string, string>
         {
-            ["PYTHONUTF8"] = "1",
-            ["PYTHONIOENCODING"] = "utf-8",
             ["SATLI_DNS_MODE"] = network.DnsMode,
             ["SATLI_DNS_SERVERS"] = network.DnsServers,
             ["SATLI_PROXY_MODE"] = network.ProxyMode,

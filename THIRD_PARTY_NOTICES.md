@@ -17,16 +17,11 @@ The Windows desktop interface uses the following dependencies:
 
 The independently distributed Windows installer is built with Inno Setup and includes the official Simplified Chinese message file from the Inno Setup source repository. Inno Setup and its message files remain subject to the Inno Setup license and their respective copyright notices.
 
-### Embedded Python runtime and tools
+### Command-line and core runtime
 
-Windows release packages include the official CPython 3.13 embeddable runtime. Python is distributed under the Python Software Foundation License; the complete runtime `LICENSE.txt` is included beside its binaries in `_satli_runtime`.
-
-The embedded Python command-line payload includes:
-
-- Dulwich — dual-licensed under Apache-2.0 or GPL-2.0-or-later; used for local Git repository access
-- urllib3 — MIT License; used by Dulwich
-
-SATLI uses Dulwich's pure-Python implementation and does not require Git for Windows or additional native libraries.
+SATLI's command-line interface and shared business logic are implemented with
+.NET and distributed as a self-contained C# executable. No Python runtime,
+Dulwich, urllib3, or Git installation is included or required.
 
 ## Translation data and game content
 

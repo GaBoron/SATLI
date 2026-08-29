@@ -8,24 +8,19 @@ public sealed class GitHubReportWorkflowService
     public Uri Prepare(GitHubReportDraft draft)
     {
         Validate(draft);
-        return GitHubIssueFormUriBuilder.Build(
-            "outdated_report_zh.yml",
-            $"[文件错误] {SingleLine(draft.GameName)} ({draft.AppId})",
-            new Dictionary<string, string?>
-            {
-                ["game_name"] = SingleLine(draft.GameName),
-                ["app_id"] = draft.AppId,
-                ["error_type"] = draft.ErrorType,
-                ["reason"] = draft.Reason.Trim(),
-                ["reference"] = draft.Reference.Trim(),
-            });
+        var normalized = draft with { GameName = SingleLine(draft.GameName) };
+        return GitHubIssueUriBuilder.Build(
+        [
+            new("title", $"[文件错误] {normalized.GameName} ({normalized.AppId})"),
+            new("body", GitHubReportIssueBodyFormatter.Format(normalized)),
+        ]);
     }
 
     public async Task OpenAsync(Uri issueFormUri)
     {
         if (!await Launcher.LaunchUriAsync(issueFormUri))
         {
-            throw new InvalidOperationException("系统未能打开 GitHub 文件错误报告表单。");
+            throw new InvalidOperationException("系统未能打开 GitHub 文件错误报告草稿。");
         }
     }
 

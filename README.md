@@ -72,7 +72,7 @@ Microsoft Store 的产品可用性可能因市场而异。产品页面在当前�
 - x64 处理器
 - 已安装 Steam；使用离线缓存时可暂时不联网
 
-发布包已包含所需运行组件，无需另外安装 .NET、Windows App SDK 或 Python。
+发布包已包含自包含的 C# 核心与所需运行组件，无需另外安装 .NET、Windows App SDK、Python 或 Git。
 
 ## 请求或贡献翻译
 

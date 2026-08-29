@@ -15,7 +15,7 @@
         </Grid.RowDefinitions>
         <StackPanel Spacing="4">
             <TextBlock Text="云端游戏" Style="{StaticResource TitleTextBlockStyle}" />
-            <TextBlock Text="查看云端 index.json 收录的全部翻译及其当前状态。" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+            <TextBlock Text="查看云端翻译目录收录的全部翻译及其当前状态。" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
         </StackPanel>
         <CommandBar Grid.Row="1" DefaultLabelPosition="Right" IsDynamicOverflowEnabled="True">
             <CommandBar.Content>

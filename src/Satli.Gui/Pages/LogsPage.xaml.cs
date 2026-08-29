@@ -1,6 +1,7 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Dispatching;
 
 namespace Satli_Gui.Pages;
 
@@ -14,10 +15,12 @@ public sealed partial class LogsPage : Page
         Loaded += LogsPage_Loaded;
     }
 
-    private async void LogsPage_Loaded(object sender, RoutedEventArgs e)
+    private void LogsPage_Loaded(object sender, RoutedEventArgs e)
     {
         ApplyWordWrap(App.ViewModel.Settings.LogWordWrap);
-        await RefreshAsync();
+        DispatcherQueue.TryEnqueue(
+            DispatcherQueuePriority.Low,
+            () => _ = RefreshAsync());
     }
 
     private async void Refresh_Click(object sender, RoutedEventArgs e) => await RefreshAsync();

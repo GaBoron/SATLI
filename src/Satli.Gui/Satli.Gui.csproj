@@ -5,10 +5,10 @@
     <TargetPlatformMinVersion>10.0.19041.0</TargetPlatformMinVersion>
     <RootNamespace>Satli_Gui</RootNamespace>
     <AssemblyName>SATLI</AssemblyName>
-    <Version>2.0.0</Version>
-    <AssemblyVersion>2.0.0.0</AssemblyVersion>
-    <FileVersion>2.0.0.0</FileVersion>
-    <InformationalVersion>2.0.0</InformationalVersion>
+    <Version>2.1.0</Version>
+    <AssemblyVersion>2.1.0.0</AssemblyVersion>
+    <FileVersion>2.1.0.0</FileVersion>
+    <InformationalVersion>2.1.0</InformationalVersion>
     <Product>SATLI</Product>
     <AssemblyTitle>SATLI</AssemblyTitle>
     <Description>SATLI</Description>
@@ -64,6 +64,7 @@
     <PropertyGroup> above to opt out.
   -->
   <ItemGroup>
+    <ProjectReference Include="..\Satli.Core\Satli.Core.csproj" />
     <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.28000.2270" />
     <!--
       Reference only the WinUI component instead of the Windows App SDK meta-package.
@@ -116,10 +117,22 @@
   </Target>
 
   <Target
-    Name="PrepareSatliLocalRuntime"
+    Name="BuildSatliCommandLine"
     AfterTargets="Build"
     Condition="'$(DesignTimeBuild)' != 'true' and '$(IncludeSatliRuntime)' != 'false'">
-    <Exec
-      Command="powershell.exe -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -File &quot;$(MSBuildProjectDirectory)\..\..\scripts\prepare-local-runtime.ps1&quot; -OutputDirectory &quot;$(TargetDir).&quot;" />
+    <MSBuild
+      Projects="$(MSBuildProjectDirectory)\..\Satli.Cli\Satli.Cli.csproj"
+      Targets="Publish"
+      Properties="Configuration=$(Configuration);Platform=x64;RuntimeIdentifier=win-x64;PublishDir=$(TargetDir)cli\" />
+  </Target>
+
+  <Target
+    Name="PublishSatliCommandLine"
+    AfterTargets="Publish"
+    Condition="'$(DesignTimeBuild)' != 'true' and '$(IncludeSatliRuntime)' != 'false'">
+    <MSBuild
+      Projects="$(MSBuildProjectDirectory)\..\Satli.Cli\Satli.Cli.csproj"
+      Targets="Publish"
+      Properties="Configuration=$(Configuration);Platform=x64;RuntimeIdentifier=win-x64;PublishDir=$(PublishDir)cli\" />
   </Target>
 </Project>

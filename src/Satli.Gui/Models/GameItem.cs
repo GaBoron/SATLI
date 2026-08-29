@@ -257,6 +257,7 @@ public sealed class GameItem : ObservableObject
         || language.Equals("tchinese", StringComparison.OrdinalIgnoreCase));
     public bool CanRequestTranslation => NativeLanguages.Count > 0
         && !HasNativeChinese
+        && CatalogStatus.Equals("unlisted", StringComparison.OrdinalIgnoreCase)
         && Variants.Count == 0;
     public Visibility TranslationRequestVisibility => CanRequestTranslation
         ? Visibility.Visible
@@ -315,6 +316,7 @@ public sealed class GameItem : ObservableObject
                     Note = GetString(variant, "note_zh", string.Empty),
                     Sha256 = GetString(variant, "sha256", string.Empty),
                     FileSizeBytes = variant.TryGetProperty("file_size_bytes", out var size)
+                        && size.ValueKind == JsonValueKind.Number
                         && size.TryGetInt64(out var fileSize)
                             ? fileSize
                             : 0,
