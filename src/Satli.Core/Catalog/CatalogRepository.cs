@@ -275,7 +275,7 @@ public sealed class CatalogRepository
         using var linked = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         linked.CancelAfter(timeout);
         using var request = new HttpRequestMessage(HttpMethod.Get, uri);
-        request.Headers.UserAgent.ParseAdd("SATLI/2.2.0 (+https://github.com/GaBoron/SATLI)");
+        request.Headers.UserAgent.ParseAdd("SATLI/2.2.1 (+https://github.com/GaBoron/SATLI)");
         request.Headers.CacheControl = new System.Net.Http.Headers.CacheControlHeaderValue
         {
             NoCache = true,

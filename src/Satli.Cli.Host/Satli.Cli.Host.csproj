@@ -6,10 +6,10 @@
     <SelfContained>false</SelfContained>
     <AssemblyName>satli</AssemblyName>
     <PackageId>Satli.CommandLine.Host</PackageId>
-    <Version>2.2.0</Version>
-    <AssemblyVersion>2.2.0.0</AssemblyVersion>
-    <FileVersion>2.2.0.0</FileVersion>
-    <InformationalVersion>2.2.0</InformationalVersion>
+    <Version>2.2.1</Version>
+    <AssemblyVersion>2.2.1.0</AssemblyVersion>
+    <FileVersion>2.2.1.0</FileVersion>
+    <InformationalVersion>2.2.1</InformationalVersion>
     <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
     <Product>SATLI</Product>
     <AssemblyTitle>SATLI Command Line Host</AssemblyTitle>
