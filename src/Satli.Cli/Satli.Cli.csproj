@@ -9,6 +9,7 @@
     <AssemblyVersion>2.2.0.0</AssemblyVersion>
     <FileVersion>2.2.0.0</FileVersion>
     <InformationalVersion>2.2.0</InformationalVersion>
+    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
     <Product>SATLI</Product>
     <AssemblyTitle>SATLI Command Line</AssemblyTitle>
     <Description>SATLI command-line runtime</Description>
