@@ -39,7 +39,7 @@
 > [!TIP]
 > **推荐从 [Microsoft Store](https://apps.microsoft.com/detail/9PB7V9S03K80) 安装。** Microsoft Store 会负责安装并自动提供软件更新，应用设置页也支持主动检查 Store 新版、查看发布说明并打开更新页面。
 
-Microsoft Store 的产品可用性可能因市场而异。产品页面在当前市场不可用、无法使用 Microsoft Store，或希望手动管理安装程序时，可从 [GitHub Releases](https://github.com/GaBoron/SATLI/releases/latest) 获取独立安装版。独立安装版通过应用内的 GitHub Releases 更新功能获取新版。
+Microsoft Store 的产品可用性可能因市场而异。产品页面在当前市场不可用、无法使用 Microsoft Store，或希望手动管理安装程序时，可从 [GitHub Releases](https://github.com/GaBoron/SATLI/releases/latest) 获取独立安装版。独立安装器会检查 .NET 10 Desktop Runtime 和 Windows App Runtime，仅在缺少时从微软官方下载并安装；独立安装版通过应用内的 GitHub Releases 更新功能获取新版。
 
 两个渠道提供相同的翻译管理功能并使用相同的数据格式，但不会相互安装对方的更新包。通常只需安装其中一个版本；切换渠道前请先退出并卸载当前版本。更多安装与更新说明见 [使用指南](docs/USAGE.md#安装与首次运行)。
 
@@ -72,7 +72,7 @@ Microsoft Store 的产品可用性可能因市场而异。产品页面在当前�
 - x64 处理器
 - 已安装 Steam；使用离线缓存时可暂时不联网
 
-发布包已包含自包含的 C# 核心与所需运行组件，无需另外安装 .NET、Windows App SDK、Python 或 Git。
+无需手动安装 .NET、Windows App SDK、Python 或 Git。Microsoft Store 会处理商店版的 Windows App Runtime 共享框架；独立安装器会在需要时联网补齐微软运行库。
 
 ## 请求或贡献翻译
 

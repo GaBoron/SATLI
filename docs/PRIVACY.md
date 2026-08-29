@@ -36,6 +36,7 @@ SATLI 以本地处理为主。扫描、编辑、备份和恢复均在当前 Wind
 
 - **翻译目录和译本：** 按用户设置向 jsDelivr（含 Fastly 域名）、GitHub Raw、StaticDelivr 请求 V2 翻译目录并在需要时回退 V1，再从配置的文件源下载经 SHA-256 校验的译本
 - **软件更新：** Microsoft Store 版由 Microsoft Store 管理；独立安装版通过 GitHub 获取更新信息和发布包
+- **安装运行库：** Microsoft Store 版由 Store 获取 Windows App Runtime 共享框架；独立安装器仅在检测到缺少运行库时，从微软官方域名下载经 SHA-256 校验的 .NET 10 Desktop Runtime 和 Windows App Runtime 安装程序
 - **Steam 游戏库：** 用户主动配置凭据后，通过 Steam Web API 补全账号游戏库
 - **游戏名称：** 通过游戏名称数据源补全 App ID 对应的名称
 - **问题报告、翻译请愿和投稿：** 用户主动操作时，在默认浏览器中打开预填的 GitHub Issue 草稿或表单

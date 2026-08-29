@@ -19,11 +19,11 @@
 
 ### Microsoft Store（推荐）
 
-从 [Microsoft Store](https://apps.microsoft.com/detail/9PB7V9S03K80) 打开产品页面，选择“获取”或“安装”。Microsoft Store 会负责安装，并在有新版时自动提供更新。产品可用性可能因市场而异；页面显示当前市场不可用时，请改用独立安装版。
+从 [Microsoft Store](https://apps.microsoft.com/detail/9PB7V9S03K80) 打开产品页面，选择“获取”或“安装”。Microsoft Store 会负责安装应用及其 Windows App Runtime 共享框架，并在有新版时自动提供更新。产品可用性可能因市场而异；页面显示当前市场不可用时，请改用独立安装版。
 
 ### 独立安装版
 
-无法使用 Microsoft Store，或希望手动管理安装程序时，可从 [GitHub Releases](https://github.com/GaBoron/SATLI/releases/latest) 下载安装程序。独立安装版暂未提供代码签名，Windows SmartScreen 可能在首次运行时显示安全提醒；请核对下载来源后再运行。
+无法使用 Microsoft Store，或希望手动管理安装程序时，可从 [GitHub Releases](https://github.com/GaBoron/SATLI/releases/latest) 下载安装程序。安装器会检查 .NET 10 Desktop Runtime 和 Windows App Runtime 2.2；只有本机缺少对应运行库时，才会从微软官方下载并校验后静默安装，因此首次安装可能需要联网。独立安装版暂未提供代码签名，Windows SmartScreen 可能在首次运行时显示安全提醒；请核对下载来源后再运行。
 
 独立安装版可以直接覆盖安装新版，也可以使用“设置 → 软件更新”获取更新。
 

@@ -17,8 +17,8 @@
     <Platforms>x64</Platforms>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <WindowsPackageType>None</WindowsPackageType>
-    <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
-    <SelfContained>true</SelfContained>
+    <WindowsAppSDKSelfContained Condition="'$(WindowsAppSDKSelfContained)' == ''">true</WindowsAppSDKSelfContained>
+    <SelfContained Condition="'$(SelfContained)' == ''">true</SelfContained>
     <UseWinUI>true</UseWinUI>
     <WinUISDKReferences>false</WinUISDKReferences>
     <EnableMsixTooling>true</EnableMsixTooling>
@@ -73,6 +73,10 @@
       which add tens of megabytes to both release formats.
     -->
     <PackageReference Include="Microsoft.WindowsAppSDK.WinUI" Version="2.2.1" />
+    <PackageReference
+      Include="Microsoft.WindowsAppSDK.Runtime"
+      Version="2.2.0"
+      Condition="'$(WindowsAppSDKSelfContained)' != 'true'" />
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
     <PackageReference Include="Markdig" Version="1.1.2" />
     <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="10.0.9" />
@@ -92,7 +96,7 @@
     <PublishReadyToRun>False</PublishReadyToRun>
     <!-- WinUI/WinRT initialization crashes after startup when this app is trimmed. -->
     <PublishTrimmed>False</PublishTrimmed>
-    <PublishSingleFile>True</PublishSingleFile>
+    <PublishSingleFile Condition="'$(PublishSingleFile)' == ''">True</PublishSingleFile>
     <IncludeAllContentForSelfExtract>True</IncludeAllContentForSelfExtract>
     <IncludeNativeLibrariesForSelfExtract>True</IncludeNativeLibrariesForSelfExtract>
     <EnableCompressionInSingleFile>True</EnableCompressionInSingleFile>
