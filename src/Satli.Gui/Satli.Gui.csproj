@@ -66,6 +66,7 @@
   -->
   <ItemGroup>
     <ProjectReference Include="..\Satli.Core\Satli.Core.csproj" />
+    <ProjectReference Include="..\Satli.Cli\Satli.Cli.csproj" />
     <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.28000.2270" />
     <!--
       Reference only the WinUI component instead of the Windows App SDK meta-package.
@@ -121,23 +122,4 @@
       SkipUnchangedFiles="true" />
   </Target>
 
-  <Target
-    Name="BuildSatliCommandLine"
-    AfterTargets="Build"
-    Condition="'$(DesignTimeBuild)' != 'true' and '$(IncludeSatliRuntime)' != 'false'">
-    <MSBuild
-      Projects="$(MSBuildProjectDirectory)\..\Satli.Cli\Satli.Cli.csproj"
-      Targets="Publish"
-      Properties="Configuration=$(Configuration);Platform=x64;RuntimeIdentifier=win-x64;PublishDir=$(TargetDir)cli\" />
-  </Target>
-
-  <Target
-    Name="PublishSatliCommandLine"
-    AfterTargets="Publish"
-    Condition="'$(DesignTimeBuild)' != 'true' and '$(IncludeSatliRuntime)' != 'false'">
-    <MSBuild
-      Projects="$(MSBuildProjectDirectory)\..\Satli.Cli\Satli.Cli.csproj"
-      Targets="Publish"
-      Properties="Configuration=$(Configuration);Platform=x64;RuntimeIdentifier=win-x64;PublishDir=$(PublishDir)cli\" />
-  </Target>
 </Project>

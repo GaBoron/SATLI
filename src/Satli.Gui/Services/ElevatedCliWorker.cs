@@ -39,7 +39,7 @@ internal static class ElevatedCliWorker
         ElevatedCliResponse response;
         try
         {
-            var result = await new CliProcessRunner().RunAsync(
+            var result = await new CliRuntimeRunner().RunAsync(
                 request,
                 onDiagnostic: diagnostics.Add);
             response = new ElevatedCliResponse(

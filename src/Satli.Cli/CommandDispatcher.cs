@@ -15,8 +15,18 @@ namespace Satli.Cli;
 internal sealed partial class CommandDispatcher
 {
     private readonly EventSink _events;
+    private readonly TextWriter _output;
+    private readonly IReadOnlyDictionary<string, string> _environment;
     private readonly SchemaEditor _editor = new();
-    public CommandDispatcher(EventSink events) => _events = events;
+    public CommandDispatcher(
+        EventSink events,
+        TextWriter output,
+        IReadOnlyDictionary<string, string> environment)
+    {
+        _events = events;
+        _output = output;
+        _environment = environment;
+    }
 
     public static string Operation(IReadOnlyList<string> args)
     {
@@ -78,7 +88,7 @@ internal sealed partial class CommandDispatcher
                 var steamId = args.Value("--owned-account")
                     ?? SteamLocator.DiscoverAccounts(steam)
                         .FirstOrDefault(account => account.MostRecent)?.SteamId;
-                var apiKey = Environment.GetEnvironmentVariable("SATLI_STEAM_WEB_API_KEY");
+                var apiKey = EnvironmentValue("SATLI_STEAM_WEB_API_KEY");
                 if (string.IsNullOrWhiteSpace(steamId))
                 {
                     _events.Emit("scan", "warning", new JsonObject
@@ -193,10 +203,10 @@ internal sealed partial class CommandDispatcher
             ["exit_code"] = 0,
         });
         if (args.Has("--json"))
-            Console.WriteLine(outputRecords.ToJsonString());
+            _output.WriteLine(outputRecords.ToJsonString());
         else if (!_events.JsonLines)
             foreach (var record in outputRecords.OfType<JsonObject>())
-                Console.WriteLine(
+                _output.WriteLine(
                     $"{record["app_id"]?.GetValue<string>(),10}  "
                     + $"{record["catalog_status"]?.GetValue<string>(),-16} "
                     + $"{record["installed_state"]?.GetValue<string>(),-10} "
@@ -244,10 +254,10 @@ internal sealed partial class CommandDispatcher
             ["exit_code"] = 0,
         });
         if (args.Has("--json"))
-            Console.WriteLine(outputRecords.ToJsonString());
+            _output.WriteLine(outputRecords.ToJsonString());
         else if (!_events.JsonLines)
             foreach (var record in outputRecords.OfType<JsonObject>())
-                Console.WriteLine(
+                _output.WriteLine(
                     $"{record["app_id"]?.GetValue<string>(),10}  "
                     + $"{record["installed_state"]?.GetValue<string>(),-10} "
                     + record["game_name"]?.GetValue<string>());
@@ -270,28 +280,16 @@ internal sealed partial class CommandDispatcher
 
     private CatalogRepository Repository(Arguments args)
     {
-        var environment = Environment.GetEnvironmentVariables()
-            .Cast<System.Collections.DictionaryEntry>()
-            .ToDictionary(
-                item => (string)item.Key,
-                item => Convert.ToString(item.Value) ?? "",
-                StringComparer.OrdinalIgnoreCase);
         return new CatalogRepository(
             args.DataDirectory,
-            NetworkHttpClientFactory.Create(environment),
-            CatalogSourceCatalog.FromEnvironment(environment));
+            NetworkHttpClientFactory.Create(_environment),
+            CatalogSourceCatalog.FromEnvironment(_environment));
     }
 
-    private static HttpClient NetworkClient()
-    {
-        var environment = Environment.GetEnvironmentVariables()
-            .Cast<System.Collections.DictionaryEntry>()
-            .ToDictionary(
-                item => (string)item.Key,
-                item => Convert.ToString(item.Value) ?? "",
-                StringComparer.OrdinalIgnoreCase);
-        return NetworkHttpClientFactory.Create(environment);
-    }
+    private HttpClient NetworkClient() => NetworkHttpClientFactory.Create(_environment);
+
+    private string? EnvironmentValue(string name) =>
+        _environment.TryGetValue(name, out var value) ? value : null;
 
     private void WarnV1(string operation) =>
         _events.Emit(operation, "warning", new JsonObject

@@ -4,7 +4,7 @@ namespace Satli_Gui.Services;
 
 public sealed class SatliCliService
 {
-    private readonly CliProcessRunner _processRunner = new();
+    private readonly CliRuntimeRunner _runtimeRunner = new();
     private readonly ElevatedCliRunner _elevatedRunner = new();
 
     public async Task<CliRunResult> RunAsync(
@@ -31,10 +31,10 @@ public sealed class SatliCliService
             return await _elevatedRunner.RunAsync(invocation, onEvent, onDiagnostic);
         }
 
-        return await _processRunner.RunAsync(invocation, onEvent, onDiagnostic);
+        return await _runtimeRunner.RunAsync(invocation, onEvent, onDiagnostic);
     }
 
-    public static SatliEvent ParseEvent(string line) => CliProcessRunner.ParseEvent(line);
+    public static SatliEvent ParseEvent(string line) => CliEventParser.Parse(line);
 
     private static Dictionary<string, string> BuildEnvironment(
         IReadOnlyList<string> arguments,
