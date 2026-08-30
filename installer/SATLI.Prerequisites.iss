@@ -7,6 +7,8 @@ const
   DotNetRuntimeUrl = 'https://download.microsoft.com/download/a2b8b791-a2da-4835-8b5a-3078153deb88/ff7dbd4b-29c5-4a7f-b1a0-b5efcf3f7771/windowsdesktop-runtime-10.0.11-win-x64.exe';
   DotNetRuntimeFileName = 'windowsdesktop-runtime-10.0.11-win-x64.exe';
   DotNetRuntimeSha256 = '61d2e1447b185d6f99c0d5799896240b48246f5440648bc031ebdb159a3bf3d1';
+  DotNetRuntimeVersion = '10.0.11';
+  DotNetRuntimeRegistryKey = 'SOFTWARE\dotnet\Setup\InstalledVersions\x64\sharedfx\Microsoft.WindowsDesktop.App';
   WindowsAppRuntimeUrl = 'https://aka.ms/windowsappsdk/2.2/2.2.0/windowsappruntimeinstall-x64.exe';
   WindowsAppRuntimeFileName = 'WindowsAppRuntimeInstall-2.2.0-x64.exe';
   WindowsAppRuntimeSha256 = 'e14abfeedd61ccf1e1b9618a9d4e8e5cad6b6a0becbacf159a50718d047eb927';
@@ -17,12 +19,29 @@ const
 var
   PrerequisiteDownloadPage: TDownloadWizardPage;
   DotNetRuntimeNeeded: Boolean;
+  DotNetRuntimeRepairNeeded: Boolean;
+  DotNetRuntimeVerificationDeferred: Boolean;
   WindowsAppRuntimeNeeded: Boolean;
+  WindowsAppRuntimeVerificationDeferred: Boolean;
   PrerequisitesDownloaded: Boolean;
 
-function DirectoryContainsDotNet10(const RuntimeRoot: String): Boolean;
+function IsUsableDotNetDesktopRuntimeDirectory(
+  const RuntimeDirectory: String): Boolean;
+begin
+  Result :=
+    FileExists(AddBackslash(RuntimeDirectory) + 'WindowsBase.dll') and
+    FileExists(
+      AddBackslash(RuntimeDirectory) +
+      'Microsoft.WindowsDesktop.App.runtimeconfig.json') and
+    FileExists(
+      AddBackslash(RuntimeDirectory) +
+      'Microsoft.WindowsDesktop.App.deps.json');
+end;
+
+function DirectoryContainsUsableDotNet10(const RuntimeRoot: String): Boolean;
 var
   FindRec: TFindRec;
+  RuntimeDirectory: String;
 begin
   Result := False;
   if not DirExists(RuntimeRoot) then
@@ -35,8 +54,12 @@ begin
         if ((FindRec.Attributes and FILE_ATTRIBUTE_DIRECTORY) <> 0) and
            (Pos('10.', FindRec.Name) = 1) then
         begin
-          Result := True;
-          Exit;
+          RuntimeDirectory := AddBackslash(RuntimeRoot) + FindRec.Name;
+          if IsUsableDotNetDesktopRuntimeDirectory(RuntimeDirectory) then
+          begin
+            Result := True;
+            Exit;
+          end;
         end;
       until not FindNext(FindRec);
     finally
@@ -48,10 +71,19 @@ end;
 function IsDotNetDesktopRuntimeInstalled: Boolean;
 begin
   Result :=
-    DirectoryContainsDotNet10(
+    DirectoryContainsUsableDotNet10(
       ExpandConstant('{commonpf64}\dotnet\shared\Microsoft.WindowsDesktop.App')) or
-    DirectoryContainsDotNet10(
+    DirectoryContainsUsableDotNet10(
       ExpandConstant('{localappdata}\Microsoft\dotnet\shared\Microsoft.WindowsDesktop.App'));
+end;
+
+function IsCurrentDotNetDesktopRuntimeRegistered: Boolean;
+begin
+  { The .NET installer writes architecture registration to the 32-bit registry view. }
+  Result := RegValueExists(
+    HKLM32,
+    DotNetRuntimeRegistryKey,
+    DotNetRuntimeVersion);
 end;
 
 function IsCompatibleWindowsAppRuntimePackage(const PackageName: String): Boolean;
@@ -116,8 +148,11 @@ end;
 procedure RefreshPrerequisiteState;
 begin
   DotNetRuntimeNeeded := not IsDotNetDesktopRuntimeInstalled;
+  DotNetRuntimeRepairNeeded :=
+    DotNetRuntimeNeeded and IsCurrentDotNetDesktopRuntimeRegistered;
   WindowsAppRuntimeNeeded := not IsWindowsAppRuntimeInstalled;
-  Log(Format('Prerequisite check: dotnetNeeded=%d, windowsAppRuntimeNeeded=%d', [Ord(DotNetRuntimeNeeded), Ord(WindowsAppRuntimeNeeded)]));
+  Log(Format(
+    'Prerequisite check: dotnetNeeded=%d, dotnetRepairNeeded=%d, windowsAppRuntimeNeeded=%d', [Ord(DotNetRuntimeNeeded), Ord(DotNetRuntimeRepairNeeded), Ord(WindowsAppRuntimeNeeded)]));
 end;
 
 function DownloadMissingPrerequisites: Boolean;
@@ -174,11 +209,13 @@ function InstallPrerequisite(
   const DisplayName: String;
   const FileName: String;
   const Parameters: String;
-  var NeedsRestart: Boolean): String;
+  var NeedsRestart: Boolean;
+  var VerificationDeferred: Boolean): String;
 var
   ResultCode: Integer;
 begin
   Result := '';
+  VerificationDeferred := False;
   Log('Installing prerequisite: ' + DisplayName);
   if not Exec(
     ExpandConstant('{tmp}\') + FileName,
@@ -192,11 +229,18 @@ begin
     Exit;
   end;
 
-  if ResultCode = 3010 then
-    NeedsRestart := True
+  if (ResultCode = 3010) or (ResultCode = 1641) then
+  begin
+    NeedsRestart := True;
+    VerificationDeferred := True;
+  end
   else if ResultCode <> 0 then
   begin
-    Result := Format('%s 安装失败，错误代码：%d。', [DisplayName, ResultCode]);
+    Log(Format(
+      'Prerequisite installation failed: %s, exitCode=%d', [DisplayName, ResultCode]));
+    Result := Format(
+      '%s 安装失败，错误代码：%d。'#13#10 +
+      '安装日志：%s', [DisplayName, ResultCode, ExpandConstant('{log}')]);
     Exit;
   end;
   Log(Format('Prerequisite installed: %s, exitCode=%d', [DisplayName, ResultCode]));
@@ -210,6 +254,8 @@ begin
     nil);
   PrerequisiteDownloadPage.ShowBaseNameInsteadOfUrl := True;
   PrerequisitesDownloaded := False;
+  DotNetRuntimeVerificationDeferred := False;
+  WindowsAppRuntimeVerificationDeferred := False;
 end;
 
 function NextButtonClick(CurPageID: Integer): Boolean;
@@ -221,6 +267,8 @@ begin
 end;
 
 function PrepareToInstall(var NeedsRestart: Boolean): String;
+var
+  DotNetInstallParameters: String;
 begin
   Result := '';
   if not PrerequisitesDownloaded and not DownloadMissingPrerequisites then
@@ -231,11 +279,16 @@ begin
 
   if DotNetRuntimeNeeded then
   begin
+    if DotNetRuntimeRepairNeeded then
+      DotNetInstallParameters := '/repair /quiet /norestart'
+    else
+      DotNetInstallParameters := '/install /quiet /norestart';
     Result := InstallPrerequisite(
       '.NET 10 Desktop Runtime',
       DotNetRuntimeFileName,
-      '/install /quiet /norestart',
-      NeedsRestart);
+      DotNetInstallParameters,
+      NeedsRestart,
+      DotNetRuntimeVerificationDeferred);
     if Result <> '' then
       Exit;
   end;
@@ -246,12 +299,25 @@ begin
       'Windows App Runtime 2.2',
       WindowsAppRuntimeFileName,
       '--quiet',
-      NeedsRestart);
+      NeedsRestart,
+      WindowsAppRuntimeVerificationDeferred);
     if Result <> '' then
       Exit;
   end;
 
   RefreshPrerequisiteState;
-  if DotNetRuntimeNeeded or WindowsAppRuntimeNeeded then
-    Result := 'Microsoft 运行库安装后仍未通过检测。请重新启动 Windows 后再次运行安装程序。';
+  if (DotNetRuntimeNeeded and not DotNetRuntimeVerificationDeferred) or
+     (WindowsAppRuntimeNeeded and not WindowsAppRuntimeVerificationDeferred) then
+    Result :=
+      'Microsoft 运行库安装后仍未通过检测。'#13#10 +
+      '请查看安装日志后重试：' + ExpandConstant('{log}')
+  else if DotNetRuntimeVerificationDeferred or
+          WindowsAppRuntimeVerificationDeferred then
+    Log('Prerequisite verification deferred until Windows restarts.');
+end;
+
+function CanLaunchInstalledApplication: Boolean;
+begin
+  Result := not DotNetRuntimeVerificationDeferred and
+    not WindowsAppRuntimeVerificationDeferred;
 end;
