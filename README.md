@@ -37,14 +37,14 @@
 ## 下载与安装
 
 > [!TIP]
-> **推荐从 [Microsoft Store](https://apps.microsoft.com/detail/9PB7V9S03K80) 安装。** Microsoft Store 会负责安装并自动提供软件更新，应用设置页也支持主动检查 Store 新版、查看发布说明并打开更新页面。
+> **强烈推荐从 [Microsoft Store](https://apps.microsoft.com/detail/9PB7V9S03K80) 安装。** 这是 SATLI 的首选安装方式：Microsoft Store 会负责安装并自动提供软件更新，应用设置页也支持主动检查 Store 新版、查看发布说明并打开更新页面。商店版还已确认不会触发目前已知的安全软件行为误报。
 
 Microsoft Store 的产品可用性可能因市场而异。产品页面在当前市场不可用、无法使用 Microsoft Store，或希望手动管理安装程序时，可从 [GitHub Releases](https://github.com/GaBoron/SATLI/releases/latest) 获取独立安装版。独立安装器会检查 .NET 10 Desktop Runtime 和 Windows App Runtime，仅在缺少时从微软官方下载并安装；独立安装版通过应用内的 GitHub Releases 更新功能获取新版。
 
 两个渠道提供相同的翻译管理功能并使用相同的数据格式，但不会相互安装对方的更新包。通常只需安装其中一个版本；切换渠道前请先退出并卸载当前版本。更多安装与更新说明见 [使用指南](docs/USAGE.md#安装与首次运行)。
 
 > [!IMPORTANT]
-> 卡巴斯基有时会把独立安装版的 `SATLI.exe` 报告为 `PDM:Trojan.Win32.Generic` 并阻止启动。这是根据程序运行方式作出的通用行为判断，本身不能证明文件一定有病毒，也不能单独证明文件一定安全。请只从 Microsoft Store 或本仓库的 GitHub Releases 下载；遇到拦截时不要关闭杀毒软件，也不要排除整个安装目录。核对文件并提交误报复核的方法见 [安全软件报警怎么办](docs/USAGE.md#安全软件报警怎么办)。
+> 部分安全软件可能把独立安装版的 `SATLI.exe` 误判为恶意程序并阻止启动。遇到这种情况，**首要解决方案是改用 Microsoft Store 版**；不要关闭安全防护，也不要排除整个安装目录。无法使用 Store 时，再按照 [安全软件报警怎么办](docs/USAGE.md#安全软件报警怎么办) 核对文件并向安全软件厂商提交误报复核。
 
 ## 快速开始
 

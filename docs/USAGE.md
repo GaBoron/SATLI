@@ -17,9 +17,11 @@
 
 ## 安装与首次运行
 
-### Microsoft Store（推荐）
+### Microsoft Store（强烈推荐）
 
-从 [Microsoft Store](https://apps.microsoft.com/detail/9PB7V9S03K80) 打开产品页面，选择“获取”或“安装”。Microsoft Store 会负责安装应用及其 Windows App Runtime 共享框架，并在有新版时自动提供更新。产品可用性可能因市场而异；页面显示当前市场不可用时，请改用独立安装版。
+Microsoft Store 是 SATLI 的首选安装方式。从 [Microsoft Store](https://apps.microsoft.com/detail/9PB7V9S03K80) 打开产品页面，选择“获取”或“安装”。Microsoft Store 会负责安装应用及其 Windows App Runtime 共享框架，并在有新版时自动提供更新。商店版已经确认不会触发目前已知的安全软件行为误报；如果独立安装版被安全软件拦截，请优先改用商店版。
+
+产品可用性可能因市场而异；页面显示当前市场不可用时，请改用独立安装版。
 
 ### 独立安装版
 
@@ -145,22 +147,22 @@ SATLI 的命令核心直接在应用进程内运行，不会在后台启动独�
 
 ### 安全软件报警怎么办
 
-卡巴斯基有时会把独立安装版的 `SATLI.exe` 报告为 `PDM:Trojan.Win32.Generic`，随后阻止程序启动。这个名称的意思是：安全软件认为程序启动后的某些行为像木马，但没有指出一种已经确认的具体病毒。它可能是误报，但只看到这个名称时也不能直接断定文件安全。
+部分安全软件可能根据程序启动后的行为，把独立安装版的 `SATLI.exe` 误判为木马或其他恶意程序并阻止启动。通用检测名称通常只表示某些行为触发了规则，不代表已经确认存在某一种具体病毒；但只看到通用名称时也不能直接断定文件安全。
 
 请按下面的顺序处理：
 
-1. **先确认下载来源。** 只使用 [Microsoft Store](https://apps.microsoft.com/detail/9PB7V9S03K80) 或本仓库的 [GitHub Releases](https://github.com/GaBoron/SATLI/releases/latest)。从网盘、群文件或第三方下载站取得的副本不要恢复运行。
-2. **确认被拦截的是当前主程序。** 新版的正常路径通常是 `C:\Program Files\SATLI\SATLI.exe`，不会再运行旧版的 `cli\satli.exe`。如果告警仍指向 `cli\satli.exe`，请安装最新版本；安装器会清理旧 CLI 目录。
-3. **核对文件指纹。** 在 PowerShell 中运行下面的命令，并把结果与对应 GitHub Release 发布说明中的 SHA-256 比较。两者必须完全一致；不一致时请删除该安装包并从官方渠道重新下载。
+1. **优先改用 Microsoft Store 版。** 这是解决独立安装版被拦截的首要方案，且已经确认不会触发目前已知的安全软件行为误报。退出并卸载独立安装版后，从 [Microsoft Store](https://apps.microsoft.com/detail/9PB7V9S03K80) 安装即可；本机设置、缓存、草稿、历史和备份不会被主动删除。
+2. **无法使用 Store 时，先确认下载来源。** 只使用本仓库的 [GitHub Releases](https://github.com/GaBoron/SATLI/releases/latest)。从网盘、群文件或第三方下载站取得的副本不要恢复运行。
+3. **确认被拦截的是当前主程序。** 新版的正常路径通常是 `C:\Program Files\SATLI\SATLI.exe`，不会再运行旧版的 `cli\satli.exe`。如果告警仍指向 `cli\satli.exe`，请安装最新版本；安装器会清理旧 CLI 目录。
+4. **核对文件指纹。** 在 PowerShell 中运行下面的命令，并把结果与对应 GitHub Release 发布说明中的 SHA-256 比较。两者必须完全一致；不一致时请删除该安装包并从官方渠道重新下载。
 
    ```powershell
    Get-FileHash '.\SATLI-Setup-vX.Y.Z.exe' -Algorithm SHA256
    ```
 
-4. **更新卡巴斯基数据库后重试。** 误报规则修正后通常会随数据库更新生效。独立安装版仍被拦截时，也可以先改用 Microsoft Store 版。
-5. **仍然报警就提交复核。** 打开 [Kaspersky Threat Intelligence Portal](https://opentip.kaspersky.com/)，上传对应安装包或 `SATLI.exe` 进行分析；报告生成后选择 **Submit to reanalyze**，请卡巴斯基重新判断。提交前请阅读页面的使用条款和隐私说明。
+5. **更新安全软件后提交复核。** 更新安全软件及其检测数据库后重新扫描。仍然报警时，通过该安全软件厂商官网的“误报申诉”“文件分析”或“重新检测”入口提交安装包或 `SATLI.exe`，并等待厂商复核。
 
-在卡巴斯基给出复核结果前，不建议关闭行为防护，也不要把整个 `C:\Program Files\SATLI` 加入排除项。反馈问题时，请附上 SATLI 版本、告警时间、对象完整路径、检测名称和 SHA-256；这些信息足够定位文件，不需要发送 Steam 凭据、代理密码或成就文件内容。
+在安全软件厂商给出复核结果前，不建议关闭行为防护，也不要把整个 `C:\Program Files\SATLI` 加入排除项。反馈问题时，请附上 SATLI 版本、告警时间、对象完整路径、检测名称和 SHA-256；这些信息足够定位文件，不需要发送 Steam 凭据、代理密码或成就文件内容。
 
 ### 找不到本地游戏
 

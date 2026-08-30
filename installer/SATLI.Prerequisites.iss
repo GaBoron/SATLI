@@ -9,6 +9,9 @@ const
   DotNetRuntimeSha256 = '61d2e1447b185d6f99c0d5799896240b48246f5440648bc031ebdb159a3bf3d1';
   DotNetRuntimeVersion = '10.0.11';
   DotNetRuntimeRegistryKey = 'SOFTWARE\dotnet\Setup\InstalledVersions\x64\sharedfx\Microsoft.WindowsDesktop.App';
+  InstallAlreadyRunningExitCode = 1618;
+  PrerequisiteInstallMaximumAttempts = 6;
+  PrerequisiteInstallRetryDelayMilliseconds = 15000;
   WindowsAppRuntimeUrl = 'https://aka.ms/windowsappsdk/2.2/2.2.0/windowsappruntimeinstall-x64.exe';
   WindowsAppRuntimeFileName = 'WindowsAppRuntimeInstall-2.2.0-x64.exe';
   WindowsAppRuntimeSha256 = 'e14abfeedd61ccf1e1b9618a9d4e8e5cad6b6a0becbacf159a50718d047eb927';
@@ -18,6 +21,7 @@ const
 
 var
   PrerequisiteDownloadPage: TDownloadWizardPage;
+  PrerequisiteInstallPage: TOutputProgressWizardPage;
   DotNetRuntimeNeeded: Boolean;
   DotNetRuntimeRepairNeeded: Boolean;
   DotNetRuntimeVerificationDeferred: Boolean;
@@ -212,21 +216,52 @@ function InstallPrerequisite(
   var NeedsRestart: Boolean;
   var VerificationDeferred: Boolean): String;
 var
+  Attempt: Integer;
   ResultCode: Integer;
 begin
   Result := '';
   VerificationDeferred := False;
-  Log('Installing prerequisite: ' + DisplayName);
-  if not Exec(
-    ExpandConstant('{tmp}\') + FileName,
-    Parameters,
-    '',
-    SW_HIDE,
-    ewWaitUntilTerminated,
-    ResultCode) then
-  begin
-    Result := '无法启动 ' + DisplayName + ' 安装程序。';
-    Exit;
+  if not WizardSilent then
+    PrerequisiteInstallPage.Show;
+  try
+    for Attempt := 1 to PrerequisiteInstallMaximumAttempts do
+    begin
+      PrerequisiteInstallPage.SetText(
+        '正在安装 ' + DisplayName,
+        Format('尝试 %d/%d，请勿关闭安装程序。', [Attempt, PrerequisiteInstallMaximumAttempts]));
+      PrerequisiteInstallPage.SetProgress(
+        Attempt - 1,
+        PrerequisiteInstallMaximumAttempts);
+      Log(Format(
+        'Installing prerequisite: %s, attempt=%d/%d', [DisplayName, Attempt, PrerequisiteInstallMaximumAttempts]));
+      if not Exec(
+        ExpandConstant('{tmp}\') + FileName,
+        Parameters,
+        '',
+        SW_HIDE,
+        ewWaitUntilTerminated,
+        ResultCode) then
+      begin
+        Result := '无法启动 ' + DisplayName + ' 安装程序。';
+        Exit;
+      end;
+
+      if ResultCode <> InstallAlreadyRunningExitCode then
+        Break;
+
+      if Attempt < PrerequisiteInstallMaximumAttempts then
+      begin
+        Log(Format(
+          'Windows Installer is busy; retrying %s in %d ms.', [DisplayName, PrerequisiteInstallRetryDelayMilliseconds]));
+        PrerequisiteInstallPage.SetText(
+          'Windows 正在完成另一项安装',
+          Format('%d 秒后自动重试 %s。', [PrerequisiteInstallRetryDelayMilliseconds div 1000, DisplayName]));
+        Sleep(PrerequisiteInstallRetryDelayMilliseconds);
+      end;
+    end;
+  finally
+    if not WizardSilent then
+      PrerequisiteInstallPage.Hide;
   end;
 
   if (ResultCode = 3010) or (ResultCode = 1641) then
@@ -238,11 +273,20 @@ begin
   begin
     Log(Format(
       'Prerequisite installation failed: %s, exitCode=%d', [DisplayName, ResultCode]));
-    Result := Format(
-      '%s 安装失败，错误代码：%d。'#13#10 +
-      '安装日志：%s', [DisplayName, ResultCode, ExpandConstant('{log}')]);
+    if ResultCode = InstallAlreadyRunningExitCode then
+      Result := Format(
+        '%s 暂时无法安装，因为 Windows 正在处理另一项安装。'#13#10 +
+        '请等待其他安装完成或重新启动 Windows 后再试。'#13#10 +
+        '安装日志：%s', [DisplayName, ExpandConstant('{log}')])
+    else
+      Result := Format(
+        '%s 安装失败，错误代码：%d。'#13#10 +
+        '安装日志：%s', [DisplayName, ResultCode, ExpandConstant('{log}')]);
     Exit;
   end;
+  PrerequisiteInstallPage.SetProgress(
+    PrerequisiteInstallMaximumAttempts,
+    PrerequisiteInstallMaximumAttempts);
   Log(Format('Prerequisite installed: %s, exitCode=%d', [DisplayName, ResultCode]));
 end;
 
@@ -253,6 +297,9 @@ begin
     '仅在缺少 Microsoft 运行库时联网下载。',
     nil);
   PrerequisiteDownloadPage.ShowBaseNameInsteadOfUrl := True;
+  PrerequisiteInstallPage := CreateOutputProgressPage(
+    '正在安装 Microsoft 运行库',
+    '安装过程可能需要几分钟。');
   PrerequisitesDownloaded := False;
   DotNetRuntimeVerificationDeferred := False;
   WindowsAppRuntimeVerificationDeferred := False;
