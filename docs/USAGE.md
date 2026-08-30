@@ -143,9 +143,24 @@ SATLI 的命令核心直接在应用进程内运行，不会在后台启动独�
 
 ## 常见问题
 
-### 安全软件报告 `PDM:Trojan.Win32.Generic`
+### 安全软件报警怎么办
 
-这是安全软件根据运行行为给出的通用判定，不是 SATLI 使用的病毒名称。新版不再通过未签名的隐藏 `satli.exe` 子进程执行扫描或文件操作；请先从官方发布页覆盖安装，并确认告警对象不再是安装目录中的 `cli\satli.exe`。如果安全软件仍对当前 `SATLI.exe` 报警，请保留告警时间、对象路径和 SHA-256，并通过厂商的误报复核渠道提交，不建议关闭行为防护或为整个安装目录添加排除项。
+卡巴斯基有时会把独立安装版的 `SATLI.exe` 报告为 `PDM:Trojan.Win32.Generic`，随后阻止程序启动。这个名称的意思是：安全软件认为程序启动后的某些行为像木马，但没有指出一种已经确认的具体病毒。它可能是误报，但只看到这个名称时也不能直接断定文件安全。
+
+请按下面的顺序处理：
+
+1. **先确认下载来源。** 只使用 [Microsoft Store](https://apps.microsoft.com/detail/9PB7V9S03K80) 或本仓库的 [GitHub Releases](https://github.com/GaBoron/SATLI/releases/latest)。从网盘、群文件或第三方下载站取得的副本不要恢复运行。
+2. **确认被拦截的是当前主程序。** 新版的正常路径通常是 `C:\Program Files\SATLI\SATLI.exe`，不会再运行旧版的 `cli\satli.exe`。如果告警仍指向 `cli\satli.exe`，请安装最新版本；安装器会清理旧 CLI 目录。
+3. **核对文件指纹。** 在 PowerShell 中运行下面的命令，并把结果与对应 GitHub Release 发布说明中的 SHA-256 比较。两者必须完全一致；不一致时请删除该安装包并从官方渠道重新下载。
+
+   ```powershell
+   Get-FileHash '.\SATLI-Setup-vX.Y.Z.exe' -Algorithm SHA256
+   ```
+
+4. **更新卡巴斯基数据库后重试。** 误报规则修正后通常会随数据库更新生效。独立安装版仍被拦截时，也可以先改用 Microsoft Store 版。
+5. **仍然报警就提交复核。** 打开 [Kaspersky Threat Intelligence Portal](https://opentip.kaspersky.com/)，上传对应安装包或 `SATLI.exe` 进行分析；报告生成后选择 **Submit to reanalyze**，请卡巴斯基重新判断。提交前请阅读页面的使用条款和隐私说明。
+
+在卡巴斯基给出复核结果前，不建议关闭行为防护，也不要把整个 `C:\Program Files\SATLI` 加入排除项。反馈问题时，请附上 SATLI 版本、告警时间、对象完整路径、检测名称和 SHA-256；这些信息足够定位文件，不需要发送 Steam 凭据、代理密码或成就文件内容。
 
 ### 找不到本地游戏
 
