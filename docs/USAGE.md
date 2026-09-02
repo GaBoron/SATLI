@@ -66,7 +66,7 @@ Microsoft Store 是 SATLI 的首选安装方式。从 [Microsoft Store](https://
 
 ### 锁定 Steam 成就显示
 
-Steam 在线获取的成就 schema 可能覆盖本机文件在客户端内存中的显示。SATLI 的“锁定”因此不再把整份 Steam 文件设为只读，而是通过 [Millennium](https://github.com/SteamClientHomebrew/Millennium) 插件在界面渲染后应用 SATLI 译文。
+Steam 在线获取的成就 schema 可能覆盖本机文件在客户端内存中的显示。SATLI 的“锁定”通过 [Millennium](https://github.com/SteamClientHomebrew/Millennium) 插件在界面渲染后应用 SATLI 译文。
 
 1. 在 SATLI 的“已管理 → 全部”中选择已正常安装的译文，点击“锁定所选”。如果当前 Steam 目录缺少 Millennium，SATLI 会停止锁定并提供 [Steam Homebrew 官方安装页](https://docs.steambrew.app/users/getting-started/installation)；SATLI 不会下载、内置或代为安装 Millennium。
 2. 完全退出 Steam，从官方页面下载并运行 `MillenniumInstaller-Windows.exe`，按安装器提示完成安装。启动一次 Steam，确认左上角 Steam 菜单中出现 Millennium，然后返回 SATLI 再次点击“锁定”。
