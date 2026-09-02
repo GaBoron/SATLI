@@ -76,7 +76,7 @@ Microsoft Store 的产品可用性可能因市场而异。产品页面在当前�
 - x64 处理器
 - 已安装 Steam；使用离线缓存时可暂时不联网
 
-无需手动安装 .NET、Windows App SDK、Python 或 Git。Microsoft Store 会处理商店版的 Windows App Runtime 共享框架；独立安装器会在需要时联网补齐微软运行库。
+无需手动安装 .NET、Windows App SDK 或 Git。Microsoft Store 会处理商店版的 Windows App Runtime 共享框架；独立安装器会在需要时联网补齐微软运行库。
 
 ## 请求或贡献翻译
 
