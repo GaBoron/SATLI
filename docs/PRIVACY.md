@@ -12,8 +12,6 @@ SATLI 以本地处理为主。扫描、编辑、备份和恢复均在当前 Wind
 %LOCALAPPDATA%\SATLI\
 ```
 
-首次运行新版本时，应用会将旧目录 `%LOCALAPPDATA%\SteamAchievementTranslationInstaller\` 一次性迁移到上述目录；迁移完成后不再并行读写旧目录。
-
 其中可能保存：
 
 - 应用设置和窗口位置
@@ -24,13 +22,11 @@ SATLI 以本地处理为主。扫描、编辑、备份和恢复均在当前 Wind
 
 本地编辑只修改选择的目标语言，不会自动把本机 schema 上传到网络。应用本身不会因切换 Microsoft Store、独立安装版渠道而主动清理此目录中的数据。
 
-扫描、预览和翻译管理的命令核心直接在 SATLI 应用进程内运行，不会为这些操作启动隐藏的 `cli\satli.exe` 子进程。需要写入受保护 Steam 目录时，仍会在用户确认 UAC 后启动一个 SATLI 管理员工作进程，并通过仅限当前用户和管理员的本机命名管道传递本次请求。
+扫描、预览和翻译管理的命令核心直接在 SATLI 应用进程内运行。需要写入受保护 Steam 目录时，会在用户确认 UAC 后启动一个 SATLI 管理员工作进程，并通过仅限当前用户和管理员的本机命名管道传递本次请求。
 
 ## 凭据
 
-可选的 Steam Web API Key 和自定义代理密码使用 Windows DPAPI CurrentUser 加密保存，仅当前 Windows 用户能够解密。SATLI 不会登录 GitHub，也不会保存 GitHub 访问令牌或刷新令牌。
-
-从曾支持 GitHub 绑定的旧版本升级后，SATLI 首次启动时会检查新旧数据目录，并自动将遗留的加密 `github-auth.json` 移入 Windows 回收站；如果移入失败，文件会保留并记录警告，不会阻断应用启动。删除本地凭据不会撤销 GitHub 服务端已有的授权，如需撤销，请前往 GitHub 的授权设置操作。
+可选的 Steam Web API Key 和自定义代理密码使用 Windows DPAPI CurrentUser 加密保存，仅当前 Windows 用户能够解密。
 
 ## 网络请求
 
