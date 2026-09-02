@@ -157,8 +157,8 @@ public sealed partial class ManagedGamesView : UserControl
         {
             return;
         }
-        var enable = !game.FileReadOnly;
-        if (enable && !await SteamFileProtectionDialog.ConfirmLockAsync(XamlRoot, [game]))
+        var enable = !game.DisplayOverrideEnabled;
+        if (enable && !await ConfirmDisplayLockAsync([game]))
         {
             return;
         }
@@ -175,24 +175,38 @@ public sealed partial class ManagedGamesView : UserControl
     private async void LockSelected_Click(object sender, RoutedEventArgs e)
     {
         var selected = State.SelectedGames
-            .Where(item => item.CanToggleProtection && !item.FileReadOnly)
+            .Where(item => item.CanToggleProtection && !item.DisplayOverrideEnabled)
             .ToArray();
         if (selected.Length == 0)
         {
             ViewModel.ShowInfo("请先选择至少一个尚未锁定的已管理游戏。", InfoBarSeverity.Warning);
             return;
         }
-        if (await SteamFileProtectionDialog.ConfirmLockAsync(XamlRoot, selected))
+        if (await ConfirmDisplayLockAsync(selected))
         {
             await ViewModel.SetProtectionAsync(selected, enable: true);
             State.Synchronize(ViewModel.ManagedGames, ViewModel.IsLoading);
         }
     }
 
+    private async Task<bool> ConfirmDisplayLockAsync(IReadOnlyList<GameItem> games)
+    {
+        if (!await SteamDisplayOverrideDialog.EnsureMillenniumInstalledAsync(
+                XamlRoot,
+                App.ViewModel.CurrentSteamDirectory))
+        {
+            return false;
+        }
+        return await SteamDisplayOverrideDialog.ConfirmLockAsync(
+            XamlRoot,
+            App.ViewModel.CurrentSteamDirectory,
+            games);
+    }
+
     private async void UnlockSelected_Click(object sender, RoutedEventArgs e)
     {
         var selected = State.SelectedGames
-            .Where(item => item.FileReadOnly)
+            .Where(item => item.DisplayOverrideEnabled)
             .ToArray();
         if (selected.Length == 0)
         {

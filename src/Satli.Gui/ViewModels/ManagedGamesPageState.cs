@@ -36,13 +36,13 @@ public sealed class ManagedGamesPageState : ObservableObject
     public ObservableCollection<ManagedGameRow> Items { get; } = [];
     public string Title => Filter == ManagedGameFilter.Locked ? "已锁定" : "全部已管理";
     public string Description => Filter == ManagedGameFilter.Locked
-        ? "管理已强制设为只读的完整 Steam 成就 schema，并可随时解除锁定。"
+        ? "管理由 Millennium 插件覆盖显示的 Steam 成就译文，并可随时解除。"
         : "查看社区安装、本地导入或本地编辑的当前译文，并恢复变更前文件。";
     public string EmptyTitle => Filter == ManagedGameFilter.Locked
-        ? "暂无已锁定的成就文件"
+        ? "暂无已锁定的 Steam 显示译文"
         : "暂无已管理的游戏";
     public string EmptyDescription => Filter == ManagedGameFilter.Locked
-        ? "在“全部”页面选择项目并强制锁定后，会显示在这里。"
+        ? "在“全部”页面锁定 Steam 显示后，会显示在这里。"
         : "安装、导入或保存本地编辑后会显示在这里。";
     public int SelectedCount => Items.Count(item => item.IsSelected);
     public string SelectedCountText => $"已选 {SelectedCount} 项";

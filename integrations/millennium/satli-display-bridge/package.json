@@ -1,0 +1,12 @@
+{
+  "private": true,
+  "scripts": {
+    "build": "starlight pack --release",
+    "prepare": "starlight lsp"
+  },
+  "devDependencies": {
+    "@types/react": "19.1.1",
+    "@types/react-dom": "19.1.1",
+    "@steambrew/starlight": "^1.1.3"
+  }
+}

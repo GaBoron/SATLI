@@ -123,6 +123,13 @@ internal sealed partial class CommandDispatcher
                     item.Variant,
                     "catalog",
                     item.Entry.GameName);
+                RefreshDisplayOverride(
+                    "install",
+                    item.Entry.AppId,
+                    item.Entry.GameName,
+                    SteamLocator.SchemaTarget(steam, item.Entry.AppId),
+                    steam,
+                    args.DataDirectory);
                 succeeded++;
                 _events.Emit("install", "item-succeeded", new JsonObject
                 {
@@ -210,6 +217,13 @@ internal sealed partial class CommandDispatcher
             variant,
             "local-import",
             "本地翻译");
+        RefreshDisplayOverride(
+            "local-import",
+            artifact.AppId,
+            "本地翻译",
+            SteamLocator.SchemaTarget(steam, artifact.AppId),
+            steam,
+            args.DataDirectory);
         _events.Emit("local-import", "item-succeeded", new JsonObject
         {
             ["app_id"] = artifact.AppId,

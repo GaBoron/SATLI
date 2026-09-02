@@ -29,14 +29,14 @@
                 Label="锁定所选"
                 Click="LockSelected_Click"
                 Visibility="{x:Bind State.LockActionVisibility, Mode=OneWay}"
-                AutomationProperties.Name="强制锁定所选完整成就文件">
+                AutomationProperties.Name="锁定所选游戏的 Steam 成就显示">
                 <AppBarButton.Icon><FontIcon Glyph="&#xE72E;" /></AppBarButton.Icon>
             </AppBarButton>
             <AppBarButton
                 Icon="UnPin"
                 Label="解除所选"
                 Click="UnlockSelected_Click"
-                AutomationProperties.Name="解除所选成就文件的强制锁定" />
+                AutomationProperties.Name="解除所选游戏的 Steam 成就显示锁定" />
             <AppBarButton Icon="Refresh" Label="刷新状态" Click="Refresh_Click" KeyboardAcceleratorTextOverride="F5" />
         </CommandBar>
         <Grid Grid.Row="2">

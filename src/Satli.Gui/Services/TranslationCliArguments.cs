@@ -84,7 +84,7 @@ public sealed class TranslationCliArguments(
             arguments.Add("--yes");
         }
         arguments.Add("--jsonl");
-        AddSteamDirectory(arguments);
+        AddCommon(arguments, includeSteamDirectory: true, includeOffline: false);
         return arguments;
     }
 
@@ -110,7 +110,7 @@ public sealed class TranslationCliArguments(
     public List<string> Status(bool forceOffline)
     {
         var arguments = new List<string> { "status", "--jsonl" };
-        AddCommon(arguments, includeSteamDirectory: false, includeOffline: true, forceOffline);
+        AddCommon(arguments, includeSteamDirectory: true, includeOffline: true, forceOffline);
         return arguments;
     }
 

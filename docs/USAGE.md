@@ -64,6 +64,21 @@ Microsoft Store 是 SATLI 的首选安装方式。从 [Microsoft Store](https://
 
 每项都可查看当前成就文本或恢复安装前文件。目标文件若被 Steam 或其他程序修改，普通恢复会停止，以免覆盖新数据；只有在明确确认后才能强制恢复，且当前文件会先归档。
 
+### 锁定 Steam 成就显示
+
+Steam 在线获取的成就 schema 可能覆盖本机文件在客户端内存中的显示。SATLI 的“锁定”因此不再把整份 Steam 文件设为只读，而是通过 [Millennium](https://github.com/SteamClientHomebrew/Millennium) 插件在界面渲染后应用 SATLI 译文。
+
+1. 在 SATLI 的“已管理 → 全部”中选择已正常安装的译文，点击“锁定所选”。如果当前 Steam 目录缺少 Millennium，SATLI 会停止锁定并提供 [Steam Homebrew 官方安装页](https://docs.steambrew.app/users/getting-started/installation)；SATLI 不会下载、内置或代为安装 Millennium。
+2. 完全退出 Steam，从官方页面下载并运行 `MillenniumInstaller-Windows.exe`，按安装器提示完成安装。启动一次 Steam，确认左上角 Steam 菜单中出现 Millennium，然后返回 SATLI 再次点击“锁定”。
+3. SATLI 检测到 Millennium 后会部署自己的显示插件，并生成所选游戏的静态翻译快照。
+4. 重启 Steam，从左上角 Steam 菜单打开 **Millennium → Plugins**，启用 `SATLI Achievement Display Bridge`；若刚刚启用插件，请再重启一次 Steam。
+
+插件已启用、版本一致且正在运行时，后续锁定、更新译文或重新生成覆盖通常会在约 2 秒内自动生效，无需再次打开 Millennium 设置或重启 Steam。只有首次部署、SATLI 更新了插件本体，或插件未运行时，SATLI 才会提示启用或重启。
+
+覆盖引擎同时接入 Steam 主界面与 Store/Community WebView，用于游戏库成就区域、动态、弹窗等可识别表面。它只替换完全匹配且没有翻译歧义的名称、描述和辅助功能文本；无法识别的内容会保留原样。Steam 更新可能改变界面实现，因此这仍是实验性兼容层。
+
+SATLI 会把锁定内容写入 Steam 目录下的 `millennium\config\satli-bridge-v1.json`。该位置不会被 Microsoft Store 的 AppData 虚拟化隔离。写入完成后 SATLI 可以彻底退出；运行时由 Millennium 随 Steam 加载，不需要 SATLI 自启、托盘运行或后台常驻。恢复安装前文件会自动解除该游戏的显示锁定；重新安装或保存已锁定译文时会自动刷新快照。
+
 ## 编辑本地成就
 
 在“本地”页点击“编辑”，即可按成就 API ID 修改目标语言的名称和说明。

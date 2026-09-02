@@ -124,7 +124,7 @@ internal sealed partial class CommandDispatcher
                 }
             }
         }
-        var registry = new ManagedGameRegistry(args.DataDirectory);
+        var registry = new ManagedGameRegistry(args.DataDirectory, steam);
         var managedIds = registry.ManagedAppIds().ToHashSet(StringComparer.Ordinal);
         var ids = scope switch
         {
@@ -218,8 +218,16 @@ internal sealed partial class CommandDispatcher
     {
         if (args.Has("--json") && _events.JsonLines)
             throw new UsageException("--json 与 --jsonl 不能同时使用");
-        var registry = new ManagedGameRegistry(args.DataDirectory);
-        var ids = args.Positionals(1, "--data-dir").ToArray();
+        string? steam = null;
+        try
+        {
+            steam = SteamLocator.FindSteamDirectory(args.SteamDirectory);
+        }
+        catch (SatliException)
+        {
+        }
+        var registry = new ManagedGameRegistry(args.DataDirectory, steam);
+        var ids = args.Positionals(1, "--data-dir", "--steam-dir").ToArray();
         if (ids.Length == 0) ids = registry.ManagedAppIds().ToArray();
         TranslationCatalog? catalog = null;
         try
@@ -328,7 +336,7 @@ internal sealed partial class CommandDispatcher
             ["installed_at"] = managed.InstalledAt,
             ["installed_sha256"] = managed.InstalledSha256,
             ["native_languages"] = Strings(native),
-            ["file_read_only"] = managed.FileReadOnly,
+            ["display_override_enabled"] = managed.DisplayOverrideEnabled,
             ["action"] = "available",
             ["error"] = null,
         };
@@ -356,7 +364,7 @@ internal sealed partial class CommandDispatcher
         ["installed_at"] = managed.InstalledAt,
         ["installed_sha256"] = managed.InstalledSha256,
         ["native_languages"] = Strings(native),
-        ["file_read_only"] = managed.FileReadOnly,
+        ["display_override_enabled"] = managed.DisplayOverrideEnabled,
         ["action"] = "unavailable",
         ["error"] = null,
     };

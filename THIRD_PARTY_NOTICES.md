@@ -23,6 +23,15 @@ SATLI's command-line interface and shared business logic are implemented with
 .NET and distributed as a self-contained C# executable. No Python runtime,
 Dulwich, urllib3, or Git installation is included or required.
 
+### Steam display integration
+
+SATLI includes an unsigned `.star` plugin built with the MIT-licensed
+[SteamClientHomebrew/PluginTemplate](https://github.com/SteamClientHomebrew/PluginTemplate)
+and [Starlight](https://github.com/SteamClientHomebrew/Millennium/tree/main/starlight)
+tooling. The plugin requires the independently installed MIT-licensed
+[Millennium](https://github.com/SteamClientHomebrew/Millennium) framework.
+Millennium is not bundled or installed automatically by SATLI.
+
 ## Translation data and game content
 
 SATLI downloads community-maintained achievement schema files from [GaBoron/steam-achievement-translation-library](https://github.com/GaBoron/steam-achievement-translation-library). That repository has its own mixed-rights notice.

@@ -1,25 +1,31 @@
 using System.Text.Json.Nodes;
 using Satli.Core.FileSystem;
 using Satli.Core.SchemaEditing;
+using Satli.Core.SteamDisplay;
 using Satli.Core.Transactions;
 
 namespace Satli.Core.State;
 
 public sealed record ManagedRecord(string AppId, string InstalledState, string? InstalledVariantId,
     string? InstalledSource, string? InstalledAt, string? InstalledSha256, string? GameName,
-    bool FileReadOnly);
+    bool DisplayOverrideEnabled);
 
 public sealed class ManagedGameRegistry
 {
     private readonly string _dataDirectory;
-    public ManagedGameRegistry(string dataDirectory)
+    public ManagedGameRegistry(string dataDirectory, string? steamDirectory = null)
     {
         _dataDirectory = Path.GetFullPath(dataDirectory);
         Installations = new TransactionManager(_dataDirectory);
         Edits = new EditHistoryStore(_dataDirectory);
+        DisplayOverrides = string.IsNullOrWhiteSpace(steamDirectory)
+            ? null
+            : new SteamDisplayOverrideStore(
+                SteamDisplayPluginInstaller.BridgePath(steamDirectory));
     }
     public TransactionManager Installations { get; }
     public EditHistoryStore Edits { get; }
+    public SteamDisplayOverrideStore? DisplayOverrides { get; }
 
     public IReadOnlyList<string> ManagedAppIds() => Installations.Store.ManagedAppIds()
         .Concat(Edits.ManagedAppIds()).Distinct().OrderBy(value => ulong.Parse(value)).ToArray();
@@ -38,13 +44,13 @@ public sealed class ManagedGameRegistry
             return new(appId, active ? FileState(Text(transaction, "target"), hash) : "restored",
                 hash is null ? "local-edit" : $"local-edit-{hash[..Math.Min(12, hash.Length)]}",
                 "local-edit", Text(transaction, "edited_at"), hash, Text(transaction, "game_name"),
-                active && IsReadOnly(Text(transaction, "target")));
+                DisplayOverrides?.IsEnabled(appId) is true);
         }
         var variant = Text(transaction, "variant_id"); var source = Text(transaction, "source_kind")
             ?? (variant?.StartsWith("local-", StringComparison.OrdinalIgnoreCase) == true ? "local-import" : "catalog");
         return new(appId, active ? Installations.Status(appId) : "restored", active ? variant : null,
             source, Text(transaction, "installed_at"), Text(transaction, "installed_sha256"),
-            Text(transaction, "game_name"), active && IsReadOnly(Text(transaction, "target")));
+            Text(transaction, "game_name"), DisplayOverrides?.IsEnabled(appId) is true);
     }
 
     public string? RestorePreviewSource(string appId, string expectedTarget)
@@ -82,7 +88,6 @@ public sealed class ManagedGameRegistry
     }
     private string SafeRelative(string value) { var full = Path.GetFullPath(Path.Combine(_dataDirectory, value)); if (Path.GetRelativePath(_dataDirectory, full).StartsWith("..", StringComparison.Ordinal)) throw new TransactionException("备份路径越界"); return full; }
     private static string FileState(string? target, string? expected) { if (string.IsNullOrWhiteSpace(target) || !File.Exists(target)) return "missing"; try { return FileOperations.Sha256(target) == expected ? "installed" : "modified"; } catch { return "unreadable"; } }
-    private static bool IsReadOnly(string? target) => !string.IsNullOrWhiteSpace(target) && File.Exists(target) && (File.GetAttributes(target) & FileAttributes.ReadOnly) != 0;
     private static string? Text(JsonObject value, string name) => StateStore.String(value, name);
     private static DateTimeOffset Timestamp(string? value) => DateTimeOffset.TryParse(value, out var parsed) ? parsed : DateTimeOffset.MinValue;
 }

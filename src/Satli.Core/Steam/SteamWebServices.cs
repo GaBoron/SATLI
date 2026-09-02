@@ -27,7 +27,7 @@ public static class SteamWebServices
             + $"?key={Uri.EscapeDataString(apiKey)}&steamid={steamId}"
             + "&include_appinfo=true&include_played_free_games=true&format=json");
         using var request = new HttpRequestMessage(HttpMethod.Get, uri);
-        request.Headers.UserAgent.ParseAdd("SATLI/2.2.2");
+        request.Headers.UserAgent.ParseAdd("SATLI/2.3.0");
         using var response = await client.SendAsync(
             request,
             HttpCompletionOption.ResponseHeadersRead,

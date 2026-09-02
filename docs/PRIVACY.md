@@ -62,3 +62,11 @@ SATLI 以本地处理为主。扫描、编辑、备份和恢复均在当前 Wind
 应用在写入前创建备份。若目标文件之后被 Steam 或其他程序修改，普通恢复会拒绝覆盖；强制恢复也会先归档当前文件，再恢复原备份。
 
 这些保护用于减少误覆盖风险，但不能代替重要数据的额外备份。
+
+## Steam 显示覆盖
+
+锁定 Steam 成就显示时，SATLI 会在 Steam 目录的 `millennium\config` 中写入静态桥接文件。桥接内容包含用户主动锁定的游戏名、App ID、成就 API 名称以及 schema 中已有的多语言成就名称和描述；该文件不会上传到 SATLI 或第三方服务器。使用 Steam 内的真实目录可避免 Microsoft Store AppData 虚拟化导致 SATLI 与 Millennium 看到不同文件。
+
+随 SATLI 分发的 Millennium 插件只从本机读取桥接文件，并写入一个不含成就文本的短期运行心跳，供 SATLI 判断插件是否已加载。SATLI 无需为此保持运行。Millennium 是独立的第三方 Steam 客户端扩展，其安装、更新和其他行为适用 Millennium 自身的说明与隐私约定。
+
+如果 SATLI 未检测到 Millennium，只有在用户点击“打开 Millennium 官方安装页”后，SATLI 才会让系统浏览器访问 Steam Homebrew 官方文档。SATLI 不会下载、内置或代为运行 Millennium 安装器。

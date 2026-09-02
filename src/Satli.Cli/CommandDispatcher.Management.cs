@@ -5,6 +5,7 @@ using Satli.Core.Formats;
 using Satli.Core.SchemaEditing;
 using Satli.Core.State;
 using Satli.Core.Steam;
+using Satli.Core.SteamDisplay;
 
 namespace Satli.Cli;
 
@@ -12,13 +13,13 @@ internal sealed partial class CommandDispatcher
 {
     private int Restore(Arguments args)
     {
-        var registry = new ManagedGameRegistry(args.DataDirectory);
+        var steam = SteamLocator.FindSteamDirectory(args.SteamDirectory);
+        var registry = new ManagedGameRegistry(args.DataDirectory, steam);
         var ids = args.Has("--all")
             ? registry.ManagedAppIds().Where(registry.HasActiveTransaction).ToArray()
             : args.Positionals(1, "--data-dir", "--steam-dir").ToArray();
         if (ids.Length == 0)
             throw new UsageException("请指定 APP_ID，或使用 --all");
-        var steam = SteamLocator.FindSteamDirectory(args.SteamDirectory);
         var force = args.Has("--force");
         _events.Emit("restore", "plan", new JsonObject
         {
@@ -75,6 +76,7 @@ internal sealed partial class CommandDispatcher
                     ["force"] = force,
                 });
                 registry.Restore(id, SteamLocator.SchemaTarget(steam, id), force);
+                DisableDisplayOverride("restore", id, steam);
                 succeeded++;
                 _events.Emit("restore", "item-succeeded", new JsonObject
                 {
@@ -105,9 +107,19 @@ internal sealed partial class CommandDispatcher
             throw new UsageException("protect 需要 lock 或 unlock");
         var enable = raw[1] == "lock";
         if (enable) RequireYes(args);
-        var ids = args.Positionals(2, "--steam-dir").ToArray();
+        var ids = args.Positionals(2, "--data-dir", "--steam-dir").ToArray();
         if (ids.Length == 0) throw new UsageException("请指定 APP_ID");
         var steam = SteamLocator.FindSteamDirectory(args.SteamDirectory);
+        var registry = new ManagedGameRegistry(args.DataDirectory, steam);
+        var overrides = new SteamDisplayOverrideStore(
+            SteamDisplayPluginInstaller.BridgePath(steam));
+        SteamDisplayPluginInstallResult? plugin = null;
+        if (enable)
+        {
+            plugin = SteamDisplayPluginInstaller.EnsureInstalled(
+                steam,
+                SteamDisplayPluginInstaller.BundledPluginPath());
+        }
         _events.Emit("protect", "plan", new JsonObject
         {
             ["action"] = raw[1],
@@ -115,21 +127,51 @@ internal sealed partial class CommandDispatcher
         });
         for (var index = 0; index < ids.Length; index++)
         {
-            var target = SteamLocator.SchemaTarget(steam, ids[index]);
-            if (!File.Exists(target))
-                throw new PreflightException($"找不到本地成就文件：{target}");
-            var attributes = File.GetAttributes(target);
-            File.SetAttributes(
-                target,
-                enable
-                    ? attributes | FileAttributes.ReadOnly
-                    : attributes & ~FileAttributes.ReadOnly);
+            var appId = ids[index];
+            var target = SteamLocator.SchemaTarget(steam, appId);
+            var managed = registry.Record(appId);
+            if (enable)
+            {
+                if (managed.InstalledState != "installed")
+                {
+                    throw new PreflightException(
+                        $"{appId} 的已安装译文已变化；请先重新安装或保存译文，再启用 Steam 显示覆盖");
+                }
+                if (!File.Exists(target))
+                {
+                    throw new PreflightException($"找不到本地成就文件：{target}");
+                }
+                if (FileOperations.IsReadOnly(target))
+                {
+                    FileOperations.SetReadOnly(target, false);
+                }
+                var original = DisplayOverrideBackup("protect", registry, appId, target);
+                overrides.Enable(
+                    appId,
+                    managed.GameName ?? $"Steam 游戏 {appId}",
+                    target,
+                    original is null ? [] : [original]);
+            }
+            else
+            {
+                overrides.Disable(appId);
+                if (File.Exists(target) && FileOperations.IsReadOnly(target))
+                {
+                    FileOperations.SetReadOnly(target, false);
+                }
+            }
             _events.Emit("protect", "item-succeeded", new JsonObject
             {
-                ["app_id"] = ids[index],
+                ["app_id"] = appId,
                 ["target"] = target,
-                ["file_read_only"] = enable,
-                ["action"] = enable ? "locked" : "unlocked",
+                ["bridge_path"] = overrides.BridgePath,
+                ["plugin_path"] = plugin?.PluginPath ?? "",
+                ["plugin_updated"] = plugin?.Updated ?? false,
+                ["plugin_runtime_active"] = plugin?.RuntimeActive ?? false,
+                ["display_override_enabled"] = enable,
+                ["legacy_read_only_cleared"] = File.Exists(target)
+                    && !FileOperations.IsReadOnly(target),
+                ["action"] = enable ? "display-override-enabled" : "display-override-disabled",
                 ["position"] = index + 1,
             });
         }

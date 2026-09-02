@@ -342,7 +342,7 @@ public sealed partial class TranslationManagementViewModel
                 scanned.InstalledSource = managed.InstalledSource;
                 scanned.InstalledAt = managed.InstalledAt;
                 scanned.InstalledSha256 = managed.InstalledSha256;
-                scanned.FileReadOnly = managed.FileReadOnly;
+                scanned.DisplayOverrideEnabled = managed.DisplayOverrideEnabled;
             }
         }
         UpdateAvailableCount = GameInstallFiltering.CountUpdates(Games);

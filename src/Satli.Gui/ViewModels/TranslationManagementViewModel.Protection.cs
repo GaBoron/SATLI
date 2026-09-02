@@ -24,22 +24,40 @@ public sealed partial class TranslationManagementViewModel
         {
             var result = await RunCliAsync(
                 _arguments.Protect(selected, enable),
-                enable ? "正在强制锁定 Steam 成就文件…" : "正在解除 Steam 成就文件锁定…");
+                enable ? "正在生成 Steam 成就显示覆盖…" : "正在解除 Steam 成就显示覆盖…");
             if (!result.IsSuccess)
             {
                 ShowResultError(result);
                 return;
             }
             await LoadManagedCoreAsync(forceOffline: true);
+            var pluginActive = result.Events
+                .Where(item => item.Event == "item-succeeded")
+                .Any(item => item.Payload.TryGetProperty(
+                        "plugin_runtime_active",
+                        out var active)
+                    && active.ValueKind == System.Text.Json.JsonValueKind.True);
+            var pluginUpdated = result.Events
+                .Where(item => item.Event == "item-succeeded")
+                .Any(item => item.Payload.TryGetProperty(
+                        "plugin_updated",
+                        out var updated)
+                    && updated.ValueKind == System.Text.Json.JsonValueKind.True);
             ShowInfo(
                 enable
-                    ? $"已将 {selected.Count} 个完整 schema 设为只读。此保护风险巨大且可能被 Steam 绕过。"
-                    : $"已解除 {selected.Count} 个 schema 的只读锁定。",
-                enable ? InfoBarSeverity.Warning : InfoBarSeverity.Success);
+                    ? pluginUpdated
+                        ? $"已写入 {selected.Count} 个游戏的显示锁定，并安装或更新 SATLI 的 Millennium 插件。请重启 Steam；首次使用时还需在 Millennium → Plugins 中启用 SATLI Achievement Display Bridge。SATLI 无需后台运行。"
+                        : pluginActive
+                        ? $"已锁定 {selected.Count} 个游戏的 Steam 成就显示；运行中的插件通常会在约 2 秒内自动刷新，无需重新启用或重启 Steam。SATLI 现在可以退出。"
+                        : $"已写入 {selected.Count} 个游戏的显示锁定和 Millennium 插件。请重启 Steam，从左上角 Steam 菜单打开 Millennium → Plugins，启用 SATLI Achievement Display Bridge；若刚启用，请再重启一次 Steam。SATLI 无需后台运行。"
+                    : $"已解除 {selected.Count} 个游戏的 Steam 成就显示覆盖。",
+                enable && (pluginUpdated || !pluginActive)
+                    ? InfoBarSeverity.Warning
+                    : InfoBarSeverity.Success);
         }
         catch (Exception exception)
         {
-            ShowException(enable ? "强制锁定" : "解除锁定", exception);
+            ShowException(enable ? "锁定 Steam 显示" : "解除 Steam 显示锁定", exception);
         }
         finally
         {

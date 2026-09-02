@@ -9,5 +9,5 @@ public enum ManagedGameFilter
 public static class ManagedGameFiltering
 {
     public static bool Matches(GameItem game, ManagedGameFilter filter) =>
-        filter != ManagedGameFilter.Locked || game.FileReadOnly;
+        filter != ManagedGameFilter.Locked || game.DisplayOverrideEnabled;
 }

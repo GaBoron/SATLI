@@ -1,0 +1,29 @@
+[plugin]
+id = "com.gaboron.satli-display-bridge"
+name = "SATLI Achievement Display Bridge"
+version = "0.1.1"
+author = "GaBoron"
+description = "Applies SATLI achievement translations across Steam UI surfaces."
+
+[backend]
+entry = "backend/main.lua"
+sources = ["backend/**/*.lua"]
+
+[frontend]
+entry = "frontend/index.tsx"
+
+[webkit]
+entry = "webview/preload.ts"
+
+[compiler]
+output_path = "satli.star"
+
+[dev]
+auto_restart = true
+reload_steamui_when = "both"
+
+[logger]
+padding = 0
+backend_prefix = "SATLI-BCK"
+frontend_prefix = "SATLI-FRT"
+webview_prefix = "SATLI-WEB"
