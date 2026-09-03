@@ -13,6 +13,7 @@ public sealed class MainViewModel : ObservableObject
     private readonly UpdateService _updateService = new();
     private readonly StoreUpdateService _storeUpdateService;
     private readonly NetworkProbeService _networkProbeService = new();
+    private readonly SteamDisplayPluginStartupUpdater _steamDisplayPluginUpdater = new();
     private readonly ApplicationDistributionService _distributionService;
     private bool _isInfoOpen;
     private string _infoMessage = string.Empty;
@@ -121,6 +122,7 @@ public sealed class MainViewModel : ObservableObject
         OnPropertyChanged(nameof(Settings));
         App.Logs.Configure(Settings.LoggingEnabled, Settings.LogLevel, Settings.LogRetentionDays);
         await App.Logs.WriteAsync("信息", "应用", "设置已加载，开始初始化。");
+        _ = _steamDisplayPluginUpdater.RunAsync(Settings, App.Logs);
         ApplyTheme();
         await Translations.ScanAsync(refreshCatalog: true);
         App.InventoryPreloader.Start(Settings);

@@ -43,13 +43,22 @@ public sealed partial class TranslationManagementViewModel
                         "plugin_updated",
                         out var updated)
                     && updated.ValueKind == System.Text.Json.JsonValueKind.True);
+            var snapshotReused = result.Events
+                .Where(item => item.Event == "item-succeeded")
+                .Any(item => item.Payload.TryGetProperty(
+                        "trusted_snapshot_reused",
+                        out var reused)
+                    && reused.ValueKind == System.Text.Json.JsonValueKind.True);
+            var snapshotMessage = snapshotReused
+                ? "已直接复用 SATLI 最后一次校验通过的译文快照，无需重新下载或改写 Steam 文件。"
+                : string.Empty;
             ShowInfo(
                 enable
                     ? pluginUpdated
-                        ? $"已写入 {selected.Count} 个游戏的显示锁定，并安装或更新 SATLI 的 Millennium 插件。请重启 Steam；首次使用时还需在 Millennium → Plugins 中启用 SATLI Achievement Display Bridge。SATLI 无需后台运行。"
+                        ? $"已写入 {selected.Count} 个游戏的显示锁定，并安装或更新 SATLI 的 Millennium 插件。{snapshotMessage}请重启 Steam；首次使用时还需在 Millennium → Plugins 中启用 SATLI Achievement Display Bridge。SATLI 无需后台运行。"
                         : pluginActive
-                        ? $"已锁定 {selected.Count} 个游戏的 Steam 成就显示；运行中的插件通常会在约 2 秒内自动刷新，无需重新启用或重启 Steam。SATLI 现在可以退出。"
-                        : $"已写入 {selected.Count} 个游戏的显示锁定和 Millennium 插件。请重启 Steam，从左上角 Steam 菜单打开 Millennium → Plugins，启用 SATLI Achievement Display Bridge；若刚启用，请再重启一次 Steam。SATLI 无需后台运行。"
+                        ? $"已锁定 {selected.Count} 个游戏的 Steam 成就显示；{snapshotMessage}运行中的插件通常会在约 2 秒内自动刷新，无需重新启用或重启 Steam。SATLI 现在可以退出。"
+                        : $"已写入 {selected.Count} 个游戏的显示锁定和 Millennium 插件。{snapshotMessage}请重启 Steam，从左上角 Steam 菜单打开 Millennium → Plugins，启用 SATLI Achievement Display Bridge；若刚启用，请再重启一次 Steam。SATLI 无需后台运行。"
                     : $"已解除 {selected.Count} 个游戏的 Steam 成就显示覆盖。",
                 enable && (pluginUpdated || !pluginActive)
                     ? InfoBarSeverity.Warning

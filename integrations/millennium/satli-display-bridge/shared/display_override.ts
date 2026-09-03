@@ -25,7 +25,7 @@ export interface OverrideMetrics {
 }
 
 type SnapshotLoader = () => Promise<unknown>;
-type LanguageLoader = () => Promise<string>;
+type LanguageLoader = () => Promise<unknown>;
 interface AppliedValue {
   original: string;
   replacement: string;
@@ -66,7 +66,10 @@ export class DisplayOverrideController {
         }
       }
     });
-    this.observer.observe(this.root.documentElement, {
+    // WebKit preloads run at document start, before documentElement necessarily
+    // exists. Observe the Document itself so the later <html> insertion is also
+    // handled instead of aborting the controller during startup.
+    this.observer.observe(this.root, {
       subtree: true,
       childList: true,
       characterData: true,
@@ -108,13 +111,19 @@ export class DisplayOverrideController {
 
   private async refresh(): Promise<void> {
     try {
-      const [rawPayload, language] = await Promise.all([
+      const [rawPayload, rawLanguage] = await Promise.all([
         this.loadSnapshot(),
         this.loadLanguage(),
       ]);
       const { snapshot, serialized: payload } = parseSnapshot(rawPayload);
+      const language = parseLanguage(rawLanguage);
       const identity = `${language}\n${payload}`;
       if (identity === this.lastPayload) {
+        // Steam's library renderer can update an already-mounted activity view
+        // without producing mutations visible to the plugin observer. Keep the
+        // existing two-second refresh useful as a bounded reconciliation pass.
+        this.applyToNode(this.root);
+        this.publishMetrics(snapshot);
         return;
       }
       if (snapshot.version !== 1 || typeof snapshot.apps !== 'object') {
@@ -125,11 +134,10 @@ export class DisplayOverrideController {
       this.replacements.clear();
       this.targets.clear();
       this.restoreAppliedValues();
-      const normalizedLanguage = normalizeLanguage(language);
-      this.replacements = buildReplacementMap(snapshot, normalizedLanguage);
-      this.targets = buildAchievementTargets(snapshot, normalizedLanguage);
+      this.replacements = buildReplacementMap(snapshot, language);
+      this.targets = buildAchievementTargets(snapshot, language);
       this.replacedCount = 0;
-      this.applyToNode(this.root.documentElement);
+      this.applyToNode(this.root);
       this.publishMetrics(snapshot);
     } catch (error) {
       const message = error instanceof Error ? `${error.name}: ${error.message}` : String(error);
@@ -146,6 +154,13 @@ export class DisplayOverrideController {
     }
     if (node.nodeType === Node.TEXT_NODE) {
       this.applyTextNode(node as Text);
+      return;
+    }
+    if (node.nodeType === Node.DOCUMENT_NODE) {
+      const documentElement = (node as Document).documentElement;
+      if (documentElement) {
+        this.applyToNode(documentElement);
+      }
       return;
     }
     if (!(node instanceof Element)) {
@@ -240,6 +255,14 @@ function parseSnapshot(raw: unknown): { snapshot: BridgeSnapshot; serialized: st
     return { snapshot: value as BridgeSnapshot, serialized: JSON.stringify(value) };
   }
   throw new TypeError(`unexpected bridge payload type: ${typeof value}`);
+}
+
+function parseLanguage(raw: unknown): string {
+  const value = unwrapFfiValue(raw);
+  if (typeof value !== 'string') {
+    throw new TypeError(`unexpected Steam language type: ${typeof value}`);
+  }
+  return normalizeLanguage(value);
 }
 
 function unwrapFfiValue(value: unknown): unknown {

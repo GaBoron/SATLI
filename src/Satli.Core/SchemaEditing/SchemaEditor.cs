@@ -121,12 +121,15 @@ public sealed partial class SchemaEditor
 
         var store = new EditHistoryStore(dataDirectory); var id = Guid.NewGuid().ToString("N");
         var backup = Path.Combine(store.DataDirectory, "edit-backups", appId, id, "original.bin");
+        var editedSnapshot = Path.Combine(store.DataDirectory, "edit-backups", appId, id, "edited.bin");
         var stage = Path.Combine(Path.GetDirectoryName(sourcePath)!, $".{Path.GetFileName(sourcePath)}.{id}.tmp");
         var replaced = false;
         try
         {
             FileOperations.CopyDurable(sourcePath, backup);
             if (FileOperations.Sha256(backup) != currentHash) throw new IntegrityException($"编辑前备份校验失败：{backup}");
+            FileOperations.WriteDurable(editedSnapshot, payload);
+            if (FileOperations.Sha256(editedSnapshot) != outputHash) throw new IntegrityException("编辑结果快照 SHA-256 校验失败");
             FileOperations.WriteDurable(stage, payload);
             if (FileOperations.Sha256(stage) != outputHash) throw new IntegrityException("编辑暂存文件 SHA-256 校验失败");
             BinaryKeyValues.Preview(File.ReadAllBytes(stage));
@@ -138,6 +141,7 @@ public sealed partial class SchemaEditor
                 ["target"] = sourcePath, ["target_language"] = targetLanguage ?? "",
                 ["original_sha256"] = currentHash, ["edited_sha256"] = outputHash,
                 ["snapshot"] = Path.GetRelativePath(store.DataDirectory, backup).Replace('\\', '/'),
+                ["edited_snapshot"] = Path.GetRelativePath(store.DataDirectory, editedSnapshot).Replace('\\', '/'),
             };
             try { store.Add(appId, transaction); }
             catch (TransactionException exception)

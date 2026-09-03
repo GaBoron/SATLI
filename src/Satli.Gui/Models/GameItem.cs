@@ -174,6 +174,7 @@ public sealed class GameItem : ObservableObject
         {
             if (SetProperty(ref _displayOverrideEnabled, value))
             {
+                OnPropertyChanged(nameof(StateText));
                 OnPropertyChanged(nameof(ProtectionStatusText));
                 OnPropertyChanged(nameof(ProtectionActionText));
                 OnPropertyChanged(nameof(ProtectionVisibility));
@@ -184,7 +185,8 @@ public sealed class GameItem : ObservableObject
     public string StateText => InstalledState switch
     {
         "installed" => "已安装",
-        "modified" => "已被修改",
+        "modified" when DisplayOverrideEnabled => "已被修改（已锁定）",
+        "modified" => "已被修改（可锁定）",
         "missing" => "文件缺失",
         "restored" => "已恢复",
         "unreadable" => "无法读取",
@@ -199,7 +201,8 @@ public sealed class GameItem : ObservableObject
     public bool IsLocalEdit => InstalledSource == "local-edit";
     public bool CanViewInstalledTranslation => InstalledState is "installed" or "modified";
     public bool CanRestore => InstalledState is "installed" or "modified" or "missing";
-    public bool CanToggleProtection => DisplayOverrideEnabled || InstalledState == "installed";
+    public bool CanToggleProtection => DisplayOverrideEnabled
+        || InstalledState is "installed" or "modified";
     public string ProtectionStatusText => DisplayOverrideEnabled ? "Steam 显示覆盖已启用" : "未锁定";
     public string ProtectionActionText => DisplayOverrideEnabled ? "解除显示锁定" : "锁定 Steam 显示";
     public Visibility ProtectionVisibility => DisplayOverrideEnabled ? Visibility.Visible : Visibility.Collapsed;

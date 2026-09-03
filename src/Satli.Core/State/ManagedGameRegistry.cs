@@ -1,5 +1,6 @@
 using System.Text.Json.Nodes;
 using Satli.Core.FileSystem;
+using Satli.Core.Formats;
 using Satli.Core.SchemaEditing;
 using Satli.Core.SteamDisplay;
 using Satli.Core.Transactions;
@@ -63,6 +64,86 @@ public sealed class ManagedGameRegistry
         var expected = Text(candidate.Transaction, "original_sha256") ?? "";
         if (!File.Exists(snapshot) || FileOperations.Sha256(snapshot) != expected) throw new IntegrityException($"编辑前备份 SHA-256 不匹配：{snapshot}");
         return snapshot;
+    }
+
+    public string DisplayOverrideSource(string appId, string expectedTarget)
+    {
+        var candidate = Active(appId)
+            ?? throw new TransactionException($"{appId} 没有可用于显示覆盖的管理记录");
+        var target = Path.GetFullPath(Text(candidate.Transaction, "target") ?? "");
+        if (!target.Equals(Path.GetFullPath(expectedTarget), StringComparison.OrdinalIgnoreCase))
+        {
+            throw new TransactionException("管理历史中的目标路径与当前 Steam 目录不一致");
+        }
+
+        var expectedHash = Text(
+            candidate.Transaction,
+            candidate.Source == "local-edit" ? "edited_sha256" : "installed_sha256")
+            ?? throw new TransactionException($"{appId} 的管理记录缺少译文校验值");
+        var candidates = new List<string>();
+        if (File.Exists(target))
+        {
+            candidates.Add(target);
+        }
+
+        var snapshotField = candidate.Source == "local-edit"
+            ? "edited_snapshot"
+            : "installed_snapshot";
+        if (Text(candidate.Transaction, snapshotField) is { } snapshot)
+        {
+            candidates.Add(SafeRelative(snapshot));
+        }
+        if (candidate.Source == "installation")
+        {
+            candidates.Add(Path.Combine(_dataDirectory, "cache", "schemas", $"{expectedHash}.bin"));
+            candidates.Add(Path.Combine(_dataDirectory, "cache", "local-import", $"{expectedHash}.bin"));
+        }
+        else
+        {
+            try
+            {
+                var revisionStore = new SchemaRevisionStore(_dataDirectory);
+                var revision = revisionStore.List(appId).FirstOrDefault(item =>
+                    item.SchemaSha256.Equals(expectedHash, StringComparison.OrdinalIgnoreCase));
+                if (revision is not null)
+                {
+                    candidates.Add(Path.Combine(
+                        revisionStore.Root,
+                        appId,
+                        revision.Commit,
+                        "schema.bin"));
+                }
+            }
+            catch (SatliException)
+            {
+                // A corrupt optional revision history must not hide a valid dedicated snapshot.
+            }
+        }
+
+        foreach (var path in candidates.Distinct(StringComparer.OrdinalIgnoreCase))
+        {
+            if (!File.Exists(path))
+            {
+                continue;
+            }
+            try
+            {
+                if (!FileOperations.Sha256(path).Equals(expectedHash, StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+                BinaryKeyValues.Preview(File.ReadAllBytes(path));
+                return path;
+            }
+            catch (Exception exception) when (exception is IOException
+                or UnauthorizedAccessException
+                or SatliException)
+            {
+                // Continue through backward-compatible sources until one verifies.
+            }
+        }
+        throw new PreflightException(
+            $"{appId} 的当前文件已变化，且找不到 SATLI 最后一次写入的可信译文快照。请重新安装或保存一次译文后再锁定。");
     }
 
     public JsonObject Restore(string appId, string target, bool force)

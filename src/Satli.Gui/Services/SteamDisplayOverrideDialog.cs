@@ -136,6 +136,13 @@ public static class SteamDisplayOverrideDialog
                     },
                     new TextBlock
                     {
+                        Text = games.Any(game => game.IsModified)
+                            ? $"其中 {games.Count(game => game.IsModified)} 个游戏的本地文件已被修改。SATLI 将直接复用最后一次写入且校验通过的译文快照生成覆盖，无需重新下载，也不会再次改写当前 Steam 文件。"
+                            : "以后即使 Steam 改回了本地成就文件，SATLI 也会优先复用最后一次写入且校验通过的译文快照，无需重新下载。",
+                        TextWrapping = TextWrapping.Wrap,
+                    },
+                    new TextBlock
+                    {
                         Text = "覆盖目标包括游戏库、活动动态和成就弹窗等 Steam 页面；未识别或发生歧义的文本会保留原样，少数与 Steam 普通界面完全同名的文本也可能被误替换。",
                         TextWrapping = TextWrapping.Wrap,
                     },

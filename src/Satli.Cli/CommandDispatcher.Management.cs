@@ -114,8 +114,21 @@ internal sealed partial class CommandDispatcher
         var overrides = new SteamDisplayOverrideStore(
             SteamDisplayPluginInstaller.BridgePath(steam));
         SteamDisplayPluginInstallResult? plugin = null;
+        var displaySources = new Dictionary<string, string>(StringComparer.Ordinal);
         if (enable)
         {
+            foreach (var appId in ids)
+            {
+                var managed = registry.Record(appId);
+                if (managed.InstalledState is not ("installed" or "modified"))
+                {
+                    throw new PreflightException(
+                        $"{appId} 没有可用于 Steam 显示覆盖的已安装译文");
+                }
+                displaySources[appId] = registry.DisplayOverrideSource(
+                    appId,
+                    SteamLocator.SchemaTarget(steam, appId));
+            }
             plugin = SteamDisplayPluginInstaller.EnsureInstalled(
                 steam,
                 SteamDisplayPluginInstaller.BundledPluginPath());
@@ -132,15 +145,6 @@ internal sealed partial class CommandDispatcher
             var managed = registry.Record(appId);
             if (enable)
             {
-                if (managed.InstalledState != "installed")
-                {
-                    throw new PreflightException(
-                        $"{appId} 的已安装译文已变化；请先重新安装或保存译文，再启用 Steam 显示覆盖");
-                }
-                if (!File.Exists(target))
-                {
-                    throw new PreflightException($"找不到本地成就文件：{target}");
-                }
                 if (FileOperations.IsReadOnly(target))
                 {
                     FileOperations.SetReadOnly(target, false);
@@ -149,7 +153,7 @@ internal sealed partial class CommandDispatcher
                 overrides.Enable(
                     appId,
                     managed.GameName ?? $"Steam 游戏 {appId}",
-                    target,
+                    displaySources[appId],
                     original is null ? [] : [original]);
             }
             else
@@ -169,6 +173,8 @@ internal sealed partial class CommandDispatcher
                 ["plugin_updated"] = plugin?.Updated ?? false,
                 ["plugin_runtime_active"] = plugin?.RuntimeActive ?? false,
                 ["display_override_enabled"] = enable,
+                ["trusted_snapshot_reused"] = enable
+                    && !displaySources[appId].Equals(target, StringComparison.OrdinalIgnoreCase),
                 ["legacy_read_only_cleared"] = File.Exists(target)
                     && !FileOperations.IsReadOnly(target),
                 ["action"] = enable ? "display-override-enabled" : "display-override-disabled",

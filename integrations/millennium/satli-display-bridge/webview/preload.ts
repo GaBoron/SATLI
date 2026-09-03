@@ -12,6 +12,15 @@ export default async function main() {
     document,
     () => backend.getBridgeSnapshot(),
     () => frontend.getCurrentSteamLanguage(),
+    (metrics) => {
+      console.log(
+        'SATLI display bridge scan',
+        window.location.hostname,
+        `apps=${metrics.appCount}`,
+        `sources=${metrics.sourceCount}`,
+        `replaced=${metrics.replacedCount}`,
+      );
+    },
   );
   window.__satliDisplayOverride = controller;
   await controller.start();

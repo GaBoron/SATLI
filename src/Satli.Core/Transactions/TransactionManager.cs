@@ -44,6 +44,7 @@ public sealed class TransactionManager
         var transactionId = Guid.NewGuid().ToString("N");
         var backupDirectory = Path.Combine(DataDirectory, "backups", appId, transactionId);
         var snapshot = Path.Combine(backupDirectory, "original.bin");
+        var installedSnapshot = Path.Combine(backupDirectory, "installed.bin");
         var stage = Path.Combine(Path.GetDirectoryName(target)!, $".{Path.GetFileName(target)}.{transactionId}.tmp");
         var previousExists = File.Exists(target);
         string? previousSha256 = null;
@@ -59,6 +60,8 @@ public sealed class TransactionManager
                     throw new IntegrityException($"安装前备份校验失败：{snapshot}");
                 }
             }
+            FileOperations.CopyDurable(source, installedSnapshot);
+            CatalogRepository.VerifySchemaFile(installedSnapshot, variant);
             Directory.CreateDirectory(Path.GetDirectoryName(target)!);
             FileOperations.CopyDurable(source, stage);
             CatalogRepository.VerifySchemaFile(stage, variant);
@@ -78,6 +81,7 @@ public sealed class TransactionManager
                 ["previous_exists"] = previousExists,
                 ["previous_sha256"] = previousSha256,
                 ["snapshot"] = previousExists ? Relative(snapshot) : null,
+                ["installed_snapshot"] = Relative(installedSnapshot),
             };
             try
             {

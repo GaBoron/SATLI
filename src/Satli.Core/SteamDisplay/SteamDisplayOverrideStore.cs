@@ -21,6 +21,8 @@ public sealed class SteamDisplayOverrideStore
     public bool IsEnabled(string appId) =>
         Load()["apps"]?.AsObject().ContainsKey(appId) is true;
 
+    public bool HasEnabledOverrides => Load()["apps"]?.AsObject().Count > 0;
+
     public void Enable(
         string appId,
         string gameName,
