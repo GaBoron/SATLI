@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.Json;
+using Satli.Core.FileSystem;
 using Satli_Gui.Models;
 using Satli_Gui.Serialization;
 
@@ -50,6 +51,9 @@ public sealed class SettingsService
                 migratedDataDirectory,
                 StringComparison.Ordinal);
             settings.DataDirectory = migratedDataDirectory;
+            var material = WindowMaterialService.Normalize(settings.Material);
+            requiresRewrite |= !string.Equals(settings.Material, material, StringComparison.Ordinal);
+            settings.Material = material;
             settings.LogLevel = PersistentLogLevel(settings.LogLevel);
             settings.Network = LoadNetworkSettings(settings.Network, ref requiresRewrite);
             settings.DownloadSources = DownloadSourceCatalog.Normalize(settings.DownloadSources);
@@ -79,17 +83,25 @@ public sealed class SettingsService
         var temporary = $"{_path}.{Guid.NewGuid():N}.tmp";
         try
         {
+            string protectedSteamApiKey;
             await using (var stream = new FileStream(temporary, FileMode.CreateNew, FileAccess.Write, FileShare.None))
             {
                 var network = NetworkSettingsValidator.Normalize(settings.Network);
                 var downloadSources = DownloadSourceCatalog.Normalize(settings.DownloadSources);
                 var steamLibrary = SteamLibrarySettingsValidator.Normalize(settings.SteamLibrary);
+                protectedSteamApiKey = steamLibrary.ApiKeyChanged
+                    || !string.IsNullOrEmpty(steamLibrary.ApiKey)
+                        ? ProtectedDataMigration.Protect(
+                            steamLibrary.ApiKey,
+                            SteamApiKeyEntropy)
+                        : steamLibrary.ProtectedApiKey;
                 var persistentSettings = new GuiSettings
                 {
                     SteamDirectory = settings.SteamDirectory,
                     DataDirectory = settings.DataDirectory,
                     Offline = settings.Offline,
                     Theme = settings.Theme,
+                    Material = WindowMaterialService.Normalize(settings.Material),
                     LoggingEnabled = settings.LoggingEnabled,
                     LogLevel = PersistentLogLevel(settings.LogLevel),
                     LogRetentionDays = settings.LogRetentionDays,
@@ -111,9 +123,7 @@ public sealed class SettingsService
                     {
                         Enabled = steamLibrary.Enabled,
                         SteamId = steamLibrary.SteamId,
-                        ProtectedApiKey = ProtectedDataMigration.Protect(
-                            steamLibrary.ApiKey,
-                            SteamApiKeyEntropy),
+                        ProtectedApiKey = protectedSteamApiKey,
                     },
                 };
                 await JsonSerializer.SerializeAsync(
@@ -123,10 +133,12 @@ public sealed class SettingsService
                 await stream.FlushAsync();
             }
             File.Move(temporary, _path, true);
+            settings.SteamLibrary.ProtectedApiKey = protectedSteamApiKey;
+            settings.SteamLibrary.ApiKeyChanged = false;
         }
         finally
         {
-            File.Delete(temporary);
+            RecycleBin.FileIfExists(temporary);
         }
     }
 

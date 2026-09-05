@@ -186,7 +186,7 @@ public sealed class MainViewModel : ObservableObject
         await App.Logs.WriteAsync(
             "详细",
             "设置",
-            $"离线模式={settings.Offline}；主题={settings.Theme}；日志级别={settings.LogLevel}；" +
+            $"离线模式={settings.Offline}；主题={settings.Theme}；窗口材质={settings.Material}；日志级别={settings.LogLevel}；" +
             $"保留天数={settings.LogRetentionDays}；启动检查更新={settings.CheckForUpdatesOnStartup}；" +
             $"DNS 模式={settings.Network.DnsMode}；代理模式={settings.Network.ProxyMode}；" +
             $"Steam 游戏库={settings.SteamLibrary.Enabled}。",
@@ -318,6 +318,13 @@ public sealed class MainViewModel : ObservableObject
                 ? root.ActualTheme
                 : root.RequestedTheme;
             mainWindow.ApplyTitleBarTheme(effectiveTheme);
+            if (!mainWindow.ApplyMaterial(Settings.Material))
+            {
+                _ = App.Logs.WriteAsync(
+                    "警告",
+                    "外观",
+                    $"窗口材质 {Settings.Material} 不可用，已回退为纯色。");
+            }
             App.DispatcherQueue.TryEnqueue(() => mainWindow.ApplyTitleBarTheme(root.ActualTheme));
         }
     }
@@ -336,7 +343,7 @@ public sealed class MainViewModel : ObservableObject
 
     private static string DescribeSettings(GuiSettings settings) =>
         $"SteamDirectory={settings.SteamDirectory}; DataDirectory={settings.DataDirectory}; Offline={settings.Offline}; " +
-        $"Theme={settings.Theme}; LoggingEnabled={settings.LoggingEnabled}; LogLevel={settings.LogLevel}; " +
+        $"Theme={settings.Theme}; Material={settings.Material}; LoggingEnabled={settings.LoggingEnabled}; LogLevel={settings.LogLevel}; " +
         $"LogRetentionDays={settings.LogRetentionDays}; LogWordWrap={settings.LogWordWrap}; " +
         $"CheckForUpdatesOnStartup={settings.CheckForUpdatesOnStartup}; " +
         $"DnsMode={settings.Network.DnsMode}; DnsServers={settings.Network.DnsServers}; " +

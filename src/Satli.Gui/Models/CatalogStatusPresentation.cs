@@ -21,7 +21,7 @@ public static class CatalogStatusPresentation
         "possibly-outdated" or "outdated" or "stale" =>
             "该翻译可能已经过期，安装前请确认它仍适用于当前游戏版本。",
         "possibly-ineffective" or "possibly-not-working" or "may-not-work" =>
-            "该翻译可能无法在当前游戏版本中生效，建议等待确认或更新。",
+            "该翻译可能无法在当前游戏版本中生效。",
         "ineffective" or "not-working" or "broken" or "invalid" =>
             "该翻译已标记为失效，不建议安装。",
         "pending" or "pending-review" or "under-review" or "reviewing" =>

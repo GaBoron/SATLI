@@ -105,6 +105,23 @@
                         </ComboBox>
                     </Grid>
                 </Border>
+                <Border Style="{StaticResource SettingsCardStyle}">
+                    <Grid Style="{StaticResource SettingsRowStyle}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel VerticalAlignment="Center" Spacing="3">
+                            <TextBlock Text="窗口材质" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                            <TextBlock Text="Mica 适合长期背景；Acrylic 更通透但功耗更高，系统关闭透明效果时会自动回退。" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
+                        </StackPanel>
+                        <ComboBox x:Name="MaterialBox" Grid.Column="1" Style="{StaticResource SettingsSelectorStyle}" SelectedIndex="0" SelectionChanged="ThemeBox_SelectionChanged">
+                            <ComboBoxItem Content="Mica（推荐）" Tag="mica" />
+                            <ComboBoxItem Content="Acrylic" Tag="acrylic" />
+                            <ComboBoxItem Content="纯色" Tag="solid" />
+                        </ComboBox>
+                    </Grid>
+                </Border>
             </StackPanel>
 
             <TextBlock Text="网络" Style="{StaticResource SubtitleTextBlockStyle}" Margin="0,12,0,0" />

@@ -32,6 +32,7 @@ public sealed partial class SettingsPage : Page
         _dataDirectory = ViewModel.Settings.DataDirectory;
         OfflineSwitch.IsOn = ViewModel.Settings.Offline;
         ThemeBox.SelectedIndex = ViewModel.Settings.Theme switch { "light" => 1, "dark" => 2, _ => 0 };
+        MaterialBox.SelectedIndex = ViewModel.Settings.Material switch { "acrylic" => 1, "solid" => 2, _ => 0 };
         LoggingSwitch.IsOn = ViewModel.Settings.LoggingEnabled;
         LogLevelBox.SelectedIndex = ViewModel.Settings.LogLevel switch { "detailed" => 1, "debug" => 2, _ => 0 };
         LogRetentionBox.SelectedIndex = ViewModel.Settings.LogRetentionDays switch { 7 => 0, 90 => 2, _ => 1 };
@@ -69,6 +70,7 @@ public sealed partial class SettingsPage : Page
         try
         {
             var theme = (ThemeBox.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "system";
+            var material = (MaterialBox.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "mica";
             var logLevel = (LogLevelBox.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "standard";
             var retention = int.TryParse((LogRetentionBox.SelectedItem as ComboBoxItem)?.Tag?.ToString(), out var days)
                 ? days
@@ -79,6 +81,7 @@ public sealed partial class SettingsPage : Page
                 DataDirectory = _dataDirectory,
                 Offline = OfflineSwitch.IsOn,
                 Theme = theme,
+                Material = material,
                 LoggingEnabled = LoggingSwitch.IsOn,
                 LogLevel = logLevel,
                 LogRetentionDays = retention,
@@ -88,6 +91,7 @@ public sealed partial class SettingsPage : Page
                 DownloadSources = DownloadSourceSettingsEditor.ReadSettings(),
                 SteamLibrary = SteamLibrarySettingsEditor.ReadSettings(),
             });
+            SteamLibrarySettingsEditor.MarkSaved(ViewModel.Settings.SteamLibrary);
             RefreshDirectoryLabels();
         }
         catch (Exception exception)

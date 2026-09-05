@@ -12,7 +12,10 @@ used to restore library activity cards, at both the native and already-loaded
 Steam library cache boundaries. A DOM observer then covers activity
 surfaces, overlays, and frontend-rendered notifications that expose only rendered
 text, with a bounded periodic reconciliation for renderer updates that bypass
-observable DOM mutations. The WebKit preload uses the same DOM engine for Store
+observable DOM mutations. The frontend keeps watching for Steam's lazily-created
+library cache instead of requiring it to exist at plugin startup, and the plugin
+status counts both structured achievement replacements and rendered text. The
+WebKit preload uses the same DOM engine for Store
 and Community WebViews. Exact text and accessibility attributes are replaced;
 ambiguous source strings are deliberately skipped.
 

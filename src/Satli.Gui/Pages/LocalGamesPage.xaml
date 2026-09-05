@@ -77,6 +77,16 @@
                             </StackPanel>
                             <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Spacing="8">
                                 <Button
+                                    Click="ViewAchievements_Click"
+                                    Tag="{x:Bind}"
+                                    AutomationProperties.Name="查看本地游戏成就"
+                                    AutomationProperties.HelpText="{x:Bind GameName}">
+                                    <StackPanel Orientation="Horizontal" Spacing="7">
+                                        <SymbolIcon Symbol="View" />
+                                        <TextBlock Text="查看成就" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </Button>
+                                <Button
                                     Click="RequestTranslation_Click"
                                     Tag="{x:Bind}"
                                     Visibility="{x:Bind TranslationRequestVisibility}"

@@ -111,6 +111,23 @@ public sealed partial class LocalGamesPage : Page
         }
     }
 
+    private async void ViewAchievements_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not FrameworkElement { Tag: GameItem game })
+        {
+            return;
+        }
+
+        var preview = await App.ViewModel.Translations.PreviewCurrentAsync(game);
+        if (preview is not null)
+        {
+            await ReplacementConfirmationDialog.ShowReadOnlyAsync(
+                XamlRoot,
+                [preview],
+                $"查看本地成就 · {game.GameName}");
+        }
+    }
+
     private async void RequestTranslation_Click(object sender, RoutedEventArgs e)
     {
         if (sender is Button { Tag: GameItem game })

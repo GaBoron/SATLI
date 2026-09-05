@@ -40,9 +40,11 @@ export class DisplayOverrideController {
   private targets = new Map<string, Map<string, TranslationText>>();
   private appliedText = new Map<Text, AppliedValue>();
   private appliedAttributes = new Map<Element, Map<string, AppliedValue>>();
+  private translatedAchievements = new Set<string>();
   private lastPayload = '';
   private lastError = '';
-  private replacedCount = 0;
+  private metricAppCount = 0;
+  private metricSourceCount = 0;
 
   constructor(
     private readonly root: Document,
@@ -100,12 +102,19 @@ export class DisplayOverrideController {
       return value;
     }
     const translated = { ...record };
-    replaceStringField(translated, 'strName', target.name);
-    replaceStringField(translated, 'strDescription', target.description);
-    replaceStringField(translated, 'name', target.name);
-    replaceStringField(translated, 'desc', target.description);
-    replaceStringField(translated, 'title', target.name);
-    replaceStringField(translated, 'description', target.description);
+    const changed = [
+      replaceStringField(translated, 'strName', target.name),
+      replaceStringField(translated, 'strDescription', target.description),
+      replaceStringField(translated, 'name', target.name),
+      replaceStringField(translated, 'desc', target.description),
+      replaceStringField(translated, 'title', target.name),
+      replaceStringField(translated, 'description', target.description),
+    ].some(Boolean);
+    if (!changed) {
+      return value;
+    }
+    this.translatedAchievements.add(`${appId}:${apiName}`);
+    this.publishCurrentMetrics();
     return translated as T;
   }
 
@@ -133,10 +142,10 @@ export class DisplayOverrideController {
       this.lastError = '';
       this.replacements.clear();
       this.targets.clear();
+      this.translatedAchievements.clear();
       this.restoreAppliedValues();
       this.replacements = buildReplacementMap(snapshot, language);
       this.targets = buildAchievementTargets(snapshot, language);
-      this.replacedCount = 0;
       this.applyToNode(this.root);
       this.publishMetrics(snapshot);
     } catch (error) {
@@ -196,7 +205,6 @@ export class DisplayOverrideController {
     const rendered = `${value.slice(0, start)}${replacement}${value.slice(start + trimmed.length)}`;
     this.appliedText.set(node, { original: value, replacement: rendered });
     node.nodeValue = rendered;
-    this.replacedCount++;
   }
 
   private applyAttributes(element: Element): void {
@@ -215,7 +223,6 @@ export class DisplayOverrideController {
         attributes.set(attribute, { original: value!, replacement });
         this.appliedAttributes.set(element, attributes);
         element.setAttribute(attribute, replacement);
-        this.replacedCount++;
       }
     }
   }
@@ -238,10 +245,18 @@ export class DisplayOverrideController {
   }
 
   private publishMetrics(snapshot: BridgeSnapshot): void {
+    this.metricAppCount = Object.keys(snapshot.apps).length;
+    this.metricSourceCount = this.replacements.size;
+    this.publishCurrentMetrics();
+  }
+
+  private publishCurrentMetrics(): void {
+    const attributeCount = [...this.appliedAttributes.values()]
+      .reduce((count, attributes) => count + attributes.size, 0);
     this.onMetrics?.({
-      appCount: Object.keys(snapshot.apps).length,
-      sourceCount: this.replacements.size,
-      replacedCount: this.replacedCount,
+      appCount: this.metricAppCount,
+      sourceCount: this.metricSourceCount,
+      replacedCount: this.appliedText.size + attributeCount + this.translatedAchievements.size,
     });
   }
 }
@@ -336,10 +351,12 @@ function replaceStringField(
   record: Record<string, unknown>,
   key: string,
   replacement: string,
-): void {
-  if (typeof record[key] === 'string' && replacement) {
+): boolean {
+  if (typeof record[key] === 'string' && replacement && record[key] !== replacement) {
     record[key] = replacement;
+    return true;
   }
+  return false;
 }
 
 function addCandidate(

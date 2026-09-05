@@ -1,4 +1,5 @@
 using System.Text;
+using Satli.Core.FileSystem;
 
 namespace Satli_Gui.Services;
 
@@ -113,7 +114,7 @@ public sealed class LogService
             }
             foreach (var file in Directory.EnumerateFiles(DirectoryPath, "satli-gui-*.log"))
             {
-                File.Delete(file);
+                RecycleBin.FileIfExists(file);
             }
         }
         finally
@@ -136,7 +137,7 @@ public sealed class LogService
             {
                 if (File.GetLastWriteTime(file) < cutoff)
                 {
-                    File.Delete(file);
+                    RecycleBin.FileIfExists(file);
                 }
             }
         }

@@ -21,16 +21,23 @@ export function installSteamApiOverrides(
     translateCachedAppDetails(controller, result));
   wrapRegistration(apps, 'RegisterForAppDetails', cleanups, controller);
 
-  const appDetailsCache = (window as any).appDetailsCache as MutableApi | undefined;
-  if (appDetailsCache) {
+  let attachedAppDetailsCache: MutableApi | undefined;
+  const attachAppDetailsCache = () => {
+    const appDetailsCache = (window as any).appDetailsCache as MutableApi | undefined;
+    if (!appDetailsCache || appDetailsCache === attachedAppDetailsCache) {
+      return;
+    }
+    attachedAppDetailsCache = appDetailsCache;
     wrapPromiseResult(appDetailsCache, 'GetCachedDataForApp', cleanups, (args, result) =>
       args[1] === 'achievementmap' && typeof result === 'string'
         ? translateAchievementMapCache(controller, result)
         : result,
-    'Steam library cache');
-  } else {
-    console.warn('SATLI could not find Steam library cache');
-  }
+      'Steam library cache');
+    console.debug('SATLI attached to Steam library achievement cache');
+  };
+  attachAppDetailsCache();
+  const cacheTimer = window.setInterval(attachAppDetailsCache, 1000);
+  cleanups.push(() => window.clearInterval(cacheTimer));
 
   const gameSessions = SteamClient.GameSessions as unknown as MutableApi;
   wrapAchievementNotifications(

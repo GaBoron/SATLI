@@ -22,7 +22,7 @@ const SettingsContent = () => {
   return (
     <Field
       label={`已锁定 ${metrics.appCount} 个游戏 · ${metrics.sourceCount} 条无歧义源文本`}
-      description={`当前窗口已替换 ${metrics.replacedCount} 处。SATLI 无需后台运行。`}
+      description={`当前 Steam 界面已应用 ${metrics.replacedCount} 项成就或文本替换。SATLI 无需后台运行。`}
     />
   );
 };

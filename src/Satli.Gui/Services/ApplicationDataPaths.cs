@@ -1,11 +1,16 @@
+using Satli.Core.FileSystem;
+
 namespace Satli_Gui.Services;
 
 internal static class ApplicationDataPaths
 {
     private const string CurrentDirectoryName = "SATLI";
     private const string LegacyDirectoryName = "SteamAchievementTranslationInstaller";
+    private static readonly Lazy<string> DefaultLocalRoot = new(
+        () => DefaultLocalApplicationDataRoot(),
+        LazyThreadSafetyMode.ExecutionAndPublication);
     public static string DefaultDataDirectory => Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+        DefaultLocalRoot.Value,
         CurrentDirectoryName);
     internal static string WebViewUserDataDirectory => WebViewUserDataDirectoryFor(
         DefaultDataDirectory);
@@ -17,7 +22,23 @@ internal static class ApplicationDataPaths
     }
 
     public static void MigrateDefaultDirectory() => MigrateDefaultDirectory(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData));
+        DefaultLocalApplicationDataRoot());
+
+    internal static string DefaultLocalApplicationDataRoot(
+        Func<string>? packagedLocalCachePath = null,
+        Func<bool>? packageIdentityProbe = null)
+    {
+        var packaged = packageIdentityProbe?.Invoke()
+            ?? new ApplicationDistributionService().UsesStoreManagedUpdates;
+        if (packaged)
+        {
+            var localCache = packagedLocalCachePath?.Invoke()
+                ?? Windows.Storage.ApplicationData.Current.LocalCacheFolder.Path;
+            return Path.Combine(localCache, "Local");
+        }
+
+        return Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+    }
 
     internal static string MigrateDefaultDirectory(
         string localAppData,
@@ -38,7 +59,7 @@ internal static class ApplicationDataPaths
             {
                 if (Directory.Exists(current))
                 {
-                    Directory.Delete(current);
+                    RecycleBin.DirectoryIfExists(current);
                 }
                 (moveDirectory ?? Directory.Move)(legacy, current);
                 DeleteLegacyUpdatePackages(current);
@@ -120,7 +141,7 @@ internal static class ApplicationDataPaths
         {
             foreach (var path in Directory.EnumerateFiles(updateDirectory, pattern))
             {
-                File.Delete(path);
+                RecycleBin.FileIfExists(path);
             }
         }
     }

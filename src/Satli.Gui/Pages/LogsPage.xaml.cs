@@ -1,13 +1,15 @@
+using System.Collections.ObjectModel;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Dispatching;
+using Satli_Gui.Models;
 
 namespace Satli_Gui.Pages;
 
 public sealed partial class LogsPage : Page
 {
-    private string _allLogs = string.Empty;
+    private IReadOnlyList<LogEntryPresentation> _allEntries = [];
+    public ObservableCollection<LogEntryPresentation> VisibleEntries { get; } = [];
 
     public LogsPage()
     {
@@ -17,7 +19,6 @@ public sealed partial class LogsPage : Page
 
     private void LogsPage_Loaded(object sender, RoutedEventArgs e)
     {
-        ApplyWordWrap(App.ViewModel.Settings.LogWordWrap);
         DispatcherQueue.TryEnqueue(
             DispatcherQueuePriority.Low,
             () => _ = RefreshAsync());
@@ -31,7 +32,7 @@ public sealed partial class LogsPage : Page
         {
             XamlRoot = XamlRoot,
             Title = "清理全部日志？",
-            Content = "这会删除本机日志目录中的 SATLI GUI 日志，且无法撤销。",
+            Content = "这会把本机日志目录中的 SATLI GUI 日志移入回收站。",
             PrimaryButtonText = "清理",
             CloseButtonText = "取消",
             DefaultButton = ContentDialogButton.Close,
@@ -44,7 +45,7 @@ public sealed partial class LogsPage : Page
         try
         {
             await App.Logs.ClearAsync();
-            _allLogs = string.Empty;
+            _allEntries = [];
             ApplyFilter();
             App.ViewModel.ShowInfo("日志已清理。", InfoBarSeverity.Success);
         }
@@ -67,7 +68,16 @@ public sealed partial class LogsPage : Page
         SetLoading(true);
         try
         {
-            _allLogs = await App.Logs.ReadRecentAsync();
+            var wrapping = App.ViewModel.Settings.LogWordWrap
+                ? TextWrapping.Wrap
+                : TextWrapping.NoWrap;
+            _allEntries = LogEntryParser.Parse(await App.Logs.ReadRecentAsync())
+                .Reverse()
+                .ToArray();
+            foreach (var entry in _allEntries)
+            {
+                entry.MessageWrapping = wrapping;
+            }
             ApplyFilter();
         }
         catch (Exception exception)
@@ -83,61 +93,26 @@ public sealed partial class LogsPage : Page
     private void SetLoading(bool isLoading)
     {
         LoadingState.IsActive = isLoading;
-        LogTextBox.Visibility = isLoading ? Visibility.Collapsed : Visibility.Visible;
+        LogList.Visibility = isLoading ? Visibility.Collapsed : Visibility.Visible;
+        EmptyState.Visibility = Visibility.Collapsed;
     }
 
     private void ApplyFilter()
     {
         var query = SearchBox.Text.Trim();
-        var content = string.IsNullOrWhiteSpace(query)
-            ? _allLogs
-            : string.Join(
-                Environment.NewLine,
-                _allLogs.Split(["\r\n", "\n"], StringSplitOptions.None)
-                    .Where(line => line.Contains(query, StringComparison.CurrentCultureIgnoreCase)));
-        LogTextBox.Text = string.IsNullOrWhiteSpace(content) ? "暂无日志。" : content;
-        ScrollToLatest();
-    }
-
-    private void ScrollToLatest()
-    {
-        LogTextBox.Select(LogTextBox.Text.Length, 0);
-        LogTextBox.DispatcherQueue.TryEnqueue(() =>
+        VisibleEntries.Clear();
+        foreach (var entry in _allEntries.Where(entry => entry.Matches(query)))
         {
-            LogTextBox.UpdateLayout();
-            FindScrollViewer(LogTextBox)?.ChangeView(
-                horizontalOffset: null,
-                verticalOffset: double.MaxValue,
-                zoomFactor: null,
-                disableAnimation: true);
-        });
-    }
-
-    private static ScrollViewer? FindScrollViewer(DependencyObject element)
-    {
-        var childCount = VisualTreeHelper.GetChildrenCount(element);
-        for (var index = 0; index < childCount; index++)
-        {
-            var child = VisualTreeHelper.GetChild(element, index);
-            if (child is ScrollViewer scrollViewer)
-            {
-                return scrollViewer;
-            }
-
-            if (FindScrollViewer(child) is { } descendant)
-            {
-                return descendant;
-            }
+            VisibleEntries.Add(entry);
         }
-
-        return null;
-    }
-
-    private void ApplyWordWrap(bool enabled)
-    {
-        LogTextBox.TextWrapping = enabled ? TextWrapping.Wrap : TextWrapping.NoWrap;
-        ScrollViewer.SetHorizontalScrollBarVisibility(
-            LogTextBox,
-            enabled ? ScrollBarVisibility.Disabled : ScrollBarVisibility.Auto);
+        EmptyState.Visibility = VisibleEntries.Count == 0
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+        if (VisibleEntries.Count > 0)
+        {
+            LogList.ScrollIntoView(
+                VisibleEntries[0],
+                ScrollIntoViewAlignment.Leading);
+        }
     }
 }

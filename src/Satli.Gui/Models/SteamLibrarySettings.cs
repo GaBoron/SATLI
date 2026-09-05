@@ -8,5 +8,7 @@ public sealed class SteamLibrarySettings
     public string SteamId { get; set; } = string.Empty;
     [JsonIgnore]
     public string ApiKey { get; set; } = string.Empty;
+    [JsonIgnore]
+    public bool ApiKeyChanged { get; set; }
     public string ProtectedApiKey { get; set; } = string.Empty;
 }

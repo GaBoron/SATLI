@@ -48,6 +48,7 @@
                             PlaceholderText="7656119xxxxxxxxxx"
                             MaxLength="17"
                             InputScope="Number"
+                            TextChanged="SteamIdBox_TextChanged"
                             LostFocus="Field_LostFocus"
                             AutomationProperties.HelpText="要查询的 Steam 账号的 17 位 SteamID64" />
                         <TextBlock
@@ -60,6 +61,7 @@
                             Header="Steam Web API Key"
                             PlaceholderText="32 位十六进制字符"
                             MaxLength="32"
+                            PasswordChanged="ApiKeyBox_PasswordChanged"
                             LostFocus="Field_LostFocus"
                             AutomationProperties.HelpText="从 Steam 开发者 API Key 页面获取的个人密钥" />
                         <StackPanel

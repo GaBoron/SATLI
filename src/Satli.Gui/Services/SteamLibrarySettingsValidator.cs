@@ -12,6 +12,7 @@ public static class SteamLibrarySettingsValidator
             Enabled = settings.Enabled,
             SteamId = settings.SteamId.Trim(),
             ApiKey = settings.ApiKey.Trim(),
+            ApiKeyChanged = settings.ApiKeyChanged,
             ProtectedApiKey = settings.ProtectedApiKey,
         };
     }

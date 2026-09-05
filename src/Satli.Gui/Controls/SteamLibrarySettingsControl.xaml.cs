@@ -1,5 +1,6 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Dispatching;
 using Satli_Gui.Models;
 
 namespace Satli_Gui.Controls;
@@ -8,6 +9,9 @@ public sealed partial class SteamLibrarySettingsControl : UserControl
 {
     private bool _isInitializing;
     private bool _isOffline;
+    private bool _apiKeyChanged;
+    private string _protectedApiKey = string.Empty;
+    private readonly DispatcherQueueTimer _credentialSaveTimer;
 
     public event EventHandler? SettingsChanged;
     public event EventHandler? TestConnectionRequested;
@@ -16,6 +20,10 @@ public sealed partial class SteamLibrarySettingsControl : UserControl
     public SteamLibrarySettingsControl()
     {
         InitializeComponent();
+        _credentialSaveTimer = DispatcherQueue.CreateTimer();
+        _credentialSaveTimer.Interval = TimeSpan.FromMilliseconds(500);
+        _credentialSaveTimer.IsRepeating = false;
+        _credentialSaveTimer.Tick += (_, _) => NotifyChanged();
     }
 
     public void LoadSettings(SteamLibrarySettings settings, bool isOffline)
@@ -24,6 +32,8 @@ public sealed partial class SteamLibrarySettingsControl : UserControl
         EnabledSwitch.IsOn = settings.Enabled;
         SteamIdBox.Text = settings.SteamId;
         ApiKeyBox.Password = settings.ApiKey;
+        _protectedApiKey = settings.ProtectedApiKey;
+        _apiKeyChanged = false;
         _isOffline = isOffline;
         UpdateAvailability();
         _isInitializing = false;
@@ -34,7 +44,18 @@ public sealed partial class SteamLibrarySettingsControl : UserControl
         Enabled = EnabledSwitch.IsOn,
         SteamId = SteamIdBox.Text,
         ApiKey = ApiKeyBox.Password,
+        ApiKeyChanged = _apiKeyChanged,
+        ProtectedApiKey = _protectedApiKey,
     };
+
+    public void MarkSaved(SteamLibrarySettings settings)
+    {
+        if (string.Equals(ApiKeyBox.Password, settings.ApiKey, StringComparison.Ordinal))
+        {
+            _protectedApiKey = settings.ProtectedApiKey;
+            _apiKeyChanged = false;
+        }
+    }
 
     public void SetOffline(bool isOffline)
     {
@@ -57,7 +78,33 @@ public sealed partial class SteamLibrarySettingsControl : UserControl
         NotifyChanged();
     }
 
-    private void Field_LostFocus(object sender, RoutedEventArgs e) => NotifyChanged();
+    private void Field_LostFocus(object sender, RoutedEventArgs e)
+    {
+        _credentialSaveTimer.Stop();
+        NotifyChanged();
+    }
+
+    private void SteamIdBox_TextChanged(object sender, TextChangedEventArgs e) =>
+        ScheduleCredentialSave();
+
+    private void ApiKeyBox_PasswordChanged(object sender, RoutedEventArgs e)
+    {
+        if (!_isInitializing)
+        {
+            _apiKeyChanged = true;
+            ScheduleCredentialSave();
+        }
+    }
+
+    private void ScheduleCredentialSave()
+    {
+        if (_isInitializing)
+        {
+            return;
+        }
+        _credentialSaveTimer.Stop();
+        _credentialSaveTimer.Start();
+    }
 
     private void TestConnectionButton_Click(object sender, RoutedEventArgs e) =>
         TestConnectionRequested?.Invoke(this, EventArgs.Empty);

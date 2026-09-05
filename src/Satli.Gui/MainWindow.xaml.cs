@@ -1,5 +1,4 @@
 using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Windowing;
 using Satli_Gui.Services;
 using Windows.Graphics;
@@ -25,14 +24,7 @@ public sealed partial class MainWindow : Window
         AppWindow.SetIcon(Path.Combine(AppContext.BaseDirectory, "Assets", "AppIcon.ico"));
         RestoreWindowPlacement();
         AppWindow.Closing += AppWindow_Closing;
-        try
-        {
-            SystemBackdrop = new MicaBackdrop();
-        }
-        catch
-        {
-            SystemBackdrop = null;
-        }
+        WindowMaterialService.Apply(this, "mica");
 
         // Navigate the root frame to the main page on startup.
         RootFrame.Navigate(typeof(MainPage));
@@ -120,4 +112,7 @@ public sealed partial class MainWindow : Window
         titleBar.ButtonInactiveBackgroundColor = titleBarInactiveBackground;
         titleBar.ButtonInactiveForegroundColor = Microsoft.UI.ColorHelper.FromArgb(255, 128, 128, 128);
     }
+
+    public bool ApplyMaterial(string material) =>
+        WindowMaterialService.Apply(this, material);
 }

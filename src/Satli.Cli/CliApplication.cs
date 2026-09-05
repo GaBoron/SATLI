@@ -40,7 +40,7 @@ public static class CliApplication
 
             if (args.Contains("--version", StringComparer.Ordinal))
             {
-                await output.WriteLineAsync("satli 2.3.0");
+                await output.WriteLineAsync("satli 2.4.0");
                 return 0;
             }
 
@@ -48,7 +48,7 @@ public static class CliApplication
                 || args.Contains("--help", StringComparer.Ordinal)
                 || args.Contains("-h", StringComparer.Ordinal))
             {
-                await output.WriteLineAsync("SATLI 2.3.0 - 安全安装、管理和恢复 Steam 成就翻译");
+                await output.WriteLineAsync("SATLI 2.4.0 - 安全安装、管理和恢复 Steam 成就翻译");
                 await output.WriteLineAsync("命令：scan, install, local-import, status, restore, protect, cache, petition, schema");
                 return args.Length == 0 ? 2 : 0;
             }

@@ -3,7 +3,8 @@
     x:Class="Satli_Gui.Pages.LogsPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:controls="using:Satli_Gui.Controls">
+    xmlns:controls="using:Satli_Gui.Controls"
+    xmlns:models="using:Satli_Gui.Models">
     <Grid x:Name="PageLayout" Padding="32,24,32,16" RowSpacing="16">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -29,18 +30,69 @@
             <AppBarButton Icon="Delete" Label="清理日志" Click="Clear_Click" />
         </CommandBar>
         <Grid Grid.Row="2">
-            <TextBox
-                x:Name="LogTextBox"
+            <ListView
+                x:Name="LogList"
                 Visibility="Collapsed"
-                IsReadOnly="True"
-                AcceptsReturn="True"
-                TextWrapping="Wrap"
-                FontFamily="Cascadia Mono, Consolas"
-                FontSize="12"
-                ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                ScrollViewer.VerticalScrollBarVisibility="Auto"
-                AutomationProperties.Name="日志内容" />
+                ItemsSource="{x:Bind VisibleEntries, Mode=OneWay}"
+                SelectionMode="None"
+                AutomationProperties.Name="结构化日志记录">
+                <ListView.ItemContainerStyle>
+                    <Style TargetType="ListViewItem">
+                        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                        <Setter Property="Padding" Value="0" />
+                        <Setter Property="Margin" Value="0,0,0,8" />
+                    </Style>
+                </ListView.ItemContainerStyle>
+                <ListView.ItemTemplate>
+                    <DataTemplate x:DataType="models:LogEntryPresentation">
+                        <Border Style="{StaticResource GameCardStyle}" MinHeight="76">
+                            <Grid ColumnSpacing="16">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="128" />
+                                    <ColumnDefinition Width="96" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock
+                                    Text="{x:Bind TimestampText}"
+                                    VerticalAlignment="Top"
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                    Style="{StaticResource CaptionTextBlockStyle}" />
+                                <Grid Grid.Column="1" VerticalAlignment="Top" ColumnSpacing="8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="18" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <FontIcon
+                                        Glyph="{x:Bind LevelGlyph}"
+                                        FontSize="14"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center" />
+                                    <TextBlock
+                                        Grid.Column="1"
+                                        Text="{x:Bind Level}"
+                                        VerticalAlignment="Center"
+                                        Style="{StaticResource CaptionTextBlockStyle}" />
+                                </Grid>
+                                <StackPanel Grid.Column="2" Spacing="4">
+                                    <TextBlock Text="{x:Bind Category}" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                                    <TextBlock Text="{x:Bind Message}" TextWrapping="{x:Bind MessageWrapping}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
             <controls:LoadingStateControl x:Name="LoadingState" IsActive="True" />
+            <StackPanel
+                x:Name="EmptyState"
+                Visibility="Collapsed"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Spacing="8">
+                <FontIcon Glyph="&#xE9D5;" FontSize="32" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                <TextBlock Text="没有符合条件的日志" Style="{StaticResource SubtitleTextBlockStyle}" />
+                <TextBlock Text="可修改筛选条件或稍后刷新。" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+            </StackPanel>
         </Grid>
         <VisualStateManager.VisualStateGroups>
             <VisualStateGroup>

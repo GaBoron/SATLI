@@ -34,21 +34,35 @@ public sealed class ManagedGamesPageState : ObservableObject
 
     public ManagedGameFilter Filter { get; }
     public ObservableCollection<ManagedGameRow> Items { get; } = [];
-    public string Title => Filter == ManagedGameFilter.Locked ? "已锁定" : "全部已管理";
-    public string Description => Filter == ManagedGameFilter.Locked
-        ? "管理由 Millennium 插件覆盖显示的 Steam 成就译文，并可随时解除。"
-        : "查看社区安装、本地导入或本地编辑的当前译文，并恢复变更前文件。";
-    public string EmptyTitle => Filter == ManagedGameFilter.Locked
-        ? "暂无已锁定的 Steam 显示译文"
-        : "暂无已管理的游戏";
-    public string EmptyDescription => Filter == ManagedGameFilter.Locked
-        ? "在“全部”页面锁定 Steam 显示后，会显示在这里。"
-        : "安装、导入或保存本地编辑后会显示在这里。";
+    public string Title => Filter switch
+    {
+        ManagedGameFilter.Modified => "被修改",
+        ManagedGameFilter.Locked => "已锁定",
+        _ => "全部已管理",
+    };
+    public string Description => Filter switch
+    {
+        ManagedGameFilter.Modified => "集中处理被 Steam 更新覆盖的游戏，可直接锁定显示、查看当前文件或恢复。",
+        ManagedGameFilter.Locked => "管理由 Millennium 插件覆盖显示的 Steam 成就译文，并可随时解除。",
+        _ => "查看社区安装、本地导入或本地编辑的当前译文，并恢复变更前文件。",
+    };
+    public string EmptyTitle => Filter switch
+    {
+        ManagedGameFilter.Modified => "没有被修改的游戏",
+        ManagedGameFilter.Locked => "暂无已锁定的 Steam 显示译文",
+        _ => "暂无已管理的游戏",
+    };
+    public string EmptyDescription => Filter switch
+    {
+        ManagedGameFilter.Modified => "SATLI 检测到已管理文件被替换后，会自动显示在这里。",
+        ManagedGameFilter.Locked => "在“全部”或“被修改”页面锁定 Steam 显示后，会显示在这里。",
+        _ => "安装、导入或保存本地编辑后会显示在这里。",
+    };
     public int SelectedCount => Items.Count(item => item.IsSelected);
     public string SelectedCountText => $"已选 {SelectedCount} 项";
     public string SelectionActionText =>
         Items.Count > 0 && Items.All(item => item.IsSelected) ? "取消全选" : "全选";
-    public Visibility LockActionVisibility => Filter == ManagedGameFilter.All
+    public Visibility LockActionVisibility => Filter is ManagedGameFilter.All or ManagedGameFilter.Modified
         ? Visibility.Visible
         : Visibility.Collapsed;
     public bool IsLoading => _isLoading;
