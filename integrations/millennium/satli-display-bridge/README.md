@@ -1,5 +1,7 @@
 # SATLI Achievement Display Bridge
 
+Current bundled plugin version: `0.2.0`.
+
 This Millennium plugin reads SATLI's static achievement bridge from
 `<Steam>\millennium\config\satli-bridge-v1.json`. SATLI does not need to stay
 running. Keeping the bridge inside Millennium's real install directory also

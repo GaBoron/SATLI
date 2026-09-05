@@ -55,13 +55,18 @@ internal sealed class SteamDisplayPluginStartupUpdater
                     : settings.SteamDirectory));
             var overrides = new SteamDisplayOverrideStore(
                 SteamDisplayPluginInstaller.BridgePath(steamDirectory));
-            if (!File.Exists(overrides.BridgePath) || !overrides.HasEnabledOverrides)
+            var status = await Task.Run(() => SteamDisplayPluginInstaller.Inspect(
+                steamDirectory,
+                bundledPlugin));
+            var hasEnabledOverrides = File.Exists(overrides.BridgePath)
+                && overrides.HasEnabledOverrides;
+            if (!status.Installed && !hasEnabledOverrides)
             {
                 WriteMarker(bundledHash);
                 await logs.WriteAsync(
                     "详细",
                     "Steam 显示覆盖",
-                    "未发现已启用的显示锁定；本版本不检查或部署插件。",
+                    "未发现已安装的 SATLI 显示插件或已启用的显示锁定；本版本不部署插件。",
                     detailed: true);
                 return;
             }
@@ -69,10 +74,9 @@ internal sealed class SteamDisplayPluginStartupUpdater
             await logs.WriteAsync(
                 "信息",
                 "Steam 显示覆盖",
-                "发现已启用的显示锁定，开始后台检查内置插件更新。");
-            var status = await Task.Run(() => SteamDisplayPluginInstaller.Inspect(
-                steamDirectory,
-                bundledPlugin));
+                status.Installed
+                    ? "发现已安装的 SATLI 显示插件，首次启动时后台检查内置插件更新。"
+                    : "发现已启用的显示锁定，首次启动时后台部署内置插件。");
             if (status.Current)
             {
                 WriteMarker(bundledHash);

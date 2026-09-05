@@ -1,7 +1,7 @@
 [plugin]
 id = "com.gaboron.satli-display-bridge"
 name = "SATLI Achievement Display Bridge"
-version = "0.1.1"
+version = "0.2.0"
 author = "GaBoron"
 description = "Applies SATLI achievement translations across Steam UI surfaces."
 
