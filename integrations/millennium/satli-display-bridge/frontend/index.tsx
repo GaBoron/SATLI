@@ -13,6 +13,22 @@ export function getCurrentSteamLanguage(): string {
   return currentSteamLanguage;
 }
 
+/** @ffi */
+export const achievementToast = {
+  translate(appId: number, achievement: Record<string, unknown>): Record<string, unknown> {
+    try {
+      const translated = controller?.translateAchievement(appId, achievement) ?? achievement;
+      console.debug(translated !== achievement
+        ? 'SATLI translated Steam achievement toast record'
+        : 'SATLI achievement toast has no changed translation');
+      return translated;
+    } catch (error) {
+      console.warn('SATLI could not translate Steam achievement toast record', error);
+      return achievement;
+    }
+  },
+};
+
 const SettingsContent = () => {
   const [metrics, setMetrics] = useState(latestMetrics);
   useEffect(() => {

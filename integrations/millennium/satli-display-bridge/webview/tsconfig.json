@@ -7,7 +7,7 @@
     ],
     "paths": {
       "millennium": [
-        ".millennium/lsp/webkit-ts"
+        "../.millennium/lsp/webkit-ts"
       ]
     }
   },

@@ -1,3 +1,8 @@
+import {
+  applyAchievementTranslation,
+  readAchievementApiName,
+} from './achievement_record';
+
 export interface TranslationText {
   name: string;
   description: string;
@@ -60,8 +65,8 @@ export class DisplayOverrideController {
         if (mutation.type === 'characterData' && mutation.target.parentElement) {
           this.applyToNode(mutation.target.parentElement);
         }
-        if (mutation.type === 'attributes' && mutation.target instanceof Element) {
-          this.applyAttributes(mutation.target);
+        if (mutation.type === 'attributes' && mutation.target.nodeType === Node.ELEMENT_NODE) {
+          this.applyAttributes(mutation.target as Element);
         }
         for (const node of mutation.addedNodes) {
           this.applyToNode(node);
@@ -78,7 +83,9 @@ export class DisplayOverrideController {
       attributes: true,
       attributeFilter: [...ATTRIBUTES],
     });
-    this.timer = window.setInterval(() => void this.refresh(), 2000);
+    this.timer = window.setInterval((): void => {
+      void this.refresh();
+    }, 2000);
   }
 
   stop(): void {
@@ -91,31 +98,23 @@ export class DisplayOverrideController {
     this.restoreAppliedValues();
   }
 
-  translateAchievement<T>(appId: string | number, value: T): T {
+  translateAchievement<T>(appId: string | number, value: T, apiNameHint?: string): T {
     if (!value || typeof value !== 'object') {
       return value;
     }
     const record = value as Record<string, unknown>;
-    const apiName = firstString(record, ['strID', 'id', 'achievement_name']);
+    const apiName = readAchievementApiName(record, apiNameHint);
     const target = apiName ? this.targets.get(String(appId))?.get(apiName) : undefined;
     if (!target) {
       return value;
     }
-    const translated = { ...record };
-    const changed = [
-      replaceStringField(translated, 'strName', target.name),
-      replaceStringField(translated, 'strDescription', target.description),
-      replaceStringField(translated, 'name', target.name),
-      replaceStringField(translated, 'desc', target.description),
-      replaceStringField(translated, 'title', target.name),
-      replaceStringField(translated, 'description', target.description),
-    ].some(Boolean);
-    if (!changed) {
+    const translated = applyAchievementTranslation(value, target);
+    if (translated === value) {
       return value;
     }
     this.translatedAchievements.add(`${appId}:${apiName}`);
     this.publishCurrentMetrics();
-    return translated as T;
+    return translated;
   }
 
   private async refresh(): Promise<void> {
@@ -172,17 +171,19 @@ export class DisplayOverrideController {
       }
       return;
     }
-    if (!(node instanceof Element)) {
+    // Popup elements belong to another realm and fail `instanceof Element`.
+    if (node.nodeType !== Node.ELEMENT_NODE) {
       return;
     }
-    this.applyAttributes(node);
-    const walker = this.root.createTreeWalker(node, NodeFilter.SHOW_TEXT);
+    const element = node as Element;
+    this.applyAttributes(element);
+    const walker = element.ownerDocument.createTreeWalker(element, NodeFilter.SHOW_TEXT);
     let current = walker.nextNode();
     while (current) {
       this.applyTextNode(current as Text);
       current = walker.nextNode();
     }
-    for (const element of node.querySelectorAll('[aria-label], [title]')) {
+    for (const element of (node as Element).querySelectorAll('[aria-label], [title]')) {
       this.applyAttributes(element);
     }
   }
@@ -338,27 +339,6 @@ function buildAchievementTargets(
   return apps;
 }
 
-function firstString(record: Record<string, unknown>, keys: string[]): string | undefined {
-  for (const key of keys) {
-    if (typeof record[key] === 'string' && record[key]) {
-      return record[key] as string;
-    }
-  }
-  return undefined;
-}
-
-function replaceStringField(
-  record: Record<string, unknown>,
-  key: string,
-  replacement: string,
-): boolean {
-  if (typeof record[key] === 'string' && replacement && record[key] !== replacement) {
-    record[key] = replacement;
-    return true;
-  }
-  return false;
-}
-
 function addCandidate(
   candidates: Map<string, Set<string>>,
   source: string,
@@ -375,7 +355,7 @@ function addCandidate(
 }
 
 function normalizeLanguage(language: string): string {
-  const normalized = language.toLowerCase().replaceAll('-', '').replaceAll('_', '');
+  const normalized = language.toLowerCase().replace(/[-_]/g, '');
   if (normalized === 'zhcn' || normalized === 'zhhans' || normalized === 'simplifiedchinese') {
     return 'schinese';
   }

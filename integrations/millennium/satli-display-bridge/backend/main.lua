@@ -17,6 +17,7 @@ local function on_unload()
 end
 
 return {
+    patches = require("achievement_toast_patch"),
     on_load = on_load,
     on_frontend_loaded = on_frontend_loaded,
     on_unload = on_unload,
