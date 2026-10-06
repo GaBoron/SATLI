@@ -7,6 +7,19 @@ This Millennium plugin reads SATLI's static achievement bridge from
 running. Keeping the bridge inside Millennium's real install directory also
 avoids Microsoft Store AppData virtualization.
 
+## Choosing a plugin
+
+This bundled plugin displays translations prepared by the SATLI desktop client.
+[SATLI lite](https://github.com/GaBoron/SATLI-lite) is a separate Millennium plugin
+that downloads community translations and manages variants, languages, and local
+edits directly inside Steam, without requiring the desktop client or BIN writes.
+
+Enable only one of these display plugins at a time. They keep separate settings
+and translation data; switching plugins does not synchronize local edits or
+restore BIN files installed by SATLI. See the [SATLI lite installation guide](https://github.com/GaBoron/SATLI-lite#安装)
+for setup, or [SATLI usage](../../../docs/USAGE.md#与-satli-lite-的区别)
+for switching between them.
+
 The Steam main frontend first overrides structured achievement responses by App
 ID and achievement API name, covering the library data path without relying on
 display-string identity. This includes both Steam's cached `achievements`

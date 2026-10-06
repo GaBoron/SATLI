@@ -17,6 +17,8 @@
 
 ## 安装与首次运行
 
+本指南适用于 SATLI 桌面客户端。只需在 Steam 中下载、切换和显示社区译本时，可选择独立的 [SATLI lite Millennium 插件](https://github.com/GaBoron/SATLI-lite)，按其安装说明操作，无需安装本体。需要制作 BIN、导出投稿 ZIP 或管理本机原文件时，请使用以下桌面客户端安装渠道。
+
 ### Microsoft Store（强烈推荐）
 
 Microsoft Store 是 SATLI 的首选安装方式。从 [Microsoft Store](https://apps.microsoft.com/detail/9PB7V9S03K80) 打开产品页面，选择“获取”或“安装”。Microsoft Store 会负责安装应用及其 Windows App Runtime 共享框架，并在有新版时自动提供更新。商店版已经确认不会触发目前已知的安全软件行为误报；如果独立安装版被安全软件拦截，请优先改用商店版。
@@ -50,7 +52,7 @@ Microsoft Store 是 SATLI 的首选安装方式。从 [Microsoft Store](https://
 
 同一游戏可能有多个候选译本，请根据版本说明选择。应用会校验文件名、App ID、文件结构和内容，并在确认后再次检查预览文件是否发生变化。
 
-SATLI 目前仍会安装并备份 BIN，但项目计划逐步迁移到由 Millennium 插件应用译文。原因是 Steam 更新后，越来越多游戏会从服务器刷新 schema，导致本地 BIN 修改被还原。完成安装后，建议继续按下方步骤锁定 Steam 成就显示；现阶段插件覆盖与 BIN 安装会并行保留，以兼顾尚未覆盖的游戏内界面和恢复流程。
+SATLI 安装并备份本机 BIN；Steam 从服务器刷新成就数据时，可能还原本地修改。需要在 Steam 界面保留译文时，可按下方步骤启用本体的“锁定 Steam 成就显示”。若选择 SATLI lite，则直接在其管理界面下载并应用，无需先在本体安装 BIN。
 
 在线列表加载成功后会保留缓存；离线时仍可浏览最近一次结果。游戏名称也会缓存，断网不会影响已有本地文件的操作。
 
@@ -80,6 +82,14 @@ Steam 在线获取的成就 schema 可能覆盖本机文件在客户端内存中
 覆盖引擎同时接入 Steam 主界面、成就缓存、游戏内成就弹窗与 Store/Community WebView。它优先按游戏和成就 ID 替换结构化数据，对只提供渲染文本的界面再使用无歧义精确匹配；无法识别的内容会保留原样。Steam 更新可能改变界面实现，因此这仍是实验性兼容层。
 
 SATLI 会把锁定内容写入 Steam 目录下的 `millennium\config\satli-bridge-v1.json`。该位置不会被 Microsoft Store 的 AppData 虚拟化隔离。写入完成后 SATLI 可以彻底退出；运行时由 Millennium 随 Steam 加载，不需要 SATLI 自启、托盘运行或后台常驻。恢复安装前文件会自动解除该游戏的显示锁定；重新安装或保存已锁定译文时会自动刷新快照。
+
+### 与 SATLI lite 的区别
+
+`SATLI Achievement Display Bridge` 随本体部署，显示内容由本体的锁定操作生成。[SATLI lite](https://github.com/GaBoron/SATLI-lite) 单独安装，在 Steam 内自行下载、选择语言和译本，并保存本地编辑。它不依赖本体的锁定记录，也不会修改本体已安装的 BIN。
+
+两种插件不要同时启用。改用 SATLI lite 时，在 Millennium 插件列表中停用 `SATLI Achievement Display Bridge`，再按 [SATLI lite 安装说明](https://github.com/GaBoron/SATLI-lite#安装) 启用新插件并重启 Steam；这不会恢复或移除本体已安装的 BIN，需要恢复原文件时仍在本体中操作。改回本体显示插件时，先停用 SATLI lite，再在本体中生成锁定内容并启用显示插件。
+
+两个客户端分别保存设置、译本选择和本地编辑，不会自动迁移或同步。SATLI lite 导出的翻译 JSON 不能作为本体的 BIN/ZIP 直接导入；完整操作见 [SATLI lite 使用指南](https://github.com/GaBoron/SATLI-lite/blob/main/docs/usage.md)。
 
 ## 编辑本地成就
 

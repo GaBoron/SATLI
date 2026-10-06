@@ -36,6 +36,8 @@
 
 ## 下载与安装
 
+只需在 Steam 内下载和显示社区成就翻译时，可使用 [SATLI lite](https://github.com/GaBoron/SATLI-lite)。它是独立的 Millennium 插件，无需安装 SATLI 本体或写入本机 BIN；前置要求与安装步骤见 [SATLI lite 安装说明](https://github.com/GaBoron/SATLI-lite#前置要求)。需要管理 BIN、制作投稿 ZIP 或恢复本机原文件时，请使用本页的桌面客户端。
+
 > [!TIP]
 > **强烈推荐从 [Microsoft Store](https://apps.microsoft.com/detail/9PB7V9S03K80) 安装。** 这是 SATLI 的首选安装方式：Microsoft Store 会负责安装并自动提供软件更新，应用设置页也支持主动检查 Store 新版、查看发布说明并打开更新页面。商店版还已确认不会触发目前已知的安全软件行为误报。
 
@@ -55,7 +57,7 @@ Microsoft Store 的产品可用性可能因市场而异。产品页面在当前�
 安装前，应用会校验译本并备份原文件。安装后可在“已管理”页检查状态、获取译本更新或恢复原文件。扫描、浏览和编辑草稿不需要管理员权限；只有安装、恢复或写回本地编辑等操作才会显示 UAC。
 
 > [!IMPORTANT]
-> SATLI 目前仍支持把译文写入本机 BIN，但正在逐步把日常使用迁移到 Millennium 插件的显示覆盖。随着 Steam 更新，越来越多游戏会从服务器重新获取 schema 并还原本地 BIN 修改；对支持锁定的游戏，建议安装译文后启用“锁定 Steam 成就显示”。目前正在进行仅支持 Millennium 插件的 [SATLI-lite](https://github.com/GaBoron/SATLI-lite) 版本开发。
+> Steam 可能从服务器重新获取成就数据并还原本地 BIN 修改。希望 Steam 界面持续显示译文时，可在本体中启用“锁定 Steam 成就显示”，或使用独立的 [SATLI lite](https://github.com/GaBoron/SATLI-lite) 插件。两种显示插件选择一种启用即可。
 
 > [!TIP]
 > 找不到游戏时，请先启动一次游戏，让 Steam 生成成就缓存，再返回应用重新扫描。
@@ -91,15 +93,18 @@ Microsoft Store 的产品可用性可能因市场而异。产品页面在当前�
 
 ## 项目生态
 
-三个项目共同覆盖 Steam 成就译本的制作、分发和使用：
+以下项目提供 Steam 成就译本的制作、分发和使用工具：
 
 | 项目 | 定位 | 适合场景 |
 | --- | --- | --- |
 | **Steam 成就翻译管理器**（当前项目） | Windows 图形化客户端 | 查找、安装、编辑和恢复翻译 |
+| [SATLI lite](https://github.com/GaBoron/SATLI-lite) | 独立 Millennium 插件 | 在 Steam 内下载、切换、编辑和显示社区译本 |
 | [Steam 成就翻译库](https://github.com/GaBoron/steam-achievement-translation-library) | 社区翻译数据仓库 | 查找、请求、提交和维护译本 |
 | [Steam Achievement Localizer Skill](https://github.com/GaBoron/steam-achievement-localizer-skill) | Codex 翻译与审核工作流 | 研究多语言语境并制作可验证译本 |
 
 Localizer Skill 生成的标准 BIN/ZIP 可直接导入管理器，也可提交到翻译库供社区使用。偏好独立桌面编辑器时，可了解第三方项目 [SteamAchievementLocalizer](https://github.com/PanVena/SteamAchievementLocalizer)。
+
+SATLI 本体与 SATLI lite 使用同一社区翻译库，但各自保存设置和本地译本，不会自动同步编辑。SATLI lite 使用翻译 JSON，本体使用 BIN/ZIP；两者的导入文件不能直接互换。
 
 ## 文档
 
