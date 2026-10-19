@@ -39,28 +39,9 @@
 >
 > 如果没有手动修改成就文本、管理原始 BIN 文件的需求，**建议优先使用 [SATLI lite](https://github.com/GaBoron/SATLI-lite)**。它通过 Millennium 插件直接替换 Steam 中显示的成就文字，不需要安装 SATLI 桌面版，也无需改写本地 `.bin` 文件。需要编辑或导出 BIN、制作投稿 ZIP、备份及恢复原始文件时，再使用本项目的桌面版。
 
-## 推荐使用 SATLI lite
+## 下载与安装
 
-以下为 Windows 下的安装和使用步骤。SATLI lite 是独立的 Steam 插件，不需要先安装 SATLI 桌面版。
-
-1. **安装前置依赖 Millennium。** 下载并安装 [Millennium](https://github.com/SteamClientHomebrew/Millennium)（要求 3.5.0 或更高版本），按其 [官方 Windows 安装指南](https://docs.steambrew.app/users/getting-started/installation) 操作。安装完成后重启 Steam，确认左上角「Steam」菜单中出现「Millennium」入口。
-2. **下载 SATLI lite。** 前往 [SATLI lite 最新版本](https://github.com/GaBoron/SATLI-lite/releases/latest)，展开 **Assets**，下载 `satli-lite.star`。不要下载 `Source code` 或 `update.json` 代替插件。
-3. **放入插件目录。** 从 Steam 左上角「Steam → 退出」完全关闭 Steam。找到包含 `steam.exe` 的 Steam 安装文件夹，将 `satli-lite.star` 放入其下的 `millennium\plugins` 目录，**无需解压**。默认安装位置通常是：
-
-   ```text
-   C:\Program Files (x86)\Steam\millennium\plugins\satli-lite.star
-   ```
-
-   如果 Steam 安装在其他位置，以实际安装目录为准，不要放进 `steamapps` 游戏目录。
-4. **启用插件。** 重新打开 Steam，点击左上角 **Steam → Millennium → Plugins（插件）**，在插件列表中启用 **SATLI lite**，然后完全退出并重新启动 Steam，让插件生效。
-5. **打开管理界面。** 再次点击左上角 **Steam → Millennium Library Manager（Millennium 库管理器）**，选择 **SATLI lite**，点击「管理译本」即可进入成就翻译管理界面。
-6. **下载并应用译文。** 选择游戏、译本和语言，可先点击「预览译本」查看内容，再点击「下载并应用」。已下载的译本可以通过「应用所选译本」切换。回到 Steam 游戏页面即可查看成就译文；如页面未刷新，可切换游戏页面后返回。
-
-SATLI lite 也支持在本机微调已应用的译文，但不负责桌面版的 BIN 编辑、导出与恢复流程。其他功能及常见问题见 [SATLI lite 使用指南](https://github.com/GaBoron/SATLI-lite/blob/main/docs/usage.md)。
-
-## SATLI 桌面版：下载与安装
-
-SATLI 桌面版适合需要直接管理 BIN、制作投稿 ZIP、编辑原始成就文件或恢复本机文件的用户。仅希望在 Steam 中显示社区译文时，推荐按上方步骤安装 SATLI lite。
+SATLI 桌面版适合需要直接管理 BIN、制作投稿 ZIP、编辑原始成就文件或恢复本机文件的用户。若只需在 Steam 中显示成就译文，建议使用 [SATLI lite](https://github.com/GaBoron/SATLI-lite#前置要求)，并按其 README 中的安装说明操作。
 
 > [!TIP]
 > **强烈推荐从 [Microsoft Store](https://apps.microsoft.com/detail/9PB7V9S03K80) 安装。** 这是 SATLI 的首选安装方式：Microsoft Store 会负责安装并自动提供软件更新，应用设置页也支持主动检查 Store 新版、查看发布说明并打开更新页面。商店版还已确认不会触发目前已知的安全软件行为误报。
