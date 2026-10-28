@@ -12,6 +12,7 @@ public static class CliElevationPolicy
         return arguments[0] switch
         {
             "install" or "restore" or "local-import" or "lite-install" => true,
+            "lite" when arguments.Count > 1 && arguments[1] == "retire-legacy" => true,
             "schema" => RequiresSchemaElevation(arguments),
             _ => false,
         };

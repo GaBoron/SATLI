@@ -4,6 +4,15 @@ namespace Satli.Core.FileSystem;
 
 public static class FileOperations
 {
+    public static void EnsureNoReparsePoints(string path)
+    {
+        for (var current = Path.GetFullPath(path); current is not null; current = Path.GetDirectoryName(current))
+        {
+            if (Path.Exists(current) && (File.GetAttributes(current) & FileAttributes.ReparsePoint) != 0)
+                throw new PreflightException("安装或本机接口路径不能包含链接或重解析点");
+        }
+    }
+
     public static string Sha256(string path)
     {
         using var stream = File.OpenRead(path);

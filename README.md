@@ -61,6 +61,8 @@ Microsoft Store 的产品可用性可能因市场而异。产品页面在当前�
 
 BIN 安装会在确认后关闭 Steam、校验译本并备份原文件。JSON 路线只向 lite 的公开本机接口导入译文并读取结果，不写入 Steam BIN；浏览、下载和预览不要求安装插件。首次安装 lite 或写入受保护目录时会请求管理员权限。
 
+也可先打开“设置 → Steam 译文显示 → 安装 / 管理 SATLI-lite”，独立安装插件、查看启用指引或将旧显示桥移入回收站，无需先选择游戏。SATLI 仅从 lite 官方正式 Release 下载插件，已有安装由 lite 自身更新；Millennium 需按官方指南另行安装。
+
 > [!IMPORTANT]
 > Steam 可能重新获取成就数据并还原本地 BIN 修改。可选择通过 [SATLI-lite](https://github.com/GaBoron/SATLI-lite) 的独立 JSON 链路管理显示；这也是首次安装即可选择的正常路线。旧显示桥已退役，迁移步骤见[使用指南](docs/USAGE.md#通过-satli-lite-管理)。
 

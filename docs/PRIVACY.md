@@ -35,7 +35,7 @@ SATLI 以本地处理为主。扫描、编辑、备份和恢复均在当前 Wind
 
 - **翻译目录和译本：** 按用户设置向 jsDelivr（含 Fastly 域名）、GitHub Raw、StaticDelivr 请求 V2 翻译目录并在需要时回退 V1，再从配置的文件源下载经 SHA-256 校验的译本
 - **软件更新：** Microsoft Store 版由 Microsoft Store 管理；独立安装版通过 GitHub 获取更新信息和发布包
-- **SATLI-lite 安装：** 用户选择 JSON 应用并确认安装后，从 SATLI-lite 官方 GitHub 正式 Release 下载插件，按发布资产的大小及完整性元数据校验；不覆盖已安装插件的设置和译本
+- **SATLI-lite 安装：** 用户从设置中的独立管理入口或 JSON 应用流程确认安装后，从 SATLI-lite 官方 GitHub 最新正式 Release 下载插件，按发布资产的大小及完整性元数据校验；已有安装原样保留，不重复下载，也不覆盖 lite 的设置和译本
 - **安装运行库：** Microsoft Store 版由 Store 获取 Windows App Runtime 共享框架；独立安装器仅在检测到缺少运行库时，从微软官方域名下载经 SHA-256 校验的 .NET 10 Desktop Runtime 和 Windows App Runtime 安装程序
 - **Steam 游戏库：** 用户主动配置凭据后，通过 Steam Web API 补全账号游戏库
 - **游戏名称：** 通过游戏名称数据源补全 App ID 对应的名称
@@ -70,3 +70,5 @@ SATLI 以本地处理为主。扫描、编辑、备份和恢复均在当前 Wind
 用户也可主动发送编辑器当前目标语言文本，或将本地 BIN/ZIP 转换后发送。保存草稿、写回 BIN、恢复和导出均不会自动发送；lite 中的编辑不会反向覆盖桌面端草稿。Steam 关闭或插件暂不可用时，经确认的请求可以留在本机队列中等待，默认拒绝覆盖 lite 已有译本。
 
 如果 SATLI 未检测到 Millennium，只有在用户点击“打开 Millennium 官方安装页”后，SATLI 才会让系统浏览器访问 Steam Homebrew 官方文档。SATLI 不会下载、内置或代为运行 Millennium 安装器。
+
+旧显示桥迁移由用户单独确认，在 Steam 退出后只将 `millennium/plugins/satli.star` 移入 Windows 回收站。该操作不清理 `satli-bridge-v1.json`、lite 私有数据、本地译文或 BIN 备份；回收不可用时停止，不改用永久删除。

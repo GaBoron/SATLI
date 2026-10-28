@@ -17,6 +17,18 @@ internal sealed partial class CommandDispatcher
         var ids = args.Positionals(2, "--data-dir", "--steam-dir", "--source", "--variant", "--language", "--replace-revision");
         var steam = SteamLocator.FindSteamDirectory(args.SteamDirectory);
         var client = new LiteClient(steam, args.DataDirectory);
+        if (raw[1] == "retire-legacy")
+        {
+            if (ids.Count != 0) throw new UsageException("lite retire-legacy 不接受 APP_ID");
+            RequireYes(args);
+            _events.Emit(operation, "item-started", new JsonObject { ["message"] = "正在将旧显示桥安装包移入回收站" });
+            var removed = LitePluginInstaller.RetireLegacyBridge(steam);
+            var message = removed ? "旧 satli.star 已移入回收站；快照、本地译文和 BIN 备份保留。"
+                : "未发现旧 satli.star；没有更改任何文件。";
+            _events.Emit(operation, "completed", new JsonObject { ["retired"] = removed, ["message"] = message, ["exit_code"] = 0 });
+            if (!_events.JsonLines) await _output.WriteLineAsync(message);
+            return 0;
+        }
         if (raw[1] == "inspect")
         {
             if (ids.Count != 0) throw new UsageException("lite inspect 不接受 APP_ID");
@@ -127,16 +139,25 @@ internal sealed partial class CommandDispatcher
     private async Task<int> InstallLitePlugin(Arguments args)
     {
         RequireYes(args);
-        if (args.Has("--offline")) throw new PreflightException("离线模式下无法下载 SATLI-lite");
         var steam = Satli.Core.Steam.SteamLocator.FindSteamDirectory(args.SteamDirectory);
+        if (args.Has("--offline") && !File.Exists(LitePluginInstaller.PluginPath(steam)))
+            throw new PreflightException("离线模式下无法首次下载 SATLI-lite");
         using var http = NetworkClient();
-        _events.Emit("lite-install", "item-started", new JsonObject { ["message"] = "正在下载官方 SATLI-lite 安装包" });
-        await Satli.Core.SatliLite.LitePluginInstaller.InstallAsync(steam, http);
+        _events.Emit("lite-install", "item-started", new JsonObject { ["message"] = "正在检查 SATLI-lite，缺少时下载官方安装包" });
+        var result = await LitePluginInstaller.InstallAsync(steam, http);
+        var message = result.AlreadyInstalled
+            ? "已发现 SATLI-lite，保留现有安装，不重复下载；后续更新由 lite 自身管理。请在 Steam → Millennium → Plugins 检查启用状态。"
+            : "插件文件已校验并保存；请在 Steam → Millennium → Plugins 启用并重启 Steam。尚未应用译文。";
+        var legacyPresent = File.Exists(LitePluginInstaller.LegacyPluginPath(steam));
+        if (legacyPresent) message += " 另发现旧 satli.star；请先退出 Steam 并确认移除旧桥，勿同时启用。";
         _events.Emit("lite-install", "completed", new JsonObject
         {
-            ["message"] = "插件文件已校验并保存；请在 Steam → Millennium → Plugins 启用并重启 Steam。尚未应用译文。",
+            ["already_installed"] = result.AlreadyInstalled, ["plugin_path"] = result.PluginPath,
+            ["legacy_bridge_present"] = legacyPresent,
+            ["message"] = message,
             ["exit_code"] = 0,
         });
+        if (!_events.JsonLines) await _output.WriteLineAsync(message);
         return 0;
     }
 

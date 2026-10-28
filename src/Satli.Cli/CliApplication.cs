@@ -52,6 +52,7 @@ public static class CliApplication
                 await output.WriteLineAsync("命令：scan, install, catalog-json, lite, lite-install, local-import, status, restore, cache, petition, schema");
                 await output.WriteLineAsync("catalog-json APP_ID --variant VARIANT：校验并缓存 JSON，不修改 Steam BIN。");
                 await output.WriteLineAsync("lite-install --yes：下载并校验官方插件，完成后仍需在 Steam 中启用。");
+                await output.WriteLineAsync("lite retire-legacy --yes：退出 Steam 后，仅将旧 satli.star 移入回收站，保留译文、快照和备份。");
                 await output.WriteLineAsync("lite inspect | status APP_ID | resume APP_ID：检查连接、查询实际状态或刷新原请求。");
                 await output.WriteLineAsync("lite import APP_ID (--catalog | --source FILE | --managed) --language LANGUAGE --yes [--variant ID]：发送 JSON 或转换 BIN/ZIP。默认拒绝覆盖。");
                 await output.WriteLineAsync("覆盖已有译本需重新查询后明确提供 --replace-revision REVISION；含本地修改另需 --allow-local-edits。--dry-run 可先校验和预览。");

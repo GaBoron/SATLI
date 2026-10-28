@@ -66,6 +66,22 @@
                 </Border>
             </StackPanel>
 
+            <TextBlock Text="Steam 译文显示" Style="{StaticResource SubtitleTextBlockStyle}" Margin="0,12,0,0" />
+            <Border Style="{StaticResource SettingsCardStyle}">
+                <Grid Style="{StaticResource SettingsRowStyle}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel VerticalAlignment="Center" Spacing="3">
+                        <TextBlock Text="SATLI-lite" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                        <TextBlock x:Name="LiteStatusText" Text="正在检查 Millennium 与插件安装…" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
+                        <TextBlock Text="独立安装、启用指引和旧桥迁移；无需先选择游戏或安装 BIN。" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
+                    </StackPanel>
+                    <Button x:Name="ManageLiteButton" Grid.Column="1" Content="安装 / 管理 SATLI-lite" Click="ManageLite_Click" />
+                </Grid>
+            </Border>
+
             <TextBlock Text="首选项" Style="{StaticResource SubtitleTextBlockStyle}" Margin="0,12,0,0" />
             <StackPanel Spacing="8">
                 <Border Style="{StaticResource SettingsCardStyle}">

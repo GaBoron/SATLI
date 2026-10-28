@@ -12,5 +12,6 @@
     <PackageReference Include="xunit.runner.visualstudio" Version="3.1.5" PrivateAssets="all" />
     <ProjectReference Include="../../src/Satli.Core/Satli.Core.csproj" />
     <ProjectReference Include="../../src/Satli.Cli/Satli.Cli.csproj" />
+    <Compile Include="../../src/Satli.Gui/Services/CliElevationPolicy.cs" Link="Gui/CliElevationPolicy.cs" />
   </ItemGroup>
 </Project>

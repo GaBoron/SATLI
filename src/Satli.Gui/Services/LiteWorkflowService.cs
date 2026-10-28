@@ -93,7 +93,7 @@ internal sealed class LiteWorkflowService
         if (!preview.Languages.Contains(language)) throw new InvalidDataException("译文不包含所选目标语言。");
         if (!await ReplacementConfirmationDialog.ConfirmJsonAsync(root, preview, language)) return null;
         var client = Client(settings);
-        if (!await EnsureConnectedAsync(root, client, settings, game.AppId)) return null;
+        if (!await new LiteSetupService().EnsureReadyAsync(root, client, settings, game.AppId)) return null;
         var previous = await client.ResumeAsync(game.AppId, TimeSpan.Zero);
         if (previous?.Pending == true) return previous;
         var connection = await client.InspectAsync();
@@ -124,64 +124,6 @@ internal sealed class LiteWorkflowService
         }
         return await Task.Run(() => client.ImportAsync(game.AppId, translation, language, sourceKind, conflict,
             sourceVersion: sourceVersion));
-    }
-
-    public static async Task<bool> EnsureConnectedAsync(XamlRoot root, LiteClient client, GuiSettings settings, string appId)
-    {
-        while (true)
-        {
-            var connection = await client.InspectAsync();
-            await App.Logs.WriteAsync("信息", "SATLI-lite", $"连接状态：{connection.State}。");
-            if (connection.Connected) return true;
-            var migration = "";
-            if (connection.State == "legacy_bridge")
-            {
-                var ids = await client.LegacyAppIdsAsync();
-                migration = ids.Contains(appId)
-                    ? "\n发现此游戏的旧显示锁定记录。将使用刚才预览的译文通过新协议迁移；旧桥快照不会直接导入。"
-                    : $"\n旧桥记录了 {ids.Count} 个游戏。请逐个选择对应的已管理译文迁移。";
-                await App.Logs.WriteAsync("信息", "SATLI-lite", $"检测到旧桥迁移记录。游戏数={ids.Count}；当前 App ID={appId}。");
-            }
-            var action = connection.State switch
-            {
-                "not_installed" => "安装 lite",
-                "millennium_missing" => "打开 Millennium 官方指南",
-                "legacy_bridge" => "将旧桥移入回收站",
-                _ => connection.CanSubmit ? "排队发送" : "重试连接",
-            };
-            var dialog = new ContentDialog
-            {
-                XamlRoot = root, Title = "使用 lite", Content = connection.Message + migration
-                    + (connection.CanSubmit ? "\n排队请求默认拒绝覆盖已有译本；发生冲突时需连接后重新查询和确认。" : "")
-                    + "\n本地译文和 JSON 缓存会保留；可以关闭提示后继续浏览。",
-                PrimaryButtonText = action, CloseButtonText = "暂不应用", DefaultButton = ContentDialogButton.Close,
-            };
-            if (await dialog.ShowAsync() != ContentDialogResult.Primary) return false;
-            if (connection.CanSubmit) return true;
-            if (connection.State == "millennium_missing")
-            {
-                await new ExternalUriLauncher().LaunchAsync(new Uri("https://docs.steambrew.app/users/getting-started/installation"));
-                return false;
-            }
-            if (connection.State == "legacy_bridge")
-            {
-                if (new SteamProcessController().IsRunning())
-                    throw new InvalidOperationException("请先正常退出 Steam，再将旧桥移入回收站。原译文快照和备份会保留。");
-                var legacy = Path.Combine(Path.GetDirectoryName(client.PluginPath)!, "satli.star");
-                await Task.Run(() => RecycleBin.FileIfExists(legacy));
-                await App.Logs.WriteAsync("信息", "SATLI-lite", "旧显示桥安装包已移入回收站，保留译文和备份。");
-            }
-            if (connection.State == "not_installed")
-            {
-                if (settings.Offline) throw new InvalidOperationException("离线模式下无法下载 SATLI-lite；JSON 缓存已保留。");
-                await App.Logs.WriteAsync("信息", "SATLI-lite", "开始下载官方插件，必要时请求管理员权限。");
-                var installed = await new SatliCliService().RunAsync(
-                    ["lite-install", "--steam-dir", client.SteamDirectory, "--yes", "--jsonl"],
-                    networkSettings: settings.Network, downloadSourceSettings: settings.DownloadSources);
-                if (!installed.IsSuccess) throw new InvalidOperationException(installed.ErrorMessage);
-                await App.Logs.WriteAsync("信息", "SATLI-lite", "SATLI-lite 安装包已校验并保存；等待在 Steam 中启用和重启。");
-            }
-        }
     }
 
     private static async Task<string> ChooseLanguageAsync(XamlRoot root, IReadOnlyList<string> languages)

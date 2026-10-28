@@ -19,15 +19,17 @@ The independently distributed Windows installer is built with Inno Setup and inc
 
 ### Command-line and core runtime
 
-SATLI's command-line interface and shared business logic are implemented with
-.NET and distributed as a self-contained C# executable. No Python runtime,
-Dulwich, urllib3, or Git installation is included or required.
+SATLI's command core and shared business logic are implemented with .NET and run
+inside the desktop application. A separate command-line host is available in the
+source tree for development and automation and is not included in desktop packages.
+No Python runtime, Dulwich, urllib3, or Git installation is included or required.
 
 ### Steam display integration
 
 SATLI can download the independent MIT-licensed
 [SATLI-lite](https://github.com/GaBoron/SATLI-lite) plugin from its official GitHub Releases
-when the user chooses JSON display management. No display plugin is bundled.
+when the user confirms installation in Settings or during JSON display management.
+No display plugin or its JavaScript/Lua build dependencies are bundled.
 SATLI-lite requires the independently installed MIT-licensed
 [Millennium](https://github.com/SteamClientHomebrew/Millennium) framework.
 Millennium is not bundled or installed automatically by SATLI.

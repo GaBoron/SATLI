@@ -26,20 +26,20 @@ public sealed class LiteClient
         _steamRunning = steamRunning ?? IsSteamRunning;
     }
 
-    public string PluginPath => Path.Combine(_steam, "millennium", "plugins", "satli-lite.star");
+    public string PluginPath => LitePluginInstaller.PluginPath(_steam);
     public string SteamDirectory => _steam;
 
     public async Task<LiteConnection> InspectAsync(CancellationToken cancellationToken = default)
     {
-        if (!MillenniumInstallation.IsInstalled(_steam))
-            return new("millennium_missing", "未安装 Millennium，请按官方指南安装。", []);
         if (File.Exists(Path.Combine(_steam, "millennium", "plugins", "satli.star")))
             return new("legacy_bridge", "发现旧 SATLI 显示桥。可先选择已管理译文发送到 lite；移除旧桥后再启用 lite，原快照和备份会保留。", []);
+        if (!MillenniumInstallation.IsInstalled(_steam))
+            return new("millennium_missing", "未安装 Millennium，请按官方指南安装。", []);
         if (!File.Exists(PluginPath))
             return new("not_installed", "未安装 SATLI-lite。", []);
         var protocol = await ReadAsync(Path.Combine(_root, "protocol.json"), 65536, cancellationToken).ConfigureAwait(false);
         if (protocol is null)
-            return new("uninitialized", "尚未取得协议：请在 Steam → Millennium → Plugins 启用 SATLI-lite，并至少启动一次，再重试。", []);
+            return new("uninitialized", "已检测到 SATLI-lite 安装包，尚未取得外部协议。请在 Steam → Millennium → Plugins 启用并重启 Steam；若仍无协议，请在 lite 中检查更新。", []);
         if (!IsProtocolV1(protocol)
             || protocol["plugin_id"]?.ToString() != "com.gaboron.satli-lite"
             || protocol["operations"] is not JsonArray operations
@@ -370,11 +370,7 @@ public sealed class LiteClient
 
     private static void EnsureSafePath(string path)
     {
-        for (var current = Path.GetFullPath(path); current is not null; current = Path.GetDirectoryName(current))
-        {
-            if (Path.Exists(current) && (File.GetAttributes(current) & FileAttributes.ReparsePoint) != 0)
-                throw new PreflightException("lite 外部接口路径不能包含链接或重解析点");
-        }
+        FileOperations.EnsureNoReparsePoints(path);
     }
 
     private static bool IsSteamRunning()

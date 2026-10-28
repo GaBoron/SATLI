@@ -73,8 +73,10 @@ BIN 记录可查看当前成就文本或恢复安装前文件，JSON 安装没�
 
 [SATLI-lite](https://github.com/GaBoron/SATLI-lite) 负责 Steam 内的译文显示，桌面端不再部署自己的显示桥。JSON 首次安装无需已有 BIN 安装、已管理或锁定记录。
 
+**独立安装入口：** 打开“设置 → Steam 译文显示 → 安装 / 管理 SATLI-lite”，即可检查安装、按需下载和查看启用指引，无需先选择游戏或发送译文。未安装 Millennium 时只提供官方指南，不会捆绑或自动安装它。安装 lite 会从其官方最新正式 Release 获取 `satli-lite.star`，核对资产、下载地址、大小和完整性后原子保存到当前 Steam 目录的 `millennium/plugins`。已有插件会原样保留，后续更新由 lite 自身负责；安装成功不代表已应用译文。
+
 1. 从在线译本选择 JSON 路线，核对目标语言与成就文本并确认。
-2. 应用时才检查 Millennium、lite 安装、协议能力和当前心跳。缺少 Millennium 时提供[官方安装指南](https://docs.steambrew.app/users/getting-started/installation)，SATLI 不捆绑安装 Millennium。
+2. 发送前会核对 Millennium、lite 安装、协议能力和当前心跳。缺少 Millennium 时提供[官方安装指南](https://docs.steambrew.app/users/getting-started/installation)，SATLI 不捆绑安装 Millennium。
 3. 缺少 lite 时可确认下载官方正式 Release 的 `satli-lite.star`。安装文件会校验大小和完整性，必要时请求管理员权限。已有插件不会被重复下载或强制覆盖。
 4. 在 **Steam → Millennium → Plugins** 启用 SATLI-lite，并完全退出、重启 Steam。返回 SATLI 重试连接；文件存在不代表插件已经可通信。
 5. lite 已有译本时，SATLI 会先查询状态，并单独确认是否覆盖，包含本地编辑时会明确说明。状态在确认后变化会被拒绝，需要重新查询和确认。
@@ -95,7 +97,9 @@ BIN 被 Steam 或其他程序修改后，可以在“被修改”页选择“通
 
 BIN 转换保留源文件标识与各语言文本，缺失文本保留为空；编辑器当前文本使用无需 BIN 来源标识的 JSON 格式 2。重复 API name、语言映射冲突、无效文本或超出协议限制会中止发送。
 
-已有 `SATLI Achievement Display Bridge` 时，列表会提示对应游戏的旧锁定记录，但不会把它当作 lite 的导入状态。选择可信译文并核对预览后，请先完全退出 Steam，再确认将旧 `satli.star` 移入回收站，之后启用 lite 并发送译文。迁移保留旧快照、本地译文和备份；旧快照只用于检测迁移记录，不作为 lite 的导入文件。SATLI 不再生成或刷新 `satli-bridge-v1.json`。两个客户端的本地编辑也不会自动同步。
+已有 `SATLI Achievement Display Bridge` 时，列表会提示对应游戏的旧锁定记录，但不会把它当作 lite 的导入状态。可先从设置中的独立入口完成切换：正常退出 Steam，确认将旧 `satli.star` 移入回收站，必要时确认 UAC，再下载、启用 lite 并重启 Steam。发送译文时也提供相同迁移入口。移除操作只处理旧插件安装包，保留旧快照、本地译文和 BIN 备份；无法回收时停止，不强制删除。旧快照只用于检测迁移记录，不作为 lite 的导入文件。SATLI 不再生成或刷新 `satli-bridge-v1.json`，两个客户端的本地编辑也不会自动同步。
+
+在 **Steam → Millennium → Plugins** 的 SATLI lite 插件设置中管理译本、语言和显示开关。若设置页已发现插件文件但没有外部协议，请先启用并重启 Steam，再在 lite 中检查更新；不要把缺少协议当作未安装而反复覆盖插件。
 
 ## 编辑本地成就
 
@@ -155,11 +159,15 @@ BIN 转换保留源文件标识与各语言文本，缺失文本保留为空；�
 源码中的 `Satli.Cli.Host` 提供可选命令入口，不随桌面安装包分发。以下命令可从仓库目录运行；`<Steam目录>` 和 `<SATLI数据目录>` 应与桌面端设置一致。
 
 ```powershell
+dotnet run --project src/Satli.Cli.Host -- lite-install --steam-dir '<Steam目录>' --yes --jsonl
+dotnet run --project src/Satli.Cli.Host -- lite retire-legacy --steam-dir '<Steam目录>' --yes --jsonl
 dotnet run --project src/Satli.Cli.Host -- lite inspect --steam-dir '<Steam目录>' --data-dir '<SATLI数据目录>' --jsonl
 dotnet run --project src/Satli.Cli.Host -- lite import 570 --source '<译文JSON或标准BIN/ZIP>' --language schinese --steam-dir '<Steam目录>' --data-dir '<SATLI数据目录>' --yes --jsonl
 dotnet run --project src/Satli.Cli.Host -- lite status 570 --steam-dir '<Steam目录>' --data-dir '<SATLI数据目录>' --jsonl
 dotnet run --project src/Satli.Cli.Host -- lite resume 570 --steam-dir '<Steam目录>' --data-dir '<SATLI数据目录>' --jsonl
 ```
+
+`lite-install` 的 `already_installed: true` 表示原样保留已有安装，没有重新下载或校验现有包；首次安装仍需联网。`lite retire-legacy` 要求已退出 Steam，只回收旧插件安装包，不清理任何译文或快照。
 
 导入来源三选一：`--source FILE`、`--catalog --variant ID` 或 `--managed`（哈希验证的已管理 BIN 快照）。导入前可用 `--dry-run --preview-content` 校验并预览。默认拒绝覆盖；只有查询后确认覆盖时，才提供 `--replace-revision REVISION --yes`，含本地编辑还需 `--allow-local-edits`。状态变化导致 `STALE_REVISION` 时必须重新查询和确认。`status` 在已有待处理请求时只刷新原请求，避免重复导入；`resume` 不会新建查询。退出码 0 也可能只是排队成功，必须检查返回的 `state`、`pending`、`succeeded` 和 `app.effective_enabled`；这些都不代表 Steam 页面渲染验收。
 
