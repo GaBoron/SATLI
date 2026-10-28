@@ -31,10 +31,10 @@ public static class ReplacementConfirmationDialog
             previews,
             title,
             confirmText: null,
-            readOnlyExplanation: "下表来自云端目录中已校验的 JSON 显示文本或 BIN。JSON 预览无需本机 Steam schema、Millennium 或 SATLI-lite。");
+            readOnlyExplanation: "预览所选译本的成就名称与描述。");
 
     public static Task<bool> ConfirmJsonAsync(XamlRoot root, ReplacementPreview preview, string language) =>
-        ShowCoreAsync(root, [preview], $"通过 SATLI-lite 应用 · {preview.GameName}", "继续应用 JSON",
+        ShowCoreAsync(root, [preview], $"使用 lite · {preview.GameName}", "应用 JSON",
             $"将向 SATLI-lite 导入并请求启用 {language} 译文。此操作不修改 Steam BIN，也不创建 BIN 安装或备份记录。若 lite 已有译本，下一步会单独确认覆盖。");
 
     private static async Task<bool> ShowCoreAsync(

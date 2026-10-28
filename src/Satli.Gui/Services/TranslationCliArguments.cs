@@ -82,13 +82,14 @@ public sealed class TranslationCliArguments(
         return arguments;
     }
 
-    public List<string> CatalogJson(GameItem game, string variantId)
+    public List<string> CatalogJson(GameItem game, string variantId, bool useCatalogCache = false)
     {
         var arguments = new List<string>
         {
             "catalog-json", game.AppId, "--variant", variantId, "--jsonl",
         };
         AddCommon(arguments, includeSteamDirectory: false, includeOffline: true);
+        if (useCatalogCache) arguments.Add("--catalog-cache-only");
         return arguments;
     }
 

@@ -7,6 +7,32 @@
     xmlns:converters="using:Satli_Gui.Converters">
     <Application.Resources>
         <ResourceDictionary>
+            <ResourceDictionary.ThemeDictionaries>
+                <ResourceDictionary x:Key="Light">
+                    <SolidColorBrush x:Key="BinBadgeBackground" Color="#DDF4FF" />
+                    <SolidColorBrush x:Key="BinBadgeForeground" Color="#0969DA" />
+                    <SolidColorBrush x:Key="BinBadgeStroke" Color="#540969DA" />
+                    <SolidColorBrush x:Key="JsonBadgeBackground" Color="#DAFBE1" />
+                    <SolidColorBrush x:Key="JsonBadgeForeground" Color="#1A7F37" />
+                    <SolidColorBrush x:Key="JsonBadgeStroke" Color="#541A7F37" />
+                </ResourceDictionary>
+                <ResourceDictionary x:Key="Default">
+                    <SolidColorBrush x:Key="BinBadgeBackground" Color="#1A2C42" />
+                    <SolidColorBrush x:Key="BinBadgeForeground" Color="#79C0FF" />
+                    <SolidColorBrush x:Key="BinBadgeStroke" Color="#5479C0FF" />
+                    <SolidColorBrush x:Key="JsonBadgeBackground" Color="#173421" />
+                    <SolidColorBrush x:Key="JsonBadgeForeground" Color="#7EE787" />
+                    <SolidColorBrush x:Key="JsonBadgeStroke" Color="#547EE787" />
+                </ResourceDictionary>
+                <ResourceDictionary x:Key="HighContrast">
+                    <SolidColorBrush x:Key="BinBadgeBackground" Color="{ThemeResource SystemColorWindowColor}" />
+                    <SolidColorBrush x:Key="BinBadgeForeground" Color="{ThemeResource SystemColorWindowTextColor}" />
+                    <SolidColorBrush x:Key="BinBadgeStroke" Color="{ThemeResource SystemColorWindowTextColor}" />
+                    <SolidColorBrush x:Key="JsonBadgeBackground" Color="{ThemeResource SystemColorWindowColor}" />
+                    <SolidColorBrush x:Key="JsonBadgeForeground" Color="{ThemeResource SystemColorWindowTextColor}" />
+                    <SolidColorBrush x:Key="JsonBadgeStroke" Color="{ThemeResource SystemColorWindowTextColor}" />
+                </ResourceDictionary>
+            </ResourceDictionary.ThemeDictionaries>
             <ResourceDictionary.MergedDictionaries>
                 <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
                 <!-- Other merged dictionaries here -->

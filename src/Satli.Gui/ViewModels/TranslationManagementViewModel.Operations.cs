@@ -51,15 +51,10 @@ public sealed partial class TranslationManagementViewModel
     public async Task<IReadOnlyList<ReplacementPreview>?> PreviewCatalogAsync(GameItem game)
     {
         var previews = new List<ReplacementPreview>(game.Variants.Count);
-        foreach (var variant in game.Variants)
+        foreach (var variant in game.Variants.Where(item => item.HasJson))
         {
             var result = await RunPreviewAsync(
-                variant.HasJson ? _arguments.CatalogJson(game, variant.VariantId) : _arguments.InstallVariant(
-                    game,
-                    variant.VariantId,
-                    dryRun: true,
-                    yes: false,
-                    previewContent: true),
+                _arguments.CatalogJson(game, variant.VariantId, useCatalogCache: true),
                 $"正在读取云端成就（{variant.VariantId}）…");
             if (result is null)
             {
@@ -74,6 +69,8 @@ public sealed partial class TranslationManagementViewModel
             previews.AddRange(parsed);
         }
 
+        if (previews.Count == 0)
+            ShowInfo("当前目录未提供 JSON 预览，请刷新目录。", InfoBarSeverity.Warning);
         return previews;
     }
 

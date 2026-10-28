@@ -10,20 +10,6 @@ public sealed partial class TranslationManagementViewModel
 {
     private readonly LiteWorkflowService _lite = new();
 
-    public async Task DownloadJsonAsync(XamlRoot root, GameItem game, string variantId)
-    {
-        if (!_operation.TryBegin()) return;
-        try
-        {
-            _operation.SetStatus("正在下载和校验显示文本 JSON…");
-            var (_, preview) = await _lite.DownloadAsync(game, variantId, _settings());
-            await ReplacementConfirmationDialog.ShowCatalogReadOnlyAsync(root, [preview], "JSON 已下载到缓存 · 成就预览");
-            ShowInfo("JSON 已下载并校验，保存在 SATLI 缓存中；尚未导入 lite。", InfoBarSeverity.Success);
-        }
-        catch (Exception exception) { ShowException("下载 JSON", exception); }
-        finally { _operation.Complete(); }
-    }
-
     public async Task ApplyLiteAsync(XamlRoot root, GameItem game, string variantId = "", string language = "", bool local = false)
     {
         if (!_operation.TryBegin()) return;
@@ -70,6 +56,8 @@ public sealed partial class TranslationManagementViewModel
     private void ObserveLite(GameItem game, LiteResult result, bool historical = false)
     {
         game.LiteStateText = (historical ? "上次处理结果（请刷新）：" : "") + LiteWorkflowService.Describe(result);
+        if (result.App?["exists"]?.GetValue<bool>() == true)
+            game.LiteStateText += " " + LiteWorkflowService.DescribeUpdate(game, result.App);
         game.LiteKnown = result.Pending || result.App?["exists"]?.GetValue<bool>() == true;
         var managed = ManagedGames.FirstOrDefault(item => item.AppId == game.AppId);
         if (managed is null && game.LiteKnown) ManagedGames.Add(game);

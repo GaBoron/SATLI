@@ -13,39 +13,41 @@ internal static class OnlineInstallationDialog
         if (game.Variants.Count == 0) throw new InvalidOperationException("此游戏没有在线译本");
         var variant = new ComboBox { Header = "译本版本", ItemsSource = game.Variants, SelectedItem = game.SelectedVariant };
         var method = new ComboBox { Header = "安装方式", HorizontalAlignment = HorizontalAlignment.Stretch };
-        var language = new ComboBox { Header = "JSON 目标语言", HorizontalAlignment = HorizontalAlignment.Stretch };
-        var availability = new TextBlock { TextWrapping = TextWrapping.Wrap };
+        var language = new ComboBox { Header = "语言", HorizontalAlignment = HorizontalAlignment.Stretch };
+        var description = new TextBlock { TextWrapping = TextWrapping.Wrap };
         var content = new StackPanel { Spacing = 12, MinWidth = 420, MaxWidth = 560 };
         content.Children.Add(new TextBlock { Text = game.GameName, TextWrapping = TextWrapping.Wrap });
         content.Children.Add(variant);
-        content.Children.Add(availability);
         content.Children.Add(method);
         content.Children.Add(language);
-        content.Children.Add(new TextBlock { Text = "JSON 首次即可通过 SATLI-lite 应用，无需先安装 BIN。下载和预览 JSON 无需插件；传统 BIN 安装独立可用。", TextWrapping = TextWrapping.Wrap });
-        var dialog = new ContentDialog { XamlRoot = root, Title = "选择译本安装方式", Content = content,
-            PrimaryButtonText = "继续", SecondaryButtonText = "仅下载和预览 JSON", CloseButtonText = "取消" };
+        content.Children.Add(description);
+        var dialog = new ContentDialog { XamlRoot = root, Title = "安装翻译", Content = content,
+            PrimaryButtonText = "使用 lite", CloseButtonText = "取消" };
         void UpdateVariant()
         {
             if (variant.SelectedItem is not SchemaVariantOption option) return;
             method.ItemsSource = option.HasJson
-                ? option.HasBin ? new[] { "通过 SATLI-lite 应用 JSON", "安装本地 BIN" } : new[] { "通过 SATLI-lite 应用 JSON" }
-                : new[] { "安装本地 BIN" };
+                ? option.HasBin ? new[] { "JSON（lite）", "BIN" } : new[] { "JSON（lite）" }
+                : new[] { "BIN" };
             method.SelectedIndex = 0;
             language.ItemsSource = option.Languages.Select(SteamLanguageCatalog.CreateOption).ToArray();
             language.DisplayMemberPath = nameof(SteamLanguageOption.DisplayName);
             language.SelectedIndex = Math.Max(0, option.Languages.ToList().IndexOf("schinese"));
-            availability.Text = option.AvailableMethods;
-            dialog.IsSecondaryButtonEnabled = option.HasJson;
         }
         variant.SelectionChanged += (_, _) => UpdateVariant();
-        method.SelectionChanged += (_, _) => language.IsEnabled = method.SelectedItem?.ToString() != "安装本地 BIN";
+        method.SelectionChanged += (_, _) =>
+        {
+            var bin = method.SelectedItem?.ToString() == "BIN";
+            language.Visibility = bin ? Visibility.Collapsed : Visibility.Visible;
+            description.Text = bin ? "备份并写入本机成就文件。" : "使用 SATLI-lite 在 Steam 中显示译文。";
+            dialog.PrimaryButtonText = bin ? "安装 BIN" : "使用 lite";
+        };
         UpdateVariant();
         var result = await dialog.ShowAsync();
         if (result == ContentDialogResult.None) return null;
         if (variant.SelectedItem is not SchemaVariantOption chosen) return null;
         game.SelectedVariant = chosen;
-        return new(result == ContentDialogResult.Secondary ? "download"
-            : method.SelectedItem?.ToString() == "安装本地 BIN" ? "bin" : "json",
+        return new(method.SelectedItem?.ToString() == "BIN" ? "bin" : "json",
             chosen.VariantId, (language.SelectedItem as SteamLanguageOption)?.Code ?? "");
     }
 
@@ -56,8 +58,7 @@ internal static class OnlineInstallationDialog
             var choice = await ChooseAsync(root, game);
             if (choice is null) return;
             var model = App.ViewModel.Translations;
-            if (choice.Method == "download") await model.DownloadJsonAsync(root, game, choice.VariantId);
-            else if (choice.Method == "json") await model.ApplyLiteAsync(root, game, choice.VariantId, choice.Language);
+            if (choice.Method == "json") await model.ApplyLiteAsync(root, game, choice.VariantId, choice.Language);
             else
             {
                 var previews = await model.PreviewInstallAsync([game]);

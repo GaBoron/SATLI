@@ -11,6 +11,8 @@ using Satli_Gui.Models;
 
 namespace Satli_Gui.Services;
 
+internal sealed record DownloadedJson(JsonObject Translation, ReplacementPreview Preview, string ContentHash);
+
 /// <summary>Coordinates explicit user choices around the public lite client.</summary>
 internal sealed class LiteWorkflowService
 {
@@ -23,7 +25,7 @@ internal sealed class LiteWorkflowService
         SteamLocator.FindSteamDirectory(string.IsNullOrWhiteSpace(settings.SteamDirectory) ? null : settings.SteamDirectory),
         DataDirectory(settings));
 
-    public async Task<(JsonObject Translation, ReplacementPreview Preview)> DownloadAsync(
+    public async Task<DownloadedJson> DownloadAsync(
         GameItem game, string variantId, GuiSettings settings)
     {
         await App.Logs.WriteAsync("信息", "JSON 下载", $"开始读取在线 JSON。App ID={game.AppId}；Variant={variantId}。");
@@ -43,7 +45,7 @@ internal sealed class LiteWorkflowService
             return JsonNode.Parse(bytes)!.AsObject();
         });
         await App.Logs.WriteAsync("信息", "JSON 下载", $"JSON 已下载并校验。App ID={game.AppId}；成就={preview.AchievementCount}；语言={preview.Languages.Count}。");
-        return (translation, preview);
+        return new(translation, preview, expectedHash!);
     }
 
     public async Task<LiteResult?> ApplyAsync(XamlRoot root, GameItem game, string variantId,
@@ -51,6 +53,7 @@ internal sealed class LiteWorkflowService
     {
         JsonObject translation;
         ReplacementPreview preview;
+        string? sourceVersion = null;
         if (local)
         {
             var steam = SteamLocator.FindSteamDirectory(string.IsNullOrWhiteSpace(settings.SteamDirectory) ? null : settings.SteamDirectory);
@@ -85,7 +88,13 @@ internal sealed class LiteWorkflowService
             language = await ChooseLanguageAsync(root, preview.Languages);
             if (language.Length == 0) return null;
         }
-        else (translation, preview) = await DownloadAsync(game, variantId, settings);
+        else
+        {
+            var downloaded = await DownloadAsync(game, variantId, settings);
+            translation = downloaded.Translation;
+            preview = downloaded.Preview;
+            sourceVersion = $"catalog-json:{downloaded.ContentHash}";
+        }
         if (!await ReplacementConfirmationDialog.ConfirmJsonAsync(root, preview, language)) return null;
         var client = Client(settings);
         if (!await EnsureConnectedAsync(root, client, settings)) return null;
@@ -113,7 +122,8 @@ internal sealed class LiteWorkflowService
                 ["allow_local_edits"] = localEdits,
             };
         }
-        return await client.ImportAsync(game.AppId, translation, language, local ? "converted" : "catalog_json", conflict);
+        return await client.ImportAsync(game.AppId, translation, language, local ? "converted" : "catalog_json", conflict,
+            sourceVersion: sourceVersion);
     }
 
     public static async Task<bool> EnsureConnectedAsync(XamlRoot root, LiteClient client, GuiSettings settings)
@@ -125,14 +135,14 @@ internal sealed class LiteWorkflowService
             if (connection.Connected) return true;
             var action = connection.State switch
             {
-                "not_installed" => "下载并安装 SATLI-lite",
+                "not_installed" => "安装 lite",
                 "millennium_missing" => "打开 Millennium 官方指南",
                 "legacy_bridge" => "将旧桥移入回收站",
                 _ => "重试连接",
             };
             var dialog = new ContentDialog
             {
-                XamlRoot = root, Title = "通过 SATLI-lite 应用 JSON", Content = connection.Message
+                XamlRoot = root, Title = "使用 lite", Content = connection.Message
                     + "\nJSON 缓存会保留；可以关闭提示后继续浏览。",
                 PrimaryButtonText = action, CloseButtonText = "暂不应用", DefaultButton = ContentDialogButton.Close,
             };
@@ -179,4 +189,30 @@ internal sealed class LiteWorkflowService
             + (result.App["effective_enabled"]?.GetValue<bool>() == true ? "显示配置已启用" : "显示未启用（请在 lite 中检查游戏及全局开关）")
             + (result.App["local_edits"]?.GetValue<bool>() == true ? " · 本地编辑或外部导入受更新保护" : "")
             + "。实际页面显示请在 Steam 中确认。";
+
+    public static string DescribeUpdate(GameItem game, JsonObject app)
+    {
+        var variant = game.Variants.FirstOrDefault(item => item.VariantId == app["variant_id"]?.ToString());
+        if (variant is null) return game.Variants.Count == 0 ? "目录信息未加载，更新状态待核对。" : "目录中没有此译本，更新状态需核对。";
+        string? identity;
+        string latest;
+        if (variant.JsonVersion == 2)
+        {
+            latest = variant.JsonSha256;
+            var origin = app["origin"] as JsonObject;
+            var version = origin?["version"]?.ToString() ?? "";
+            identity = origin?["kind"]?.ToString() == "community" ? app["json_sha256"]?.ToString()
+                : origin?["kind"]?.ToString() == "external" && origin["client_id"]?.ToString() == LiteClient.ClientId
+                    && origin["source_kind"]?.ToString() == "catalog_json" && version.StartsWith("catalog-json:", StringComparison.Ordinal)
+                    ? version["catalog-json:".Length..] : null;
+        }
+        else
+        {
+            latest = variant.Sha256;
+            identity = app["source_sha256"]?.ToString();
+        }
+        if (app["origin"]?["kind"]?.ToString() == "local_edit" || string.IsNullOrEmpty(identity) || latest.Length == 0)
+            return "本地或未知来源，更新状态需在 lite 中核对。";
+        return identity == latest ? "与当前目录版本一致。" : "社区目录已有不同版本；应用前仍需确认覆盖。";
+    }
 }

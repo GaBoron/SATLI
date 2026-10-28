@@ -68,17 +68,20 @@
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
                             <StackPanel Spacing="6">
-                                <TextBlock Text="{x:Bind GameName}" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                                <Grid ColumnSpacing="10">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                                    <TextBlock Text="{x:Bind GameName}" TextTrimming="CharacterEllipsis" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                                    <controls:TranslationAssetBadges Grid.Column="1" HasBin="{x:Bind HasBinAsset}" HasJson="{x:Bind HasJsonAsset}" />
+                                </Grid>
                                 <TextBlock Text="{x:Bind CloudMetadataText}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Style="{StaticResource CaptionTextBlockStyle}" TextWrapping="Wrap" />
-                                <TextBlock Text="{x:Bind AvailableMethodsText}" TextWrapping="Wrap" Style="{StaticResource CaptionTextBlockStyle}" />
-                                <TextBlock Text="{x:Bind LiteStateText, Mode=OneWay}" TextWrapping="Wrap" Style="{StaticResource CaptionTextBlockStyle}" />
+                                <TextBlock Text="{x:Bind LiteStateText, Mode=OneWay}" Visibility="{x:Bind ProtectionVisibility, Mode=OneWay}" TextWrapping="Wrap" Style="{StaticResource CaptionTextBlockStyle}" />
                                 <TextBlock Text="{x:Bind CatalogText}" Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" Style="{StaticResource CaptionTextBlockStyle}" />
                                 <TextBlock Text="{x:Bind StateText}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Style="{StaticResource CaptionTextBlockStyle}" />
                                 <InfoBar IsOpen="{x:Bind HasCatalogWarning}" IsClosable="False" Severity="Warning" Message="{x:Bind CatalogWarningText}" />
                             </StackPanel>
                             <CommandBar Grid.Column="1" VerticalAlignment="Center" DefaultLabelPosition="Right" IsDynamicOverflowEnabled="True">
-                                <AppBarButton Icon="Download" Label="安装 / 下载" Click="Install_Click" Tag="{x:Bind}" AutomationProperties.Name="选择 BIN 或 JSON 安装方式" />
-                                <AppBarButton Icon="View" Label="查看成就" Click="ViewAchievements_Click" Tag="{x:Bind}" />
+                                <AppBarButton Icon="Download" Label="安装" Click="Install_Click" Tag="{x:Bind}" AutomationProperties.Name="选择 BIN 或 JSON 安装方式" />
+                                <AppBarButton Icon="View" Label="查看成就" Click="ViewAchievements_Click" Tag="{x:Bind}" IsEnabled="{x:Bind HasJsonAsset}" />
                                 <CommandBar.SecondaryCommands>
                                     <AppBarButton Icon="Refresh" Label="查询 lite 状态" Click="LiteStatus_Click" Tag="{x:Bind}" />
                                     <AppBarButton Icon="Help" Label="报告" Click="Report_Click" Tag="{x:Bind}" />

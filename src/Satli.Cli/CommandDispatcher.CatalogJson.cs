@@ -11,7 +11,7 @@ internal sealed partial class CommandDispatcher
         var ids = args.Positionals(1, "--data-dir", "--variant");
         if (ids.Count != 1) throw new UsageException("catalog-json 需要一个 APP_ID");
         var repository = Repository(args);
-        var catalog = await repository.LoadAsync(args.Has("--offline"));
+        var catalog = await repository.LoadAsync(args.Has("--offline"), refresh: !args.Has("--catalog-cache-only"));
         if (!catalog.Entries.TryGetValue(ids[0], out var entry))
             throw new UsageException("翻译库中没有所选 App ID");
         var variantId = args.Value("--variant") ?? "default";

@@ -14,11 +14,9 @@ public sealed class SchemaVariantOption
     public long FileSizeBytes { get; init; }
     public bool HasBin { get; init; } = true;
     public int? JsonVersion { get; init; }
+    public string JsonSha256 { get; init; } = string.Empty;
     public IReadOnlyList<string> Languages { get; init; } = [];
     public bool HasJson => JsonVersion is 1 or 2;
-    public string AvailableMethods => HasBin
-        ? HasJson ? "BIN + JSON · 可安装本地 BIN 或通过 SATLI-lite 应用 JSON" : "仅 BIN · 安装本地 BIN"
-        : "仅 JSON · 通过 SATLI-lite 应用";
     public string DisplayName => string.IsNullOrWhiteSpace(Note) ? VariantId : $"{VariantId} · {Note}";
     public override string ToString() => DisplayName;
 }
@@ -311,7 +309,8 @@ public sealed class GameItem : ObservableObject
         ? "译本作者：未提供"
         : $"译本作者：{string.Join("、", Contributors)}";
     public string CloudMetadataText => $"App ID {AppId} · {ContributorText}";
-    public string AvailableMethodsText => string.Join("；", Variants.Select(option => $"{option.DisplayName}：{option.AvailableMethods}"));
+    public bool HasBinAsset => Variants.Any(option => option.HasBin);
+    public bool HasJsonAsset => Variants.Any(option => option.HasJson);
 
     public static GameItem FromPayload(JsonElement payload)
     {
@@ -354,6 +353,7 @@ public sealed class GameItem : ObservableObject
                     HasBin = !variant.TryGetProperty("has_bin", out var hasBin) || hasBin.ValueKind == JsonValueKind.True,
                     JsonVersion = variant.TryGetProperty("json_version", out var jsonVersion)
                         && jsonVersion.ValueKind == JsonValueKind.Number ? jsonVersion.GetInt32() : null,
+                    JsonSha256 = GetString(variant, "json_sha256", string.Empty),
                     Languages = GetStringArray(variant, "languages"),
                     FileSizeBytes = variant.TryGetProperty("file_size_bytes", out var size)
                         && size.ValueKind == JsonValueKind.Number

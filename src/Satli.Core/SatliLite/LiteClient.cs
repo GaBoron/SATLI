@@ -93,7 +93,7 @@ public sealed class LiteClient
 
     public async Task<LiteResult> ImportAsync(
         string appId, JsonObject translation, string language, string sourceKind,
-        JsonObject? authorizedConflict = null, CancellationToken cancellationToken = default)
+        JsonObject? authorizedConflict = null, CancellationToken cancellationToken = default, string? sourceVersion = null)
     {
         var version = translation["version"]!.GetValue<int>();
         var connection = await InspectAsync(cancellationToken).ConfigureAwait(false);
@@ -110,7 +110,7 @@ public sealed class LiteClient
         var request = Request(appId, "import");
         request["language"] = language;
         request["enabled"] = true;
-        request["source"] = new JsonObject { ["kind"] = sourceKind, ["version"] = "2.4.1" };
+        request["source"] = new JsonObject { ["kind"] = sourceKind, ["version"] = sourceVersion ?? "2.4.1" };
         request["conflict"] = authorizedConflict?.DeepClone() ?? new JsonObject { ["mode"] = "reject" };
         request["translation"] = translation.DeepClone();
         return await SubmitAsync(request, cancellationToken).ConfigureAwait(false);

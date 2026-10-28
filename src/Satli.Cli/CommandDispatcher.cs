@@ -326,6 +326,7 @@ internal sealed partial class CommandDispatcher
             ["format"] = variant.Format,
             ["has_bin"] = variant.HasBin,
             ["json_version"] = variant.Json?.Version,
+            ["json_sha256"] = variant.Json?.Sha256,
             ["languages"] = Strings(variant.Languages ?? []),
         }).ToArray());
         return new JsonObject

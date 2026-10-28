@@ -51,8 +51,7 @@ public sealed partial class GamesPage : Page
         {
             var choice = await OnlineInstallationDialog.ChooseAsync(XamlRoot, game);
             if (choice is null) return;
-            if (choice.Method == "download") await ViewModel.DownloadJsonAsync(XamlRoot, game, choice.VariantId);
-            else if (choice.Method == "json") await ViewModel.ApplyLiteAsync(XamlRoot, game, choice.VariantId, choice.Language);
+            if (choice.Method == "json") await ViewModel.ApplyLiteAsync(XamlRoot, game, choice.VariantId, choice.Language);
             else binGames.Add(game);
         }
         selected = binGames;
