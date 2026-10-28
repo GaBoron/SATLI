@@ -34,9 +34,14 @@
   <a href="mailto:SATLI.support@proton.me">📧 获取支持</a>
 </p>
 
+> [!IMPORTANT]
+> **Steam 更新后，直接替换本地 `.bin` 成就缓存的方式已不稳定**，修改可能被 Steam 重新获取的成就数据覆盖，无法保证译文始终生效。
+>
+> 如果没有手动修改成就文本、管理原始 BIN 文件的需求，**建议优先使用 [SATLI lite](https://github.com/GaBoron/SATLI-lite)**。它通过 Millennium 插件直接替换 Steam 中显示的成就文字，不需要安装 SATLI 桌面版，也无需改写本地 `.bin` 文件。需要编辑或导出 BIN、制作投稿 ZIP、备份及恢复原始文件时，再使用本项目的桌面版。
+
 ## 下载与安装
 
-只需在 Steam 内下载和显示社区成就翻译时，可使用 [SATLI lite](https://github.com/GaBoron/SATLI-lite)。它是独立的 Millennium 插件，无需安装 SATLI 本体或写入本机 BIN；前置要求与安装步骤见 [SATLI lite 安装说明](https://github.com/GaBoron/SATLI-lite#前置要求)。需要管理 BIN、制作投稿 ZIP 或恢复本机原文件时，请使用本页的桌面客户端。
+SATLI 桌面版适合需要直接管理 BIN、制作投稿 ZIP、编辑原始成就文件或恢复本机文件的用户。若只需在 Steam 中显示成就译文，建议使用 [SATLI lite](https://github.com/GaBoron/SATLI-lite#前置要求)，并按其 README 中的安装说明操作。
 
 > [!TIP]
 > **强烈推荐从 [Microsoft Store](https://apps.microsoft.com/detail/9PB7V9S03K80) 安装。** 这是 SATLI 的首选安装方式：Microsoft Store 会负责安装并自动提供软件更新，应用设置页也支持主动检查 Store 新版、查看发布说明并打开更新页面。商店版还已确认不会触发目前已知的安全软件行为误报。
