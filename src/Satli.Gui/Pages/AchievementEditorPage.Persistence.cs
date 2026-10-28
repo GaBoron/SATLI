@@ -7,6 +7,17 @@ namespace Satli_Gui.Pages;
 
 public sealed partial class AchievementEditorPage
 {
+    private async void SendLite_Click(object sender, RoutedEventArgs e)
+    {
+        if (_inspection is null || _game is null || !await ConfirmIncompleteAsync("发送到 SATLI-lite")) return;
+        var rows = _inspection.Rows.Select(row => new Satli.Core.Formats.AchievementPreviewRow(row.Index, row.ApiName,
+            new Dictionary<string, Satli.Core.Formats.AchievementTranslation>(StringComparer.Ordinal)
+            {
+                [_targetLanguage] = new(row.TargetName, row.TargetDescription),
+            })).ToArray();
+        await RunBusyAsync(() => App.ViewModel.Translations.SendEditedLiteAsync(XamlRoot, _game, _targetLanguage, rows));
+    }
+
     private async void Save_Click(object sender, RoutedEventArgs e)
     {
         await SaveChangesAsync();

@@ -64,22 +64,8 @@ internal sealed class LiteWorkflowService
                 var source = new ManagedGameRegistry(data, steam).DisplayOverrideSource(game.AppId,
                     SteamLocator.SchemaTarget(steam, game.AppId));
                 var bytes = File.ReadAllBytes(source);
-                var payload = BinaryKeyValues.PreviewJson(bytes);
-                var achievements = new JsonObject();
-                foreach (var row in payload["rows"]!.AsArray())
-                {
-                    var apiName = row!["api_name"]!.ToString();
-                    if (achievements.ContainsKey(apiName)) throw new InvalidDataException("本地 BIN 含重复 API name，无法转换");
-                    achievements[apiName] = new JsonObject { ["translations"] = row["translations"]!.DeepClone() };
-                }
-                var converted = new JsonObject
-                {
-                    ["version"] = 1, ["app_id"] = game.AppId,
-                    ["variant_id"] = System.Text.RegularExpressions.Regex.IsMatch(game.InstalledVariantId, "^[a-z0-9][a-z0-9-]{0,63}$")
-                        ? game.InstalledVariantId : "local",
-                    ["source_sha256"] = FileOperations.Sha256(bytes),
-                    ["languages"] = payload["languages"]!.DeepClone(), ["achievements"] = achievements,
-                };
+                var converted = LiteTranslation.FromBin(bytes, game.AppId, game.InstalledVariantId);
+                var payload = TranslationJson.Preview(converted);
                 payload["app_id"] = game.AppId;
                 payload["variant_id"] = converted["variant_id"]!.DeepClone();
                 using var document = JsonDocument.Parse(payload.ToJsonString());
@@ -95,11 +81,25 @@ internal sealed class LiteWorkflowService
             preview = downloaded.Preview;
             sourceVersion = $"catalog-json:{downloaded.ContentHash}";
         }
+        return await ApplyTranslationAsync(root, game, translation, preview, language, settings,
+            local ? "converted" : "catalog_json", sourceVersion);
+    }
+
+    public async Task<LiteResult?> ApplyTranslationAsync(XamlRoot root, GameItem game, JsonObject translation,
+        ReplacementPreview preview, string language, GuiSettings settings, string sourceKind, string? sourceVersion = null)
+    {
+        if (language.Length == 0) language = await ChooseLanguageAsync(root, preview.Languages);
+        if (language.Length == 0) return null;
+        if (!preview.Languages.Contains(language)) throw new InvalidDataException("译文不包含所选目标语言。");
         if (!await ReplacementConfirmationDialog.ConfirmJsonAsync(root, preview, language)) return null;
         var client = Client(settings);
-        if (!await EnsureConnectedAsync(root, client, settings)) return null;
+        if (!await EnsureConnectedAsync(root, client, settings, game.AppId)) return null;
         var previous = await client.ResumeAsync(game.AppId, TimeSpan.Zero);
         if (previous?.Pending == true) return previous;
+        var connection = await client.InspectAsync();
+        // The plugin enforces reject at execution time, so an offline request cannot silently replace existing text.
+        if (!connection.Connected)
+            return await Task.Run(() => client.ImportAsync(game.AppId, translation, language, sourceKind, sourceVersion: sourceVersion));
         var query = await client.QueryAsync(game.AppId);
         if (!query.Succeeded) return query;
         JsonObject? conflict = null;
@@ -122,31 +122,42 @@ internal sealed class LiteWorkflowService
                 ["allow_local_edits"] = localEdits,
             };
         }
-        return await client.ImportAsync(game.AppId, translation, language, local ? "converted" : "catalog_json", conflict,
-            sourceVersion: sourceVersion);
+        return await Task.Run(() => client.ImportAsync(game.AppId, translation, language, sourceKind, conflict,
+            sourceVersion: sourceVersion));
     }
 
-    public static async Task<bool> EnsureConnectedAsync(XamlRoot root, LiteClient client, GuiSettings settings)
+    public static async Task<bool> EnsureConnectedAsync(XamlRoot root, LiteClient client, GuiSettings settings, string appId)
     {
         while (true)
         {
             var connection = await client.InspectAsync();
             await App.Logs.WriteAsync("信息", "SATLI-lite", $"连接状态：{connection.State}。");
             if (connection.Connected) return true;
+            var migration = "";
+            if (connection.State == "legacy_bridge")
+            {
+                var ids = await client.LegacyAppIdsAsync();
+                migration = ids.Contains(appId)
+                    ? "\n发现此游戏的旧显示锁定记录。将使用刚才预览的译文通过新协议迁移；旧桥快照不会直接导入。"
+                    : $"\n旧桥记录了 {ids.Count} 个游戏。请逐个选择对应的已管理译文迁移。";
+                await App.Logs.WriteAsync("信息", "SATLI-lite", $"检测到旧桥迁移记录。游戏数={ids.Count}；当前 App ID={appId}。");
+            }
             var action = connection.State switch
             {
                 "not_installed" => "安装 lite",
                 "millennium_missing" => "打开 Millennium 官方指南",
                 "legacy_bridge" => "将旧桥移入回收站",
-                _ => "重试连接",
+                _ => connection.CanSubmit ? "排队发送" : "重试连接",
             };
             var dialog = new ContentDialog
             {
-                XamlRoot = root, Title = "使用 lite", Content = connection.Message
-                    + "\nJSON 缓存会保留；可以关闭提示后继续浏览。",
+                XamlRoot = root, Title = "使用 lite", Content = connection.Message + migration
+                    + (connection.CanSubmit ? "\n排队请求默认拒绝覆盖已有译本；发生冲突时需连接后重新查询和确认。" : "")
+                    + "\n本地译文和 JSON 缓存会保留；可以关闭提示后继续浏览。",
                 PrimaryButtonText = action, CloseButtonText = "暂不应用", DefaultButton = ContentDialogButton.Close,
             };
             if (await dialog.ShowAsync() != ContentDialogResult.Primary) return false;
+            if (connection.CanSubmit) return true;
             if (connection.State == "millennium_missing")
             {
                 await new ExternalUriLauncher().LaunchAsync(new Uri("https://docs.steambrew.app/users/getting-started/installation"));
@@ -181,14 +192,33 @@ internal sealed class LiteWorkflowService
         return await dialog.ShowAsync() == ContentDialogResult.Primary ? box.SelectedItem?.ToString() ?? "" : "";
     }
 
-    public static string Describe(LiteResult result) => result.Pending
-        ? $"请求 {result.RequestId} 已投递，等待 lite 处理；可刷新状态。尚未确认导入或启用。"
-        : !result.Succeeded ? $"lite 处理失败：{result.ErrorCode}。JSON 缓存已保留；冲突或版本变化需要重新确认。"
+    public static string Describe(LiteResult result) => DescribeCurrent(result)
+        + (result.ProcessedAt is { } time ? $" 处理时间：{DateTimeOffset.FromUnixTimeSeconds(time).ToLocalTime():g}。" : "")
+        + (result.LastImport is { } last ? $" 最近发送：{DescribeCurrent(last)}" : "");
+
+    private static string DescribeCurrent(LiteResult result) => result.Pending
+        ? $"请求 {result.RequestId} " + (result.State switch
+        {
+            "prepared" => "已保存待发送；请重试投递。",
+            "accepted" => "已被 lite 接收，等待最终处理结果。",
+            _ => "已投递，等待 Steam / lite 启动或处理。",
+        }) + "可刷新原请求；尚未确认导入或启用。"
+        : !result.Succeeded ? $"lite 处理失败：{result.ErrorCode}。{DescribeError(result.ErrorCode)}本地译文和 JSON 缓存已保留。"
         : result.App?["exists"]?.GetValue<bool>() != true ? "已连接 · lite 尚未导入此游戏的译文"
         : $"lite 已保存 · {result.App["variant_id"]} · {result.App["language"]} · "
             + (result.App["effective_enabled"]?.GetValue<bool>() == true ? "显示配置已启用" : "显示未启用（请在 lite 中检查游戏及全局开关）")
             + (result.App["local_edits"]?.GetValue<bool>() == true ? " · 本地编辑或外部导入受更新保护" : "")
             + "。实际页面显示请在 Steam 中确认。";
+
+    private static string DescribeError(string code) => code switch
+    {
+        "CONFLICT" or "LOCAL_EDITS_CONFLICT" or "STALE_REVISION" => "请连接 lite 后重新发送，查询当前译本并再次确认覆盖。",
+        "UNSUPPORTED_PROTOCOL" => "请升级 SATLI 或 lite。",
+        "INVALID_TRANSLATION" or "APP_ID_MISMATCH" or "LANGUAGE_UNAVAILABLE" => "请检查译文格式和目标语言后重试。",
+        "STORAGE_ERROR" or "APPLY_FAILED" => "请检查插件存储权限及容量，刷新原请求后再决定是否重试。",
+        "REQUEST_ID_REUSED" => "请求标识已被其他内容占用，请重新发送并生成新请求。",
+        _ => "请刷新请求状态并检查 lite 日志。",
+    };
 
     public static string DescribeUpdate(GameItem game, JsonObject app)
     {

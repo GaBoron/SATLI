@@ -103,6 +103,19 @@ public sealed partial class LocalGamesPage : Page
         }
     }
 
+    private async void SendLite_Click(object sender, RoutedEventArgs e)
+    {
+        if (_isImporting) return;
+        _isImporting = true;
+        try
+        {
+            var source = await PickImportSourceAsync();
+            if (source is not null) await App.ViewModel.Translations.ImportLiteFileAsync(XamlRoot, source);
+            else await App.Logs.WriteAsync("信息", "SATLI-lite", "用户取消选择本地译文文件。");
+        }
+        finally { _isImporting = false; }
+    }
+
     private void Edit_Click(object sender, RoutedEventArgs e)
     {
         if (sender is Button { Tag: GameItem game })

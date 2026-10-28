@@ -34,6 +34,16 @@ public sealed class GameItem : ObservableObject
     private bool _displayOverrideEnabled;
     private string _liteStateText = "尚未查询 SATLI-lite";
     private bool _liteKnown;
+    private bool _liteStatusVisible;
+
+    public bool LiteStatusVisible
+    {
+        get => _liteStatusVisible;
+        set
+        {
+            if (SetProperty(ref _liteStatusVisible, value)) OnPropertyChanged(nameof(ProtectionVisibility));
+        }
+    }
 
     public string LiteStateText
     {
@@ -41,6 +51,7 @@ public sealed class GameItem : ObservableObject
         set
         {
             if (SetProperty(ref _liteStateText, value)) OnPropertyChanged(nameof(ProtectionStatusText));
+            LiteStatusVisible = true;
         }
     }
 
@@ -233,7 +244,7 @@ public sealed class GameItem : ObservableObject
         || InstalledState is "installed" or "modified" or "missing" or "unreadable";
     public string ProtectionStatusText => LiteStateText;
     public string ProtectionActionText => "通过 SATLI-lite 管理";
-    public Visibility ProtectionVisibility => LiteKnown ? Visibility.Visible : Visibility.Collapsed;
+    public Visibility ProtectionVisibility => LiteKnown || LiteStatusVisible ? Visibility.Visible : Visibility.Collapsed;
     public bool RequiresForceRestore => InstalledState is "modified" or "missing";
     public bool IsUpdateAvailable
     {

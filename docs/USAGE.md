@@ -12,6 +12,7 @@
 - [编辑本地成就](#编辑本地成就)
 - [制作、导入与贡献翻译](#制作导入与贡献翻译)
 - [报告云端文件问题](#报告云端文件问题)
+- [开发与自动化命令](#开发与自动化命令)
 - [软件更新与网络](#软件更新与网络)
 - [常见问题](#常见问题)
 
@@ -81,11 +82,20 @@ BIN 记录可查看当前成就文本或恢复安装前文件，JSON 安装没�
 
 “已管理 → SATLI-lite”显示经 SATLI 查询或导入的 lite 译文，包括从未安装过 BIN 的游戏。启动时的历史结果会标为“上次处理结果”，可选择“刷新 lite 状态”查询当前状态；插件尚无公开的全部译本枚举接口，尚未由 SATLI 查询的其他游戏可从云端列表主动查询。游戏和全局显示开关在 Steam 的 SATLI-lite 中管理。
 
-Steam 未运行时提示启动 Steam；运行但缺少有效心跳时提示检查插件启用状态或重启，不会一律视为未安装。协议或 JSON 格式不兼容时停止提交并提示升级，保留缓存。超时显示等待处理，并追踪原请求 ID；不会因为再次查询而重复导入。
+Steam 未运行或 lite 暂无有效心跳时，可选择“排队发送”，之后启动 Steam 并启用插件即可继续处理，SATLI 无需常驻。排队要求已安装的 lite 至少运行过一次，留下兼容的公开协议；尚未初始化时先提示启用插件。离线模式也可发送已缓存的 JSON 或本地译文。未连接时不授予覆盖权限：lite 若已有译本，会返回冲突，需要连接后重新查询和确认。
+
+状态分别显示“已保存待发送”“已投递”“lite 已接收”“处理成功”和失败错误码。超时不会当作失败，刷新沿用原请求 ID；只有原请求结束后，才会建立新的查询或发送请求。状态查询也会保留最近一次发送的结果。协议或 JSON 格式不兼容时停止提交并提示升级，本地内容和缓存保留。
 
 BIN 被 Steam 或其他程序修改后，可以在“被修改”页选择“通过 SATLI-lite 管理”，复用经过哈希验证的最后一次译文快照并转换为 JSON，不必继续修改 BIN。找不到可信译文时会要求重新选择或下载，不会将被覆盖的本地原文当作译文发送。BIN 恢复、编辑、历史版本和投稿继续独立可用，也不会自动更改 lite 的译本。
 
-已有 `SATLI Achievement Display Bridge` 时，请先完全退出 Steam，再确认将旧 `satli.star` 移入回收站，之后启用 lite。迁移保留旧快照、本地译文和备份；旧快照不会自动被 lite 读取。SATLI 不再生成或刷新 `satli-bridge-v1.json`。两个客户端的本地编辑也不会自动同步。
+本地译文也可独立发送，无需先写入 Steam BIN：
+
+- 在“本地”页选择“发送文件到 lite”，选择标准命名的 BIN 或 ZIP，校验后选择语言并确认发送。
+- 在编辑器中选择“发送到 SATLI-lite”，发送当前目标语言的编辑内容，包括尚未写回 BIN 的修改。发送不会清除草稿，也不会自动保存或反向同步 lite 的修改。
+
+BIN 转换保留源文件标识与各语言文本，缺失文本保留为空；编辑器当前文本使用无需 BIN 来源标识的 JSON 格式 2。重复 API name、语言映射冲突、无效文本或超出协议限制会中止发送。
+
+已有 `SATLI Achievement Display Bridge` 时，列表会提示对应游戏的旧锁定记录，但不会把它当作 lite 的导入状态。选择可信译文并核对预览后，请先完全退出 Steam，再确认将旧 `satli.star` 移入回收站，之后启用 lite 并发送译文。迁移保留旧快照、本地译文和备份；旧快照只用于检测迁移记录，不作为 lite 的导入文件。SATLI 不再生成或刷新 `satli-bridge-v1.json`。两个客户端的本地编辑也不会自动同步。
 
 ## 编辑本地成就
 
@@ -139,6 +149,19 @@ BIN 被 Steam 或其他程序修改后，可以在“被修改”页选择“通
 4. 检查网页中的内容，登录 GitHub 后自行提交。
 
 预填内容只包含游戏名、App ID、问题类型、说明和可选参考来源，不会上传本机成就文件。SATLI 不会登录 GitHub、保存 GitHub 凭据或代替用户提交 Issue。
+
+## 开发与自动化命令
+
+源码中的 `Satli.Cli.Host` 提供可选命令入口，不随桌面安装包分发。以下命令可从仓库目录运行；`<Steam目录>` 和 `<SATLI数据目录>` 应与桌面端设置一致。
+
+```powershell
+dotnet run --project src/Satli.Cli.Host -- lite inspect --steam-dir '<Steam目录>' --data-dir '<SATLI数据目录>' --jsonl
+dotnet run --project src/Satli.Cli.Host -- lite import 570 --source '<译文JSON或标准BIN/ZIP>' --language schinese --steam-dir '<Steam目录>' --data-dir '<SATLI数据目录>' --yes --jsonl
+dotnet run --project src/Satli.Cli.Host -- lite status 570 --steam-dir '<Steam目录>' --data-dir '<SATLI数据目录>' --jsonl
+dotnet run --project src/Satli.Cli.Host -- lite resume 570 --steam-dir '<Steam目录>' --data-dir '<SATLI数据目录>' --jsonl
+```
+
+导入来源三选一：`--source FILE`、`--catalog --variant ID` 或 `--managed`（哈希验证的已管理 BIN 快照）。导入前可用 `--dry-run --preview-content` 校验并预览。默认拒绝覆盖；只有查询后确认覆盖时，才提供 `--replace-revision REVISION --yes`，含本地编辑还需 `--allow-local-edits`。状态变化导致 `STALE_REVISION` 时必须重新查询和确认。`status` 在已有待处理请求时只刷新原请求，避免重复导入；`resume` 不会新建查询。退出码 0 也可能只是排队成功，必须检查返回的 `state`、`pending`、`succeeded` 和 `app.effective_enabled`；这些都不代表 Steam 页面渲染验收。
 
 ## 软件更新与网络
 

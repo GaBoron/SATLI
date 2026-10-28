@@ -39,6 +39,7 @@
                 </StackPanel>
             </CommandBar.Content>
             <AppBarButton Icon="OpenFile" Label="导入本地翻译" Click="Import_Click" AutomationProperties.Name="导入本地 BIN 或 ZIP" />
+            <AppBarButton Icon="Send" Label="发送文件到 lite" Click="SendLite_Click" AutomationProperties.Name="将本地 BIN 或 ZIP 转换并发送到 SATLI-lite" />
             <AppBarButton Icon="Edit" Label="制作翻译" Click="Localizer_Click" AutomationProperties.Name="打开 Steam Achievement Localizer Skill" />
             <AppBarButton Icon="Refresh" Label="重新扫描" Click="Refresh_Click" />
         </CommandBar>

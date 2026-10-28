@@ -101,7 +101,7 @@ internal sealed partial class CommandDispatcher
     }
 
     private int Protect(string[] raw, Arguments args) =>
-        throw new UsageException("旧显示锁定已退役。请在图形界面选择通过 SATLI-lite 管理；不会自动修改旧桥快照。");
+        throw new UsageException("旧显示锁定已退役。请在图形界面选择通过 SATLI-lite 管理，或使用 lite import；不会自动修改旧桥快照。");
 
     private int Petition(Arguments args)
     {

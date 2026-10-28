@@ -12,7 +12,8 @@ public sealed record LocalImportArtifact(string Source, string AppId, string Sch
 public static partial class LocalImportReader
 {
     private const long MaximumBytes = 64L * 1024 * 1024;
-    public static LocalImportArtifact Read(string path)
+    /// <param name="requireAchievements">Disable only when the caller validates all display fields through an alternate converter.</param>
+    public static LocalImportArtifact Read(string path, bool requireAchievements = true)
     {
         var source = Path.GetFullPath(path); var match = NameRegex().Match(Path.GetFileName(source));
         if (!match.Success) throw new UsageException("本地导入文件必须命名为 UserGameStatsSchema_<app_id>.bin 或 UserGameStatsSchema_<app_id>.zip");
@@ -33,7 +34,8 @@ public static partial class LocalImportReader
             payload = File.ReadAllBytes(source);
         }
         var preview = BinaryKeyValues.PreviewJson(payload);
-        if (preview["achievement_count"]!.GetValue<int>() <= 0) throw new PreflightException("本地导入文件中没有可识别的 Steam 成就");
+        if (requireAchievements && preview["achievement_count"]!.GetValue<int>() <= 0)
+            throw new PreflightException("本地导入文件中没有可识别的 Steam 成就");
         return new LocalImportArtifact(source, appId, schemaName, payload,
             Convert.ToHexString(SHA256.HashData(payload)).ToLowerInvariant(), preview);
     }
