@@ -27,9 +27,10 @@ internal sealed partial class CommandDispatcher
             "--variant");
         if (positionals.Count == 0 && !args.Has("--matched"))
             throw new UsageException("请指定 APP_ID，或使用 --matched");
-        var steam = SteamLocator.FindSteamDirectory(args.SteamDirectory);
+        var steam = args.Has("--matched")
+            ? SteamLocator.FindSteamDirectory(args.SteamDirectory) : null;
         var ids = args.Has("--matched")
-            ? SteamLocator.DiscoverLocalGames(steam, args.Value("--account"))
+            ? SteamLocator.DiscoverLocalGames(steam!, args.Value("--account"))
                 .Keys.Intersect(catalog.Entries.Keys).ToArray()
             : positionals.ToArray();
         var overrides = new Dictionary<string, string>(StringComparer.Ordinal);
@@ -98,6 +99,9 @@ internal sealed partial class CommandDispatcher
             return 0;
         }
         RequireYes(args);
+        if (plan.Any(item => !item.Variant.HasBin))
+            throw new UsageException("所选版本仅提供 JSON，请通过 SATLI-lite 应用，不能安装本地 BIN");
+        steam ??= SteamLocator.FindSteamDirectory(args.SteamDirectory);
         RequireSteamStopped();
         var manager = new TransactionManager(args.DataDirectory);
         var succeeded = 0;
@@ -123,13 +127,7 @@ internal sealed partial class CommandDispatcher
                     item.Variant,
                     "catalog",
                     item.Entry.GameName);
-                RefreshDisplayOverride(
-                    "install",
-                    item.Entry.AppId,
-                    item.Entry.GameName,
-                    SteamLocator.SchemaTarget(steam, item.Entry.AppId),
-                    steam,
-                    args.DataDirectory);
+
                 succeeded++;
                 _events.Emit("install", "item-succeeded", new JsonObject
                 {
@@ -217,13 +215,7 @@ internal sealed partial class CommandDispatcher
             variant,
             "local-import",
             "本地翻译");
-        RefreshDisplayOverride(
-            "local-import",
-            artifact.AppId,
-            "本地翻译",
-            SteamLocator.SchemaTarget(steam, artifact.AppId),
-            steam,
-            args.DataDirectory);
+
         _events.Emit("local-import", "item-succeeded", new JsonObject
         {
             ["app_id"] = artifact.AppId,

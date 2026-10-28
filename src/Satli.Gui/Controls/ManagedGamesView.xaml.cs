@@ -153,67 +153,30 @@ public sealed partial class ManagedGamesView : UserControl
 
     private async void Protection_Click(object sender, RoutedEventArgs e)
     {
-        if (sender is not FrameworkElement { Tag: GameItem game } || !game.CanToggleProtection)
-        {
-            return;
-        }
-        var enable = !game.DisplayOverrideEnabled;
-        if (enable && !await ConfirmDisplayLockAsync([game]))
-        {
-            return;
-        }
-        await ViewModel.SetProtectionAsync([game], enable);
+        if (sender is not FrameworkElement { Tag: GameItem game }) return;
+        if (game.CanRestore || game.InstalledState == "unreadable")
+            await ViewModel.ApplyLiteAsync(XamlRoot, game, local: true);
+        else
+            await ViewModel.RefreshLiteAsync(game);
         State.Synchronize(ViewModel.ManagedGames, ViewModel.IsLoading);
     }
 
-    private void ManagedSelection_Click(object sender, RoutedEventArgs e) =>
-        State.RefreshSelection();
-
-    private void ToggleSelection_Click(object sender, RoutedEventArgs e) =>
-        State.ToggleSelection();
+    private void ManagedSelection_Click(object sender, RoutedEventArgs e) => State.RefreshSelection();
+    private void ToggleSelection_Click(object sender, RoutedEventArgs e) => State.ToggleSelection();
 
     private async void LockSelected_Click(object sender, RoutedEventArgs e)
     {
-        var selected = State.SelectedGames
-            .Where(item => item.CanToggleProtection && !item.DisplayOverrideEnabled)
-            .ToArray();
-        if (selected.Length == 0)
+        foreach (var game in State.SelectedGames)
         {
-            ViewModel.ShowInfo("请先选择至少一个尚未锁定的已管理游戏。", InfoBarSeverity.Warning);
-            return;
+            if (game.CanRestore || game.InstalledState == "unreadable") await ViewModel.ApplyLiteAsync(XamlRoot, game, local: true);
+            else await ViewModel.RefreshLiteAsync(game);
         }
-        if (await ConfirmDisplayLockAsync(selected))
-        {
-            await ViewModel.SetProtectionAsync(selected, enable: true);
-            State.Synchronize(ViewModel.ManagedGames, ViewModel.IsLoading);
-        }
-    }
-
-    private async Task<bool> ConfirmDisplayLockAsync(IReadOnlyList<GameItem> games)
-    {
-        if (!await SteamDisplayOverrideDialog.EnsureMillenniumInstalledAsync(
-                XamlRoot,
-                App.ViewModel.CurrentSteamDirectory))
-        {
-            return false;
-        }
-        return await SteamDisplayOverrideDialog.ConfirmLockAsync(
-            XamlRoot,
-            App.ViewModel.CurrentSteamDirectory,
-            games);
+        State.Synchronize(ViewModel.ManagedGames, ViewModel.IsLoading);
     }
 
     private async void UnlockSelected_Click(object sender, RoutedEventArgs e)
     {
-        var selected = State.SelectedGames
-            .Where(item => item.DisplayOverrideEnabled)
-            .ToArray();
-        if (selected.Length == 0)
-        {
-            ViewModel.ShowInfo("请先选择至少一个已锁定的游戏。", InfoBarSeverity.Warning);
-            return;
-        }
-        await ViewModel.SetProtectionAsync(selected, enable: false);
+        foreach (var game in State.SelectedGames) await ViewModel.RefreshLiteAsync(game);
         State.Synchronize(ViewModel.ManagedGames, ViewModel.IsLoading);
     }
 

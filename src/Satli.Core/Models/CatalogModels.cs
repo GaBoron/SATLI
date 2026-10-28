@@ -1,5 +1,7 @@
 namespace Satli.Core.Models;
 
+public sealed record TranslationJsonAsset(int Version, long Size, string? Sha256 = null);
+
 public sealed record SchemaVariant(
     string VariantId,
     bool Primary,
@@ -8,7 +10,14 @@ public sealed record SchemaVariant(
     long? FileSizeBytes = null,
     string NoteZh = "",
     string NoteEn = "",
-    int? AchievementCount = null);
+    int? AchievementCount = null,
+    string Format = "bin",
+    TranslationJsonAsset? Json = null,
+    IReadOnlyList<string>? Languages = null)
+{
+    public bool HasBin => Format == "bin";
+    public bool HasJson => Json is not null;
+}
 
 public sealed record CatalogEntry(
     string AppId,

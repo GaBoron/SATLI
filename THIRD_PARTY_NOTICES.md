@@ -25,10 +25,10 @@ Dulwich, urllib3, or Git installation is included or required.
 
 ### Steam display integration
 
-SATLI includes an unsigned `.star` plugin built with the MIT-licensed
-[SteamClientHomebrew/PluginTemplate](https://github.com/SteamClientHomebrew/PluginTemplate)
-and [Starlight](https://github.com/SteamClientHomebrew/Millennium/tree/main/starlight)
-tooling. The plugin requires the independently installed MIT-licensed
+SATLI can download the independent MIT-licensed
+[SATLI-lite](https://github.com/GaBoron/SATLI-lite) plugin from its official GitHub Releases
+when the user chooses JSON display management. No display plugin is bundled.
+SATLI-lite requires the independently installed MIT-licensed
 [Millennium](https://github.com/SteamClientHomebrew/Millennium) framework.
 Millennium is not bundled or installed automatically by SATLI.
 

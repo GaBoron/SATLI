@@ -2,7 +2,6 @@ using System.Text.Json.Nodes;
 using Satli.Core.FileSystem;
 using Satli.Core.Formats;
 using Satli.Core.SchemaEditing;
-using Satli.Core.SteamDisplay;
 using Satli.Core.Transactions;
 
 namespace Satli.Core.State;
@@ -19,14 +18,9 @@ public sealed class ManagedGameRegistry
         _dataDirectory = Path.GetFullPath(dataDirectory);
         Installations = new TransactionManager(_dataDirectory);
         Edits = new EditHistoryStore(_dataDirectory);
-        DisplayOverrides = string.IsNullOrWhiteSpace(steamDirectory)
-            ? null
-            : new SteamDisplayOverrideStore(
-                SteamDisplayPluginInstaller.BridgePath(steamDirectory));
     }
     public TransactionManager Installations { get; }
     public EditHistoryStore Edits { get; }
-    public SteamDisplayOverrideStore? DisplayOverrides { get; }
 
     public IReadOnlyList<string> ManagedAppIds() => Installations.Store.ManagedAppIds()
         .Concat(Edits.ManagedAppIds()).Distinct().OrderBy(value => ulong.Parse(value)).ToArray();
@@ -45,13 +39,13 @@ public sealed class ManagedGameRegistry
             return new(appId, active ? FileState(Text(transaction, "target"), hash) : "restored",
                 hash is null ? "local-edit" : $"local-edit-{hash[..Math.Min(12, hash.Length)]}",
                 "local-edit", Text(transaction, "edited_at"), hash, Text(transaction, "game_name"),
-                DisplayOverrides?.IsEnabled(appId) is true);
+                false);
         }
         var variant = Text(transaction, "variant_id"); var source = Text(transaction, "source_kind")
             ?? (variant?.StartsWith("local-", StringComparison.OrdinalIgnoreCase) == true ? "local-import" : "catalog");
         return new(appId, active ? Installations.Status(appId) : "restored", active ? variant : null,
             source, Text(transaction, "installed_at"), Text(transaction, "installed_sha256"),
-            Text(transaction, "game_name"), DisplayOverrides?.IsEnabled(appId) is true);
+            Text(transaction, "game_name"), false);
     }
 
     public string? RestorePreviewSource(string appId, string expectedTarget)
@@ -143,7 +137,7 @@ public sealed class ManagedGameRegistry
             }
         }
         throw new PreflightException(
-            $"{appId} 的当前文件已变化，且找不到 SATLI 最后一次写入的可信译文快照。请重新安装或保存一次译文后再锁定。");
+            $"{appId} 的当前文件已变化，且找不到 SATLI 最后一次写入的可信译文快照。请重新选择或下载译本；不会将被覆盖的当前文件作为译文。");
     }
 
     public JsonObject Restore(string appId, string target, bool force)

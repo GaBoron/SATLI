@@ -50,16 +50,11 @@ public sealed partial class TranslationManagementViewModel
 
     public async Task<IReadOnlyList<ReplacementPreview>?> PreviewCatalogAsync(GameItem game)
     {
-        if (game.Variants.Count <= 1)
-        {
-            return await PreviewCatalogEntriesAsync([game], "正在读取云端成就…");
-        }
-
         var previews = new List<ReplacementPreview>(game.Variants.Count);
         foreach (var variant in game.Variants)
         {
             var result = await RunPreviewAsync(
-                _arguments.InstallVariant(
+                variant.HasJson ? _arguments.CatalogJson(game, variant.VariantId) : _arguments.InstallVariant(
                     game,
                     variant.VariantId,
                     dryRun: true,
@@ -346,6 +341,7 @@ public sealed partial class TranslationManagementViewModel
             }
         }
         UpdateAvailableCount = GameInstallFiltering.CountUpdates(Games);
+        await LoadKnownLiteAsync();
         ApplyFilter();
     }
 

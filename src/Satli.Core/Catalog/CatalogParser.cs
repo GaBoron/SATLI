@@ -35,6 +35,11 @@ public static partial class CatalogParser
         {
             throw new CatalogException($"翻译目录不是有效的 UTF-8 JSON：{exception.Message}", exception);
         }
+        catch (Exception exception) when (exception is InvalidOperationException or KeyNotFoundException
+            or FormatException or IntegrityException)
+        {
+            throw new CatalogException("翻译目录的资产元数据无效", exception);
+        }
     }
 
     private static TranslationCatalog ParseV1(JsonElement root, string source)
@@ -202,8 +207,43 @@ public static partial class CatalogParser
         JsonElement raw)
     {
         ValidateVariantId(appId, variantId);
-        var sha256 = RequiredString(raw, "sha256", $"{appId}/{variantId}").ToLowerInvariant();
-        ValidateSha256(appId, variantId, sha256);
+        var format = raw.TryGetProperty("format", out var rawFormat)
+            ? RequiredStringValue(rawFormat, "format") : "bin";
+        if (format is not ("bin" or "json"))
+            throw new CatalogException($"{appId}/{variantId} 的资产格式不受支持");
+        var sha256 = string.Empty;
+        long? size = null;
+        if (format == "bin")
+        {
+            sha256 = RequiredString(raw, "sha256", $"{appId}/{variantId}").ToLowerInvariant();
+            ValidateSha256(appId, variantId, sha256);
+            if (raw.TryGetProperty("size", out _))
+                size = AssetSize(raw, "size");
+        }
+        else if (raw.TryGetProperty("sha256", out _) || raw.TryGetProperty("size", out _))
+            throw new CatalogException($"{appId}/{variantId} 的 JSON-only 版本不能声明 BIN 哈希或大小");
+
+        TranslationJsonAsset? json = null;
+        IReadOnlyList<string>? languages = null;
+        int? count = null;
+        if (raw.TryGetProperty("json", out var rawJson))
+        {
+            var version = RequiredInt(rawJson, "version", "json");
+            if (version != (format == "json" ? 2 : 1))
+                throw new CatalogException($"{appId}/{variantId} 的 JSON 格式与资产类型不匹配");
+            var jsonHash = rawJson.TryGetProperty("sha256", out _)
+                ? RequiredString(rawJson, "sha256", "json") : null;
+            if (format == "json" && jsonHash is null)
+                throw new CatalogException($"{appId}/{variantId} 缺少 JSON 自身哈希");
+            if (jsonHash is not null) ValidateSha256(appId, variantId, jsonHash);
+            json = new TranslationJsonAsset(version, AssetSize(rawJson, "size"), jsonHash);
+            languages = Formats.TranslationJson.ReadLanguages(raw.GetProperty("languages"));
+            count = RequiredInt(raw, "achievements", "variant");
+            if (count is < 1 or > 10000)
+                throw new CatalogException($"{appId}/{variantId} 的成就数无效");
+        }
+        if (format == "json" && json is null)
+            throw new CatalogException($"{appId}/{variantId} 缺少 JSON 资产");
         var noteZh = string.Empty;
         var noteEn = string.Empty;
         if (raw.TryGetProperty("label", out var label))
@@ -218,10 +258,22 @@ public static partial class CatalogParser
         return new SchemaVariant(
             variantId,
             variantId == "default",
-            VariantPath(appId, variantId),
+            format == "bin" ? VariantPath(appId, variantId) : string.Empty,
             sha256,
+            size,
             NoteZh: noteZh,
-            NoteEn: noteEn);
+            NoteEn: noteEn,
+            AchievementCount: count,
+            Format: format,
+            Json: json,
+            Languages: languages);
+    }
+
+    private static long AssetSize(JsonElement raw, string field)
+    {
+        var size = RequiredLong(raw, field, "asset");
+        return size is > 0 and <= MaximumSchemaBytes ? size
+            : throw new CatalogException("资产大小必须在 1–32 MiB 以内");
     }
 
     private static IReadOnlyList<SchemaVariant> OrderVariants(IEnumerable<SchemaVariant> variants) =>
@@ -342,7 +394,7 @@ public static partial class CatalogParser
         return parsed;
     }
 
-    [GeneratedRegex("^[0-9]+$", RegexOptions.CultureInvariant)]
+    [GeneratedRegex("^[1-9][0-9]{0,9}$", RegexOptions.CultureInvariant)]
     private static partial Regex AppIdRegex();
 
     [GeneratedRegex("^[a-z0-9][a-z0-9-]{0,63}$", RegexOptions.CultureInvariant)]

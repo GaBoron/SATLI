@@ -13,7 +13,7 @@ public static class ManagedGameFiltering
         filter switch
         {
             ManagedGameFilter.Modified => game.IsModified,
-            ManagedGameFilter.Locked => game.DisplayOverrideEnabled,
+            ManagedGameFilter.Locked => game.LiteKnown,
             _ => true,
         };
 }

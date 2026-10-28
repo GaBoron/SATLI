@@ -26,17 +26,17 @@
                 Click="ToggleSelection_Click"
                 KeyboardAcceleratorTextOverride="Ctrl+A" />
             <AppBarButton
-                Label="锁定所选"
+                Label="通过 SATLI-lite 管理"
                 Click="LockSelected_Click"
                 Visibility="{x:Bind State.LockActionVisibility, Mode=OneWay}"
-                AutomationProperties.Name="锁定所选游戏的 Steam 成就显示">
+                AutomationProperties.Name="通过 SATLI-lite 管理所选译文">
                 <AppBarButton.Icon><FontIcon Glyph="&#xE72E;" /></AppBarButton.Icon>
             </AppBarButton>
             <AppBarButton
                 Icon="UnPin"
-                Label="解除所选"
+                Label="刷新 lite 状态"
                 Click="UnlockSelected_Click"
-                AutomationProperties.Name="解除所选游戏的 Steam 成就显示锁定" />
+                AutomationProperties.Name="查询所选游戏的 SATLI-lite 状态" />
             <AppBarButton Icon="Refresh" Label="刷新状态" Click="Refresh_Click" KeyboardAcceleratorTextOverride="F5" />
         </CommandBar>
         <Grid Grid.Row="2">

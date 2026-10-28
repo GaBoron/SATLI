@@ -29,8 +29,8 @@ internal sealed class CliRuntimeRunner
             line =>
             {
                 outputLine++;
-                onDiagnostic?.Invoke($"步骤 2.{outputLine}：收到核心事件：{line}");
                 var parsed = CliEventParser.Parse(line);
+                onDiagnostic?.Invoke($"步骤 2.{outputLine}：收到核心事件：{CliEventDescription.Format(parsed)}");
                 events.Add(parsed);
                 onEvent?.Invoke(parsed);
             });

@@ -45,20 +45,20 @@ Microsoft Store 是 SATLI 的首选安装方式。从 [Microsoft Store](https://
 
 ## 查找和安装社区译本
 
-1. 打开“可管理”页，按游戏名或 Steam App ID 搜索。
-2. 选择需要翻译的游戏和合适的译本版本。
-3. 点击“安装所选”，逐页检查目标语言及 BIN 中的成就文本。
-4. 确认后关闭 Steam，让应用完成备份和写入。
+1. 打开“云端”页，按名称或 Steam App ID 查找全部已发布译本；没有本机 schema 的游戏也可以查看。
+2. 点击“查看成就”预览各版本；点击“安装 / 下载”选择 Variant、语言和安装方式。“可管理”页的“安装所选”也提供相同选择。
+3. 有 BIN+JSON 时，可首次直接选择“通过 SATLI-lite 应用 JSON”，也可选择“安装本地 BIN”。JSON-only 只提供 JSON 路线。
+4. 仅需查看时选择“仅下载和预览 JSON”。文件经校验后保留在 SATLI 缓存中，无需 Millennium、lite 或 Steam 本地 BIN。
 
-同一游戏可能有多个候选译本，请根据版本说明选择。应用会校验文件名、App ID、文件结构和内容，并在确认后再次检查预览文件是否发生变化。
+JSON 格式 1 按目录的大小、ID、语言、成就数和源 BIN 标识校验，不要求下载源 BIN；格式 2 按 JSON 自身的大小和哈希校验。两种格式都检查结构与成就 API name。校验失败会停止应用，不会改扩展名后写入 BIN。
 
-SATLI 安装并备份本机 BIN；Steam 从服务器刷新成就数据时，可能还原本地修改。需要在 Steam 界面保留译文时，可按下方步骤启用本体的“锁定 Steam 成就显示”。若选择 SATLI lite，则直接在其管理界面下载并应用，无需先在本体安装 BIN。
+选择 BIN 时，保留原有预览、关闭 Steam、备份、完整性检查及恢复机制，不要求安装 lite。选择 JSON 时，按下方流程连接 lite，不执行 BIN 安装或建立虚假的备份记录。两条路线不会自动互相切换。
 
-在线列表加载成功后会保留缓存；离线时仍可浏览最近一次结果。游戏名称也会缓存，断网不会影响已有本地文件的操作。
+在线列表与已校验的 JSON 保留缓存；离线时仍可浏览最近一次结果和缓存预览。获取新文件、首次安装 lite 需要联网。
 
 ## 管理与恢复
 
-“已管理”页集中显示社区安装、本地导入和本地编辑记录，并标记以下状态：
+“已管理”页分别显示 BIN 安装/编辑记录与 lite 返回的译文状态。BIN 记录标记以下状态：
 
 - 正常
 - 可更新
@@ -66,30 +66,26 @@ SATLI 安装并备份本机 BIN；Steam 从服务器刷新成就数据时，可�
 - 文件已被修改
 - 缺少备份
 
-每项都可查看当前成就文本或恢复安装前文件。目标文件若被 Steam 或其他程序修改，普通恢复会停止，以免覆盖新数据；只有在明确确认后才能强制恢复，且当前文件会先归档。
+BIN 记录可查看当前成就文本或恢复安装前文件，JSON 安装没有对应的 BIN 恢复操作。目标文件若被 Steam 或其他程序修改，普通恢复会停止，以免覆盖新数据；只有在明确确认后才能强制恢复，且当前文件会先归档。
 
-### 锁定 Steam 成就显示
+### 通过 SATLI-lite 管理
 
-Steam 在线获取的成就 schema 可能覆盖本机文件在客户端内存中的显示。SATLI 的“锁定”通过 [Millennium](https://github.com/SteamClientHomebrew/Millennium) 插件在界面渲染后应用 SATLI 译文。
+[SATLI-lite](https://github.com/GaBoron/SATLI-lite) 负责 Steam 内的译文显示，桌面端不再部署自己的显示桥。JSON 首次安装无需已有 BIN 安装、已管理或锁定记录。
 
-1. 在 SATLI 的“已管理 → 全部”中选择已正常安装的译文，点击“锁定所选”。如果当前 Steam 目录缺少 Millennium，SATLI 会停止锁定并提供 [Steam Homebrew 官方安装页](https://docs.steambrew.app/users/getting-started/installation)；SATLI 不会下载、内置或代为安装 Millennium。
-2. 完全退出 Steam，从官方页面下载并运行 `MillenniumInstaller-Windows.exe`，按安装器提示完成安装。启动一次 Steam，确认左上角 Steam 菜单中出现 Millennium，然后返回 SATLI 再次点击“锁定”。
-3. SATLI 检测到 Millennium 后会部署自己的显示插件，并生成所选游戏的静态翻译快照。
-4. 重启 Steam，从左上角 Steam 菜单打开 **Millennium → Plugins**，启用 `SATLI Achievement Display Bridge`；若刚刚启用插件，请再重启一次 Steam。
+1. 从在线译本选择 JSON 路线，核对目标语言与成就文本并确认。
+2. 应用时才检查 Millennium、lite 安装、协议能力和当前心跳。缺少 Millennium 时提供[官方安装指南](https://docs.steambrew.app/users/getting-started/installation)，SATLI 不捆绑安装 Millennium。
+3. 缺少 lite 时可确认下载官方正式 Release 的 `satli-lite.star`。安装文件会校验大小和完整性，必要时请求管理员权限。已有插件不会被重复下载或强制覆盖。
+4. 在 **Steam → Millennium → Plugins** 启用 SATLI-lite，并完全退出、重启 Steam。返回 SATLI 重试连接；文件存在不代表插件已经可通信。
+5. lite 已有译本时，SATLI 会先查询状态，并单独确认是否覆盖，包含本地编辑时会明确说明。状态在确认后变化会被拒绝，需要重新查询和确认。
+6. 查看返回结果；请求已投递、等待处理、处理失败、已保存和显示配置已启用是不同状态。实际名称和描述仍需在 Steam 中查看。SATLI 可以退出，无需常驻。
 
-插件已启用、版本一致且正在运行时，后续锁定、更新译文或重新生成覆盖通常会在约 2 秒内自动生效，无需再次打开 Millennium 设置或重启 Steam。只有首次部署、SATLI 更新了插件本体，或插件未运行时，SATLI 才会提示启用或重启。
+“已管理 → SATLI-lite”显示经 SATLI 查询或导入的 lite 译文，包括从未安装过 BIN 的游戏。启动时的历史结果会标为“上次处理结果”，可选择“刷新 lite 状态”查询当前状态；插件尚无公开的全部译本枚举接口，尚未由 SATLI 查询的其他游戏可从云端列表主动查询。游戏和全局显示开关在 Steam 的 SATLI-lite 中管理。
 
-覆盖引擎同时接入 Steam 主界面、成就缓存、游戏内成就弹窗与 Store/Community WebView。它优先按游戏和成就 ID 替换结构化数据，对只提供渲染文本的界面再使用无歧义精确匹配；无法识别的内容会保留原样。Steam 更新可能改变界面实现，因此这仍是实验性兼容层。
+Steam 未运行时提示启动 Steam；运行但缺少有效心跳时提示检查插件启用状态或重启，不会一律视为未安装。协议或 JSON 格式不兼容时停止提交并提示升级，保留缓存。超时显示等待处理，并追踪原请求 ID；不会因为再次查询而重复导入。
 
-SATLI 会把锁定内容写入 Steam 目录下的 `millennium\config\satli-bridge-v1.json`。该位置不会被 Microsoft Store 的 AppData 虚拟化隔离。写入完成后 SATLI 可以彻底退出；运行时由 Millennium 随 Steam 加载，不需要 SATLI 自启、托盘运行或后台常驻。恢复安装前文件会自动解除该游戏的显示锁定；重新安装或保存已锁定译文时会自动刷新快照。
+BIN 被 Steam 或其他程序修改后，可以在“被修改”页选择“通过 SATLI-lite 管理”，复用经过哈希验证的最后一次译文快照并转换为 JSON，不必继续修改 BIN。找不到可信译文时会要求重新选择或下载，不会将被覆盖的本地原文当作译文发送。BIN 恢复、编辑、历史版本和投稿继续独立可用，也不会自动更改 lite 的译本。
 
-### 与 SATLI lite 的区别
-
-`SATLI Achievement Display Bridge` 随本体部署，显示内容由本体的锁定操作生成。[SATLI lite](https://github.com/GaBoron/SATLI-lite) 单独安装，在 Steam 内自行下载、选择语言和译本，并保存本地编辑。它不依赖本体的锁定记录，也不会修改本体已安装的 BIN。
-
-两种插件不要同时启用。改用 SATLI lite 时，在 Millennium 插件列表中停用 `SATLI Achievement Display Bridge`，再按 [SATLI lite 安装说明](https://github.com/GaBoron/SATLI-lite#安装) 启用新插件并重启 Steam；这不会恢复或移除本体已安装的 BIN，需要恢复原文件时仍在本体中操作。改回本体显示插件时，先停用 SATLI lite，再在本体中生成锁定内容并启用显示插件。
-
-两个客户端分别保存设置、译本选择和本地编辑，不会自动迁移或同步。SATLI lite 导出的翻译 JSON 不能作为本体的 BIN/ZIP 直接导入；完整操作见 [SATLI lite 使用指南](https://github.com/GaBoron/SATLI-lite/blob/main/docs/usage.md)。
+已有 `SATLI Achievement Display Bridge` 时，请先完全退出 Steam，再确认将旧 `satli.star` 移入回收站，之后启用 lite。迁移保留旧快照、本地译文和备份；旧快照不会自动被 lite 读取。SATLI 不再生成或刷新 `satli-bridge-v1.json`。两个客户端的本地编辑也不会自动同步。
 
 ## 编辑本地成就
 
@@ -162,7 +158,7 @@ SATLI 会把锁定内容写入 Steam 目录下的 `millennium\config\satli-bridg
 - 连接测试
 - 离线模式和最近成功加载的云端列表
 
-“设置 → 下载源”可分别拖动调整翻译目录与翻译 BIN 文件的来源顺序。每个目录源会先请求 `index-v2.json`，不可用或不兼容时再回退同源 `index.json`，然后继续下一个来源。默认目录顺序为 GitHub Raw、jsDelivr、jsDelivr Fastly、StaticDelivr；默认文件顺序为 jsDelivr、jsDelivr Fastly、GitHub Raw。StaticDelivr 只提供目录候选，因为实际验证中其二进制文件响应不适合作为安装器下载源。两个列表可分别恢复默认顺序。
+“设置 → 下载源”可分别拖动调整翻译目录与翻译 BIN/JSON 文件的来源顺序。每个目录源会先请求 `index-v2.json`，不可用或不兼容时再回退同源 `index.json`，然后继续下一个来源。默认目录顺序为 GitHub Raw、jsDelivr、jsDelivr Fastly、StaticDelivr；默认文件顺序为 jsDelivr、jsDelivr Fastly、GitHub Raw。StaticDelivr 只提供目录候选，因为实际验证中其二进制文件响应不适合作为安装器下载源。两个列表可分别恢复默认顺序。
 
 本地游戏扫描不以在线翻译目录为前提。无网络且没有目录缓存时，本地页仍会列出扫描到的游戏，并将收录状态显示为“未知”；只有已确认目录未收录的游戏才会显示请求翻译入口。V2 译本下载固定限制为 32 MiB，并在预览、安装和更新判断前使用 SHA-256 校验内容。
 
@@ -191,7 +187,7 @@ SATLI 会把锁定内容写入 Steam 目录下的 `millennium\config\satli-bridg
 
 ### 找不到本地游戏
 
-先启动一次对应游戏，让 Steam 生成成就缓存，然后返回应用重新扫描。仍未找到时，在设置中确认 Steam 路径。Steam Web API 可以补全账号游戏库，但没有本机成就文件的游戏暂时不能编辑或安装。
+先启动一次对应游戏，让 Steam 生成成就缓存，然后返回应用重新扫描。仍未找到时，在设置中确认 Steam 路径。Steam Web API 可以补全账号游戏库，没有本机成就文件时暂时不能编辑本地 BIN，但仍可从云端列表预览和应用 JSON。
 
 ### 游戏名称没有正常显示
 
@@ -215,7 +211,7 @@ SATLI 会把锁定内容写入 Steam 目录下的 `millennium\config\satli-bridg
 
 ### 安装后翻译消失
 
-Steam 或游戏更新可能重新生成成就缓存。重新扫描并安装即可；如果云端译本已经过期或不再生效，请使用“报告”提交问题。
+Steam 或游戏更新可能重新生成成就缓存。可以选择通过 SATLI-lite 的独立 JSON 链路管理显示，或重新检查 BIN 译本；如果云端译本已经过期或不再生效，请使用“报告”提交问题。
 
 ### 恢复被拒绝
 

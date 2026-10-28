@@ -31,7 +31,7 @@
                 <NavigationViewItem.MenuItems>
                     <NavigationViewItem x:Name="ManagedAllItem" Content="全部" Tag="managed-all" />
                     <NavigationViewItem Content="被修改" Tag="managed-modified" />
-                    <NavigationViewItem Content="已锁定" Tag="managed-locked" />
+                    <NavigationViewItem Content="SATLI-lite" Tag="managed-locked" />
                 </NavigationViewItem.MenuItems>
             </NavigationViewItem>
             <NavigationViewItem Content="日志" Tag="logs">

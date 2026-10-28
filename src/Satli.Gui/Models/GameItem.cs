@@ -12,6 +12,13 @@ public sealed class SchemaVariantOption
     public string Note { get; init; } = string.Empty;
     public string Sha256 { get; init; } = string.Empty;
     public long FileSizeBytes { get; init; }
+    public bool HasBin { get; init; } = true;
+    public int? JsonVersion { get; init; }
+    public IReadOnlyList<string> Languages { get; init; } = [];
+    public bool HasJson => JsonVersion is 1 or 2;
+    public string AvailableMethods => HasBin
+        ? HasJson ? "BIN + JSON · 可安装本地 BIN 或通过 SATLI-lite 应用 JSON" : "仅 BIN · 安装本地 BIN"
+        : "仅 JSON · 通过 SATLI-lite 应用";
     public string DisplayName => string.IsNullOrWhiteSpace(Note) ? VariantId : $"{VariantId} · {Note}";
     public override string ToString() => DisplayName;
 }
@@ -27,6 +34,30 @@ public sealed class GameItem : ObservableObject
     private string _installedAt = string.Empty;
     private string _installedSha256 = string.Empty;
     private bool _displayOverrideEnabled;
+    private string _liteStateText = "尚未查询 SATLI-lite";
+    private bool _liteKnown;
+
+    public string LiteStateText
+    {
+        get => _liteStateText;
+        set
+        {
+            if (SetProperty(ref _liteStateText, value)) OnPropertyChanged(nameof(ProtectionStatusText));
+        }
+    }
+
+    public bool LiteKnown
+    {
+        get => _liteKnown;
+        set
+        {
+            if (SetProperty(ref _liteKnown, value))
+            {
+                OnPropertyChanged(nameof(ProtectionVisibility));
+                OnPropertyChanged(nameof(CanToggleProtection));
+            }
+        }
+    }
 
     public required string AppId { get; init; }
     public required string GameName { get; init; }
@@ -185,8 +216,7 @@ public sealed class GameItem : ObservableObject
     public string StateText => InstalledState switch
     {
         "installed" => "已安装",
-        "modified" when DisplayOverrideEnabled => "已被修改（已锁定）",
-        "modified" => "已被修改（可锁定）",
+        "modified" => "BIN 已被修改 · 可通过 SATLI-lite 管理显示",
         "missing" => "文件缺失",
         "restored" => "已恢复",
         "unreadable" => "无法读取",
@@ -201,11 +231,11 @@ public sealed class GameItem : ObservableObject
     public bool IsLocalEdit => InstalledSource == "local-edit";
     public bool CanViewInstalledTranslation => InstalledState is "installed" or "modified";
     public bool CanRestore => InstalledState is "installed" or "modified" or "missing";
-    public bool CanToggleProtection => DisplayOverrideEnabled
-        || InstalledState is "installed" or "modified";
-    public string ProtectionStatusText => DisplayOverrideEnabled ? "Steam 显示覆盖已启用" : "未锁定";
-    public string ProtectionActionText => DisplayOverrideEnabled ? "解除显示锁定" : "锁定 Steam 显示";
-    public Visibility ProtectionVisibility => DisplayOverrideEnabled ? Visibility.Visible : Visibility.Collapsed;
+    public bool CanToggleProtection => LiteKnown
+        || InstalledState is "installed" or "modified" or "missing" or "unreadable";
+    public string ProtectionStatusText => LiteStateText;
+    public string ProtectionActionText => "通过 SATLI-lite 管理";
+    public Visibility ProtectionVisibility => LiteKnown ? Visibility.Visible : Visibility.Collapsed;
     public bool RequiresForceRestore => InstalledState is "modified" or "missing";
     public bool IsUpdateAvailable
     {
@@ -281,6 +311,7 @@ public sealed class GameItem : ObservableObject
         ? "译本作者：未提供"
         : $"译本作者：{string.Join("、", Contributors)}";
     public string CloudMetadataText => $"App ID {AppId} · {ContributorText}";
+    public string AvailableMethodsText => string.Join("；", Variants.Select(option => $"{option.DisplayName}：{option.AvailableMethods}"));
 
     public static GameItem FromPayload(JsonElement payload)
     {
@@ -320,6 +351,10 @@ public sealed class GameItem : ObservableObject
                     Primary = variant.TryGetProperty("primary", out var primary) && primary.GetBoolean(),
                     Note = GetString(variant, "note_zh", string.Empty),
                     Sha256 = GetString(variant, "sha256", string.Empty),
+                    HasBin = !variant.TryGetProperty("has_bin", out var hasBin) || hasBin.ValueKind == JsonValueKind.True,
+                    JsonVersion = variant.TryGetProperty("json_version", out var jsonVersion)
+                        && jsonVersion.ValueKind == JsonValueKind.Number ? jsonVersion.GetInt32() : null,
+                    Languages = GetStringArray(variant, "languages"),
                     FileSizeBytes = variant.TryGetProperty("file_size_bytes", out var size)
                         && size.ValueKind == JsonValueKind.Number
                         && size.TryGetInt64(out var fileSize)

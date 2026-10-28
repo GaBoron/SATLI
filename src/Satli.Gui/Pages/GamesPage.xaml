@@ -112,6 +112,7 @@
                                     Severity="Warning"
                                     Message="{x:Bind CatalogWarningText}" />
                                 <TextBlock Text="{x:Bind InstalledVersionText, Mode=OneWay}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Style="{StaticResource CaptionTextBlockStyle}" />
+                                <TextBlock Text="{x:Bind SelectedVariant.AvailableMethods, Mode=OneWay}" TextWrapping="Wrap" Style="{StaticResource CaptionTextBlockStyle}" />
                             </StackPanel>
                             <ComboBox
                                 Grid.Column="2"

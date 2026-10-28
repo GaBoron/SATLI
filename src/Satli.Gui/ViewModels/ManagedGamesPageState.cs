@@ -37,25 +37,25 @@ public sealed class ManagedGamesPageState : ObservableObject
     public string Title => Filter switch
     {
         ManagedGameFilter.Modified => "被修改",
-        ManagedGameFilter.Locked => "已锁定",
+        ManagedGameFilter.Locked => "SATLI-lite 译文",
         _ => "全部已管理",
     };
     public string Description => Filter switch
     {
-        ManagedGameFilter.Modified => "集中处理被 Steam 更新覆盖的游戏，可直接锁定显示、查看当前文件或恢复。",
-        ManagedGameFilter.Locked => "管理由 Millennium 插件覆盖显示的 Steam 成就译文，并可随时解除。",
-        _ => "查看社区安装、本地导入或本地编辑的当前译文，并恢复变更前文件。",
+        ManagedGameFilter.Modified => "BIN 可能被 Steam 或其他程序修改。可选用可信快照发送到 SATLI-lite，通过独立 JSON 管理显示；也可恢复 BIN。",
+        ManagedGameFilter.Locked => "显示经公开接口查询或导入的 lite 译文。可刷新状态；游戏和全局显示开关请在 Steam 的 SATLI-lite 中管理。",
+        _ => "分别查看 BIN 安装记录与 lite 返回的译文状态。JSON 安装不创建 BIN 记录；只有 BIN 记录可恢复文件。",
     };
     public string EmptyTitle => Filter switch
     {
         ManagedGameFilter.Modified => "没有被修改的游戏",
-        ManagedGameFilter.Locked => "暂无已锁定的 Steam 显示译文",
+        ManagedGameFilter.Locked => "暂无已查询或导入的 lite 译文",
         _ => "暂无已管理的游戏",
     };
     public string EmptyDescription => Filter switch
     {
         ManagedGameFilter.Modified => "SATLI 检测到已管理文件被替换后，会自动显示在这里。",
-        ManagedGameFilter.Locked => "在“全部”或“被修改”页面锁定 Steam 显示后，会显示在这里。",
+        ManagedGameFilter.Locked => "从云端游戏直接应用 JSON 或查询 lite 状态，无需先安装 BIN。",
         _ => "安装、导入或保存本地编辑后会显示在这里。",
     };
     public int SelectedCount => Items.Count(item => item.IsSelected);

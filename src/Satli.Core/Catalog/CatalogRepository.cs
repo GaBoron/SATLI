@@ -5,7 +5,7 @@ using Satli.Core.Models;
 
 namespace Satli.Core.Catalog;
 
-public sealed class CatalogRepository
+public sealed partial class CatalogRepository
 {
     private readonly string _dataDirectory;
     private readonly HttpClient _client;
@@ -82,6 +82,7 @@ public sealed class CatalogRepository
         bool offline = false,
         CancellationToken cancellationToken = default)
     {
+        RequireBin(variant);
         var cached = SchemaCachePath(variant);
         if (File.Exists(cached))
         {
@@ -140,6 +141,7 @@ public sealed class CatalogRepository
         bool offline = false,
         CancellationToken cancellationToken = default)
     {
+        RequireBin(variant);
         var destination = SchemaCachePath(variant);
         if (File.Exists(destination))
         {
@@ -196,6 +198,7 @@ public sealed class CatalogRepository
 
     public static void VerifySchemaFile(string path, SchemaVariant variant)
     {
+        RequireBin(variant);
         var info = new FileInfo(path);
         if (!info.Exists)
         {
@@ -217,6 +220,7 @@ public sealed class CatalogRepository
 
     public static void VerifySchemaBytes(ReadOnlySpan<byte> payload, SchemaVariant variant)
     {
+        RequireBin(variant);
         if (payload.Length > CatalogParser.MaximumSchemaBytes)
         {
             throw new IntegrityException($"文件超过 32 MiB 安全上限：{variant.SchemaFile}");
@@ -364,5 +368,11 @@ public sealed class CatalogRepository
             throw new IntegrityException(
                 $"SHA-256 不匹配：{variant.SchemaFile}，期望 {variant.Sha256}，实际 {actual}");
         }
+    }
+
+    private static void RequireBin(SchemaVariant variant)
+    {
+        if (!variant.HasBin)
+            throw new IntegrityException("此版本仅提供 JSON，不能写入 Steam BIN；请通过 SATLI-lite 应用");
     }
 }

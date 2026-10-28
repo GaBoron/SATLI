@@ -75,23 +75,20 @@ public sealed class TranslationCliArguments(
         return arguments;
     }
 
-    public List<string> Protect(IReadOnlyList<GameItem> selected, bool enable)
-    {
-        var arguments = new List<string> { "protect", enable ? "lock" : "unlock" };
-        arguments.AddRange(selected.Select(item => item.AppId));
-        if (enable)
-        {
-            arguments.Add("--yes");
-        }
-        arguments.Add("--jsonl");
-        AddCommon(arguments, includeSteamDirectory: true, includeOffline: false);
-        return arguments;
-    }
-
     public List<string> CacheRefresh()
     {
         var arguments = new List<string> { "cache", "refresh", "--jsonl" };
         AddDataDirectory(arguments);
+        return arguments;
+    }
+
+    public List<string> CatalogJson(GameItem game, string variantId)
+    {
+        var arguments = new List<string>
+        {
+            "catalog-json", game.AppId, "--variant", variantId, "--jsonl",
+        };
+        AddCommon(arguments, includeSteamDirectory: false, includeOffline: true);
         return arguments;
     }
 

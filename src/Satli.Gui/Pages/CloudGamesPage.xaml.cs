@@ -26,6 +26,18 @@ public sealed partial class CloudGamesPage : Page
     private async void Refresh_Click(object sender, RoutedEventArgs e) =>
         await ViewModel.RefreshAsync();
 
+    private async void Install_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement { Tag: GameItem game })
+            await OnlineInstallationDialog.RunAsync(XamlRoot, game);
+    }
+
+    private async void LiteStatus_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement { Tag: GameItem game })
+            await App.ViewModel.Translations.RefreshLiteAsync(game);
+    }
+
     private async void ViewAchievements_Click(object sender, RoutedEventArgs e)
     {
         if (sender is not FrameworkElement { Tag: GameItem game })
@@ -45,7 +57,7 @@ public sealed partial class CloudGamesPage : Page
 
     private async void Report_Click(object sender, RoutedEventArgs e)
     {
-        if (sender is not Button { Tag: GameItem game })
+        if (sender is not FrameworkElement { Tag: GameItem game })
         {
             return;
         }

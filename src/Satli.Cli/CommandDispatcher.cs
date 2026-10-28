@@ -50,6 +50,8 @@ internal sealed partial class CommandDispatcher
             "scan" => await Scan(args),
             "install" => await Install(args),
             "local-import" => await LocalImport(args),
+            "catalog-json" => await CatalogJson(args),
+            "lite-install" => await InstallLitePlugin(args),
             "status" => await Status(args),
             "restore" => Restore(args),
             "protect" => Protect(raw, args),
@@ -321,6 +323,10 @@ internal sealed partial class CommandDispatcher
             ["note_zh"] = variant.NoteZh,
             ["note_en"] = variant.NoteEn,
             ["achievement_count"] = variant.AchievementCount,
+            ["format"] = variant.Format,
+            ["has_bin"] = variant.HasBin,
+            ["json_version"] = variant.Json?.Version,
+            ["languages"] = Strings(variant.Languages ?? []),
         }).ToArray());
         return new JsonObject
         {

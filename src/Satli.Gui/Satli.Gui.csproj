@@ -30,11 +30,6 @@
 
   <ItemGroup>
     <Content Include="Assets\AppIcon.ico" />
-    <Content Include="..\..\integrations\millennium\satli-display-bridge\satli.star">
-      <Link>Integrations\Millennium\satli.star</Link>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
-    </Content>
   </ItemGroup>
 
   <ItemGroup>

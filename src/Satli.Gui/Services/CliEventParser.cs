@@ -18,7 +18,7 @@ internal static class CliEventParser
         }
         catch (JsonException exception)
         {
-            throw new InvalidDataException($"SATLI 返回了无效事件：{line}", exception);
+            throw new InvalidDataException("SATLI 返回了无效事件。", exception);
         }
 
         if (parsed.ProtocolVersion != 1)

@@ -5,7 +5,6 @@ using Satli.Core.Formats;
 using Satli.Core.SchemaEditing;
 using Satli.Core.State;
 using Satli.Core.Steam;
-using Satli.Core.SteamDisplay;
 
 namespace Satli.Cli;
 
@@ -76,7 +75,7 @@ internal sealed partial class CommandDispatcher
                     ["force"] = force,
                 });
                 registry.Restore(id, SteamLocator.SchemaTarget(steam, id), force);
-                DisableDisplayOverride("restore", id, steam);
+
                 succeeded++;
                 _events.Emit("restore", "item-succeeded", new JsonObject
                 {
@@ -101,93 +100,8 @@ internal sealed partial class CommandDispatcher
         return code;
     }
 
-    private int Protect(string[] raw, Arguments args)
-    {
-        if (raw.Length < 2 || raw[1] is not ("lock" or "unlock"))
-            throw new UsageException("protect 需要 lock 或 unlock");
-        var enable = raw[1] == "lock";
-        if (enable) RequireYes(args);
-        var ids = args.Positionals(2, "--data-dir", "--steam-dir").ToArray();
-        if (ids.Length == 0) throw new UsageException("请指定 APP_ID");
-        var steam = SteamLocator.FindSteamDirectory(args.SteamDirectory);
-        var registry = new ManagedGameRegistry(args.DataDirectory, steam);
-        var overrides = new SteamDisplayOverrideStore(
-            SteamDisplayPluginInstaller.BridgePath(steam));
-        SteamDisplayPluginInstallResult? plugin = null;
-        var displaySources = new Dictionary<string, string>(StringComparer.Ordinal);
-        if (enable)
-        {
-            foreach (var appId in ids)
-            {
-                var managed = registry.Record(appId);
-                if (managed.InstalledState is not ("installed" or "modified"))
-                {
-                    throw new PreflightException(
-                        $"{appId} 没有可用于 Steam 显示覆盖的已安装译文");
-                }
-                displaySources[appId] = registry.DisplayOverrideSource(
-                    appId,
-                    SteamLocator.SchemaTarget(steam, appId));
-            }
-            plugin = SteamDisplayPluginInstaller.EnsureInstalled(
-                steam,
-                SteamDisplayPluginInstaller.BundledPluginPath());
-        }
-        _events.Emit("protect", "plan", new JsonObject
-        {
-            ["action"] = raw[1],
-            ["count"] = ids.Length,
-        });
-        for (var index = 0; index < ids.Length; index++)
-        {
-            var appId = ids[index];
-            var target = SteamLocator.SchemaTarget(steam, appId);
-            var managed = registry.Record(appId);
-            if (enable)
-            {
-                if (FileOperations.IsReadOnly(target))
-                {
-                    FileOperations.SetReadOnly(target, false);
-                }
-                var original = DisplayOverrideBackup("protect", registry, appId, target);
-                overrides.Enable(
-                    appId,
-                    managed.GameName ?? $"Steam 游戏 {appId}",
-                    displaySources[appId],
-                    original is null ? [] : [original]);
-            }
-            else
-            {
-                overrides.Disable(appId);
-                if (File.Exists(target) && FileOperations.IsReadOnly(target))
-                {
-                    FileOperations.SetReadOnly(target, false);
-                }
-            }
-            _events.Emit("protect", "item-succeeded", new JsonObject
-            {
-                ["app_id"] = appId,
-                ["target"] = target,
-                ["bridge_path"] = overrides.BridgePath,
-                ["plugin_path"] = plugin?.PluginPath ?? "",
-                ["plugin_updated"] = plugin?.Updated ?? false,
-                ["plugin_runtime_active"] = plugin?.RuntimeActive ?? false,
-                ["display_override_enabled"] = enable,
-                ["trusted_snapshot_reused"] = enable
-                    && !displaySources[appId].Equals(target, StringComparison.OrdinalIgnoreCase),
-                ["legacy_read_only_cleared"] = File.Exists(target)
-                    && !FileOperations.IsReadOnly(target),
-                ["action"] = enable ? "display-override-enabled" : "display-override-disabled",
-                ["position"] = index + 1,
-            });
-        }
-        _events.Emit("protect", "completed", new JsonObject
-        {
-            ["count"] = ids.Length,
-            ["exit_code"] = 0,
-        });
-        return 0;
-    }
+    private int Protect(string[] raw, Arguments args) =>
+        throw new UsageException("旧显示锁定已退役。请在图形界面选择通过 SATLI-lite 管理；不会自动修改旧桥快照。");
 
     private int Petition(Arguments args)
     {

@@ -49,7 +49,9 @@ public static class CliApplication
                 || args.Contains("-h", StringComparer.Ordinal))
             {
                 await output.WriteLineAsync("SATLI 2.4.1 - 安全安装、管理和恢复 Steam 成就翻译");
-                await output.WriteLineAsync("命令：scan, install, local-import, status, restore, protect, cache, petition, schema");
+                await output.WriteLineAsync("命令：scan, install, catalog-json, lite-install, local-import, status, restore, cache, petition, schema");
+                await output.WriteLineAsync("catalog-json APP_ID --variant VARIANT：校验并缓存 JSON，不修改 Steam BIN。");
+                await output.WriteLineAsync("lite-install --yes：下载并校验官方插件，完成后仍需在 Steam 中启用。");
                 return args.Length == 0 ? 2 : 0;
             }
 

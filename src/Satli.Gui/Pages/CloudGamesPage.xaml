@@ -70,32 +70,20 @@
                             <StackPanel Spacing="6">
                                 <TextBlock Text="{x:Bind GameName}" Style="{StaticResource BodyStrongTextBlockStyle}" />
                                 <TextBlock Text="{x:Bind CloudMetadataText}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Style="{StaticResource CaptionTextBlockStyle}" TextWrapping="Wrap" />
+                                <TextBlock Text="{x:Bind AvailableMethodsText}" TextWrapping="Wrap" Style="{StaticResource CaptionTextBlockStyle}" />
+                                <TextBlock Text="{x:Bind LiteStateText, Mode=OneWay}" TextWrapping="Wrap" Style="{StaticResource CaptionTextBlockStyle}" />
                                 <TextBlock Text="{x:Bind CatalogText}" Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" Style="{StaticResource CaptionTextBlockStyle}" />
                                 <TextBlock Text="{x:Bind StateText}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Style="{StaticResource CaptionTextBlockStyle}" />
                                 <InfoBar IsOpen="{x:Bind HasCatalogWarning}" IsClosable="False" Severity="Warning" Message="{x:Bind CatalogWarningText}" />
                             </StackPanel>
-                            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Spacing="8">
-                                <Button
-                                    Click="ViewAchievements_Click"
-                                    Tag="{x:Bind}"
-                                    AutomationProperties.Name="查看云端游戏成就"
-                                    AutomationProperties.HelpText="{x:Bind GameName}">
-                                    <StackPanel Orientation="Horizontal" Spacing="7">
-                                        <SymbolIcon Symbol="View" />
-                                        <TextBlock Text="查看成就" VerticalAlignment="Center" />
-                                    </StackPanel>
-                                </Button>
-                                <Button
-                                    Click="Report_Click"
-                                    Tag="{x:Bind}"
-                                    AutomationProperties.Name="报告游戏文件问题"
-                                    AutomationProperties.HelpText="{x:Bind GameName}">
-                                    <StackPanel Orientation="Horizontal" Spacing="7">
-                                        <FontIcon Glyph="&#xE7C1;" FontSize="15" />
-                                        <TextBlock Text="报告" VerticalAlignment="Center" />
-                                    </StackPanel>
-                                </Button>
-                            </StackPanel>
+                            <CommandBar Grid.Column="1" VerticalAlignment="Center" DefaultLabelPosition="Right" IsDynamicOverflowEnabled="True">
+                                <AppBarButton Icon="Download" Label="安装 / 下载" Click="Install_Click" Tag="{x:Bind}" AutomationProperties.Name="选择 BIN 或 JSON 安装方式" />
+                                <AppBarButton Icon="View" Label="查看成就" Click="ViewAchievements_Click" Tag="{x:Bind}" />
+                                <CommandBar.SecondaryCommands>
+                                    <AppBarButton Icon="Refresh" Label="查询 lite 状态" Click="LiteStatus_Click" Tag="{x:Bind}" />
+                                    <AppBarButton Icon="Help" Label="报告" Click="Report_Click" Tag="{x:Bind}" />
+                                </CommandBar.SecondaryCommands>
+                            </CommandBar>
                         </Grid>
                     </Border>
                 </DataTemplate>

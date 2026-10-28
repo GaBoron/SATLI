@@ -50,7 +50,7 @@ internal sealed partial class CommandDispatcher
                     appId,
                     File.ReadAllBytes(source),
                     "restore");
-                DisableDisplayOverride("schema-restore", appId, steam);
+
                 break;
             case "export":
             {
@@ -90,13 +90,7 @@ internal sealed partial class CommandDispatcher
                     appId,
                     File.ReadAllBytes(source),
                     "apply");
-                RefreshDisplayOverride(
-                    "schema-apply",
-                    appId,
-                    args.Value("--game-name") ?? $"Steam 游戏 {appId}",
-                    source,
-                    steam,
-                    args.DataDirectory);
+
                 break;
             }
             default:
@@ -212,13 +206,7 @@ internal sealed partial class CommandDispatcher
                 revision.AchievementCount,
                 variantId: revision.VariantId);
             Merge(result, committed.ToJson());
-            RefreshDisplayOverride(
-                operation,
-                appId,
-                revision.GameName,
-                SteamLocator.SchemaTarget(steam, appId),
-                steam,
-                args.DataDirectory);
+
         }
         else
         {
