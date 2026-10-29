@@ -28,6 +28,7 @@ public static class CliApplication
         try
         {
             if (!args.Contains("--data-dir", StringComparer.Ordinal)
+                && !IsReadOnlyJsonExport(args)
                 && !args.Contains("--help", StringComparer.Ordinal)
                 && !args.Contains("-h", StringComparer.Ordinal)
                 && !args.Contains("--version", StringComparer.Ordinal))
@@ -51,6 +52,8 @@ public static class CliApplication
                 await output.WriteLineAsync("SATLI 2.4.1 - 安全安装、管理和恢复 Steam 成就翻译");
                 await output.WriteLineAsync("命令：scan, install, catalog-json, lite, lite-install, local-import, status, restore, cache, petition, schema");
                 await output.WriteLineAsync("catalog-json APP_ID --variant VARIANT：校验并缓存 JSON，不修改 Steam BIN。");
+                await output.WriteLineAsync("schema export APP_ID --format json --output FILE [--variant-id ID] [--source BIN_OR_ZIP | --managed]：导出独立翻译 JSON；可加 --edits-file FILE --target-language CODE 导出编辑结果，不写回 Steam 或修订历史。");
+                await output.WriteLineAsync("schema revisions export APP_ID REVISION --format json --output FILE [--variant-id ID]：导出历史修订；JSON 仅包含显示文本，不能取代完整 BIN。");
                 await output.WriteLineAsync("lite-install --yes：下载并校验官方插件，完成后仍需在 Steam 中启用。");
                 await output.WriteLineAsync("lite retire-legacy --yes：退出 Steam 后，仅将旧 satli.star 移入回收站，保留译文、快照和备份。");
                 await output.WriteLineAsync("lite inspect | status APP_ID | resume APP_ID：检查连接、查询实际状态或刷新原请求。");
@@ -105,6 +108,15 @@ public static class CliApplication
             }
             return 6;
         }
+    }
+
+    private static bool IsReadOnlyJsonExport(string[] args)
+    {
+        var isExport = args.Length >= 2 && args[0] == "schema"
+            && (args[1] == "export" || (args.Length >= 3 && args[1] == "revisions" && args[2] == "export"));
+        var formatIndex = Array.IndexOf(args, "--format");
+        // A display-text export must not migrate or create application history as a side effect.
+        return isExport && formatIndex >= 0 && formatIndex + 1 < args.Length && args[formatIndex + 1] == "json";
     }
 
     private static IReadOnlyDictionary<string, string> MergeEnvironment(

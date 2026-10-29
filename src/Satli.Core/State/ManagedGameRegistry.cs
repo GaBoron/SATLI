@@ -60,7 +60,7 @@ public sealed class ManagedGameRegistry
         return snapshot;
     }
 
-    public string DisplayOverrideSource(string appId, string expectedTarget)
+    public string DisplayOverrideSource(string appId, string expectedTarget, bool importLegacyRevisions = true)
     {
         var candidate = Active(appId)
             ?? throw new TransactionException($"{appId} 没有可用于显示覆盖的管理记录");
@@ -97,7 +97,7 @@ public sealed class ManagedGameRegistry
             try
             {
                 var revisionStore = new SchemaRevisionStore(_dataDirectory);
-                var revision = revisionStore.List(appId).FirstOrDefault(item =>
+                var revision = revisionStore.List(appId, importLegacyRevisions).FirstOrDefault(item =>
                     item.SchemaSha256.Equals(expectedHash, StringComparison.OrdinalIgnoreCase));
                 if (revision is not null)
                 {

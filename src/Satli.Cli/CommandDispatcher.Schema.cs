@@ -2,7 +2,9 @@ using System.Text.Json.Nodes;
 using Satli.Core;
 using Satli.Core.FileSystem;
 using Satli.Core.Formats;
+using Satli.Core.Imports;
 using Satli.Core.SchemaEditing;
+using Satli.Core.State;
 using Satli.Core.Steam;
 
 namespace Satli.Cli;
@@ -24,10 +26,13 @@ internal sealed partial class CommandDispatcher
             "--format",
             "--output",
             "--game-name",
-            "--variant-id");
+            "--variant-id",
+            "--source");
         if (positions.Count != 1)
             throw new UsageException($"schema {raw[1]} 需要 APP_ID");
         var appId = positions[0];
+        if (raw[1] == "export" && args.Value("--format") == "json")
+            return ExportTranslationJson(args, appId);
         var steam = SteamLocator.FindSteamDirectory(args.SteamDirectory);
         var source = SteamLocator.SchemaTarget(steam, appId);
         JsonObject report;
@@ -116,7 +121,8 @@ internal sealed partial class CommandDispatcher
             "--data-dir",
             "--steam-dir",
             "--format",
-            "--output");
+            "--output",
+            "--variant-id");
         var appId = positions.Count > 0 ? positions[0] : null;
         var store = new SchemaRevisionStore(args.DataDirectory);
         var operation = $"schema-revisions-{command}";
@@ -157,7 +163,8 @@ internal sealed partial class CommandDispatcher
         if (positions.Count < 2)
             throw new UsageException("缺少 REVISION");
         var revisionId = positions[1];
-        var revision = store.Get(appId, revisionId);
+        var revision = store.Get(appId, revisionId,
+            importLegacy: command != "export" || args.Value("--format") != "json");
         JsonObject result;
         if (command == "show")
         {
@@ -181,7 +188,8 @@ internal sealed partial class CommandDispatcher
                 appId,
                 revisionId,
                 args.Required("--output"),
-                args.Required("--format"));
+                args.Required("--format"),
+                args.Value("--variant-id"));
             result = revision.ToJson();
             result["output"] = Path.GetFullPath(args.Required("--output"));
         }
@@ -228,6 +236,53 @@ internal sealed partial class CommandDispatcher
             args.Required("--target-language"),
             args.Required("--edits-file"),
             args.Has("--allow-incomplete"));
+
+    private int ExportTranslationJson(Arguments args, string appId)
+    {
+        const string operation = "schema-export";
+        if (args.Has("--source") && args.Has("--managed"))
+            throw new UsageException("--source 与 --managed 只能选择一个");
+        _events.Emit(operation, "item-started", new JsonObject { ["app_id"] = appId, ["format"] = "json" });
+        var source = args.Value("--source");
+        if (source is null)
+        {
+            var steam = SteamLocator.FindSteamDirectory(args.SteamDirectory);
+            source = SteamLocator.SchemaTarget(steam, appId);
+            if (args.Has("--managed"))
+                source = new ManagedGameRegistry(args.DataDirectory, steam)
+                    .DisplayOverrideSource(appId, source, importLegacyRevisions: false);
+        }
+        byte[] schema;
+        JsonObject? editReport = null;
+        if (args.Has("--edits-file"))
+        {
+            // Rendering stays in memory; JSON coverage rules also allow universally empty fields.
+            var rendered = _editor.Render(source, appId, args.Required("--target-language"),
+                args.Required("--edits-file"), allowIncomplete: true);
+            schema = rendered.Payload;
+            editReport = rendered.Report;
+        }
+        else
+        {
+            // Managed snapshots may be named schema.bin, so only explicit imports use the filename reader.
+            if (args.Has("--source"))
+            {
+                var artifact = LocalImportReader.Read(source, requireAchievements: false);
+                if (artifact.AppId != appId) throw new IntegrityException("来源文件的 App ID 与目标不一致");
+                schema = artifact.Payload;
+            }
+            else schema = File.ReadAllBytes(source);
+        }
+        var report = TranslationJsonExport.Write(schema, appId, args.Value("--variant-id") ?? "default",
+            args.Required("--output"));
+        if (editReport is not null)
+            foreach (var field in new[] { "changed_names", "changed_descriptions", "changed_fields" })
+                report[field] = editReport[field]?.DeepClone();
+        _events.Emit(operation, "item-succeeded", report);
+        _events.Emit(operation, "completed", new JsonObject { ["count"] = 1, ["exit_code"] = 0 });
+        if (!_events.JsonLines) _output.WriteLine($"已导出翻译 JSON：{report["output"]}");
+        return 0;
+    }
 
     private void CaptureRevision(
         JsonObject report,

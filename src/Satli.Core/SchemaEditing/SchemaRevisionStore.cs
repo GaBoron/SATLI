@@ -77,10 +77,10 @@ public sealed class SchemaRevisionStore
         return Read(appId, commit);
     }
 
-    public IReadOnlyList<SchemaRevision> List(string appId)
+    public IReadOnlyList<SchemaRevision> List(string appId, bool importLegacy = true)
     {
         var indexPath = Path.Combine(Root, appId, "index.json");
-        if (!File.Exists(indexPath))
+        if (importLegacy && !File.Exists(indexPath))
         {
             ImportLegacyLooseObjects(appId);
         }
@@ -95,9 +95,9 @@ public sealed class SchemaRevisionStore
         catch (Exception exception) { throw new TransactionException($"无法读取修订索引：{exception.Message}", exception); }
     }
 
-    public SchemaRevision Get(string appId, string revision)
+    public SchemaRevision Get(string appId, string revision, bool importLegacy = true)
     {
-        var matches = List(appId).Where(item => item.Commit.StartsWith(revision, StringComparison.OrdinalIgnoreCase)).ToArray();
+        var matches = List(appId, importLegacy).Where(item => item.Commit.StartsWith(revision, StringComparison.OrdinalIgnoreCase)).ToArray();
         return matches.Length switch
         {
             1 => matches[0], 0 => throw new UsageException($"找不到修订：{revision}"),
@@ -110,7 +110,7 @@ public sealed class SchemaRevisionStore
         var ids = appId is not null ? [appId] : Directory.Exists(Root)
             ? Directory.EnumerateDirectories(Root).Select(Path.GetFileName).Where(value => value is not null).Cast<string>().ToArray()
             : [];
-        var revisions = ids.SelectMany(List).ToArray();
+        var revisions = ids.SelectMany(id => List(id)).ToArray();
         foreach (var revision in revisions)
         {
             var actual = Convert.ToHexString(SHA256.HashData(revision.Schema)).ToLowerInvariant();
@@ -120,11 +120,13 @@ public sealed class SchemaRevisionStore
         return new JsonObject { ["verified"] = revisions.Length, ["repository"] = Root };
     }
 
-    public SchemaRevision Export(string appId, string revision, string output, string format)
+    public SchemaRevision Export(string appId, string revision, string output, string format, string? variantId = null)
     {
-        var item = Get(appId, revision);
+        var item = Get(appId, revision, importLegacy: format != "json");
         if (format == "bin") FileOperations.WriteDurable(output, item.Schema);
         else if (format == "zip") SchemaEditor.WriteZip(output, $"UserGameStatsSchema_{appId}.bin", item.Schema);
+        else if (format == "json") TranslationJsonExport.Write(item.Schema, appId,
+            variantId ?? (string.IsNullOrWhiteSpace(item.VariantId) ? "default" : item.VariantId), output);
         else throw new UsageException($"不支持的导出格式：{format}");
         return item;
     }

@@ -43,7 +43,7 @@ public static partial class TranslationJson
             CheckUniqueKeys(document.RootElement);
             var root = document.RootElement;
             var version = root.GetProperty("version").GetInt32();
-            if (version is not (1 or 2) || !AppIdPattern().IsMatch(appId)
+            if (version is not (1 or 2) || !AppIdPattern().IsMatch(appId) || !uint.TryParse(appId, out _)
                 || root.GetProperty("app_id").GetString() != appId
                 || !VariantPattern().IsMatch(root.GetProperty("variant_id").GetString() ?? ""))
                 throw new IntegrityException("JSON 格式版本、App ID 或 Variant 无效");
@@ -60,17 +60,24 @@ public static partial class TranslationJson
             if (achievements.ValueKind != JsonValueKind.Object)
                 throw new IntegrityException("JSON 成就必须按 API name 索引");
             var count = 0;
+            var incompleteFields = 0;
+            var coverageErrors = new List<string>();
             foreach (var achievement in achievements.EnumerateObject())
             {
-                if (achievement.Name.Length == 0 || achievement.Name.EnumerateRunes().Count() > 512 || achievement.Name.Any(char.IsControl))
+                if (string.IsNullOrWhiteSpace(achievement.Name) || achievement.Name.EnumerateRunes().Count() > 512 || achievement.Name.Any(char.IsControl))
                     throw new IntegrityException("JSON 成就 API name 无效");
+                if (version == 2 && achievement.Value.EnumerateObject().Count() != 1)
+                    throw new IntegrityException("格式 2 成就只能包含 translations");
                 var translations = achievement.Value.GetProperty("translations");
                 if (version == 2 && (translations.EnumerateObject().Count() != languages.Count
                     || translations.EnumerateObject().Any(item => !languages.Contains(item.Name))))
                     throw new IntegrityException("JSON 包含未声明或遗漏的语言");
+                if (version == 2 && translations.EnumerateObject().Any(item => item.Value.EnumerateObject().Count() != 2))
+                    throw new IntegrityException("格式 2 译文只能包含 name 和 description");
                 foreach (var field in new[] { "name", "description" })
                 {
                     var populated = 0;
+                    var missing = new List<string>();
                     foreach (var language in languages)
                     {
                         var text = translations.GetProperty(language).GetProperty(field).GetString()
@@ -81,14 +88,23 @@ public static partial class TranslationJson
                         if (tooLong || text.Contains('\0'))
                             throw new IntegrityException("JSON 文本过长或含 NUL");
                         if (!string.IsNullOrWhiteSpace(text)) populated++;
+                        else missing.Add(language);
                     }
                     if (version == 2 && populated != 0 && populated != languages.Count)
-                        throw new IntegrityException("JSON 的名称或描述存在未完成的语言覆盖");
+                    {
+                        incompleteFields++;
+                        if (coverageErrors.Count < 20)
+                            coverageErrors.Add($"{achievement.Name} · {field}：缺少 {string.Join(", ", missing)}");
+                    }
                 }
                 count++;
             }
             if (count < 1 || count > (version == 1 ? 100000 : 10000))
                 throw new IntegrityException("JSON 成就数量无效");
+            if (incompleteFields > 0)
+                throw new IntegrityException($"JSON 校验未通过：{incompleteFields} 个字段的语言覆盖不完整，不能作为正式译本导出。\n"
+                    + string.Join("\n", coverageErrors)
+                    + (incompleteFields > coverageErrors.Count ? "\n仅显示前 20 项。" : ""));
             return JsonNode.Parse(payload)!.AsObject();
         }
         catch (Exception exception) when (exception is JsonException or InvalidOperationException
