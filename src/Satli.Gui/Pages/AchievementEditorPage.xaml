@@ -31,42 +31,47 @@
             </StackPanel>
         </Grid>
 
-        <CommandBar Grid.Row="1" DefaultLabelPosition="Right" IsDynamicOverflowEnabled="True">
-            <CommandBar.Content>
-                <StackPanel Orientation="Horizontal" Spacing="12">
-                    <AutoSuggestBox
-                        x:Name="SearchBox"
-                        Width="240"
-                        Header="搜索"
-                        Style="{StaticResource ToolbarSearchBoxStyle}"
-                        PlaceholderText="成就 ID 或文本"
-                        QueryIcon="Find"
-                        TextChanged="SearchBox_TextChanged" />
-                    <ComboBox
-                        x:Name="ReferenceLanguageBox"
-                        Width="170"
-                        Header="对照语言"
-                        Style="{StaticResource ToolbarComboBoxStyle}"
-                        DisplayMemberPath="DisplayName"
-                        SelectionChanged="ReferenceLanguageBox_SelectionChanged" />
-                    <ComboBox
-                        x:Name="TargetLanguageBox"
-                        Width="170"
-                        Header="目标语言"
-                        Style="{StaticResource ToolbarComboBoxStyle}"
-                        IsEditable="True"
-                        DisplayMemberPath="DisplayName"
-                        SelectionChanged="TargetLanguageBox_SelectionChanged"
-                        LostFocus="TargetLanguageBox_LostFocus" />
-                </StackPanel>
-            </CommandBar.Content>
-            <AppBarButton Icon="Save" Label="保存到本机" Click="Save_Click" />
-            <AppBarButton Icon="Send" Label="发送到 SATLI-lite" Click="SendLite_Click" />
-            <AppBarButton Icon="Download" Label="导出翻译 JSON" Click="ExportJson_Click" />
-            <AppBarButton Icon="Download" Label="导出 BIN" Click="ExportBin_Click" />
-            <AppBarButton Icon="Folder" Label="导出投稿 ZIP" Click="ExportZip_Click" />
-            <AppBarButton Icon="Clock" Label="修订历史" Click="History_Click" />
-        </CommandBar>
+        <!-- Headered filters must not stretch the CommandBar's overflow button between open and closed states. -->
+        <Grid Grid.Row="1" ColumnSpacing="12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <StackPanel Orientation="Horizontal" Spacing="12">
+                <AutoSuggestBox
+                    x:Name="SearchBox"
+                    Width="240"
+                    Header="搜索"
+                    Style="{StaticResource ToolbarSearchBoxStyle}"
+                    PlaceholderText="成就 ID 或文本"
+                    QueryIcon="Find"
+                    TextChanged="SearchBox_TextChanged" />
+                <ComboBox
+                    x:Name="ReferenceLanguageBox"
+                    Width="170"
+                    Header="对照语言"
+                    Style="{StaticResource ToolbarComboBoxStyle}"
+                    DisplayMemberPath="DisplayName"
+                    SelectionChanged="ReferenceLanguageBox_SelectionChanged" />
+                <ComboBox
+                    x:Name="TargetLanguageBox"
+                    Width="170"
+                    Header="目标语言"
+                    Style="{StaticResource ToolbarComboBoxStyle}"
+                    IsEditable="True"
+                    DisplayMemberPath="DisplayName"
+                    SelectionChanged="TargetLanguageBox_SelectionChanged"
+                    LostFocus="TargetLanguageBox_LostFocus" />
+            </StackPanel>
+            <CommandBar Grid.Column="1" VerticalAlignment="Bottom" DefaultLabelPosition="Right" IsDynamicOverflowEnabled="True">
+                <AppBarButton Icon="Save" Label="保存到本机" Click="Save_Click" />
+                <AppBarButton Icon="Send" Label="发送到 SATLI-lite" Click="SendLite_Click" />
+                <AppBarButton Icon="Download" Label="导出翻译 JSON" Click="ExportJson_Click" />
+                <AppBarButton Icon="Download" Label="导出 BIN" Click="ExportBin_Click" />
+                <AppBarButton Icon="Folder" Label="导出投稿 ZIP" Click="ExportZip_Click" />
+                <AppBarButton Icon="Clock" Label="修订历史" Click="History_Click" />
+            </CommandBar>
+        </Grid>
 
         <ProgressBar Grid.Row="2" x:Name="BusyProgress" IsIndeterminate="True" />
 
