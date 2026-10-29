@@ -81,6 +81,7 @@
                                             <MenuFlyoutItem Text="修改历史" Click="History_Click" Tag="{x:Bind Game}">
                                                 <MenuFlyoutItem.Icon><SymbolIcon Symbol="Clock" /></MenuFlyoutItem.Icon>
                                             </MenuFlyoutItem>
+                                            <MenuFlyoutItem Text="导出翻译 JSON" Click="ExportJson_Click" Tag="{x:Bind Game}" IsEnabled="{x:Bind Game.CanViewInstalledTranslation}" />
                                             <MenuFlyoutSeparator />
                                             <MenuFlyoutItem Text="{x:Bind Game.ProtectionActionText, Mode=OneWay}" Click="Protection_Click" Tag="{x:Bind Game}" IsEnabled="{x:Bind Game.CanToggleProtection}">
                                                 <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE72E;" /></MenuFlyoutItem.Icon>

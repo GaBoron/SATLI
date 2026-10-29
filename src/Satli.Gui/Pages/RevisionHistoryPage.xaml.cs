@@ -136,6 +136,14 @@ public sealed partial class RevisionHistoryPage : Page
         });
     }
 
+    private async void ExportJson_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button { Tag: SchemaRevisionItem revision } || _game is null) return;
+        await RunBusyAsync(() => TranslationJsonExportService.ExportAsync(XamlRoot,
+            _game.AppId, revision.VariantId,
+            ["schema", "revisions", "export", _game.AppId, revision.Commit]));
+    }
+
     private async void Activate_Click(object sender, RoutedEventArgs e)
     {
         if (sender is not Button { Tag: SchemaRevisionItem revision }

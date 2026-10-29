@@ -1,12 +1,13 @@
 using System.Diagnostics;
 using System.Security.Cryptography;
+using Satli.Core.Formats;
 using Satli_Gui.Models;
 using Windows.System;
 
 namespace Satli_Gui.Services;
 
 public sealed record ContributionDraft(
-    string ZipPath,
+    string AttachmentPath,
     Uri IssueFormUri,
     bool IsUpdate,
     string Languages,
@@ -14,30 +15,42 @@ public sealed record ContributionDraft(
 
 public sealed class ContributionWorkflowService
 {
+    public Task<ContributionDraft> PrepareAsync(GameItem game, SchemaEditResult result) =>
+        Task.Run(() => Prepare(game, result));
+
     public ContributionDraft Prepare(GameItem game, SchemaEditResult result)
     {
         if (string.IsNullOrWhiteSpace(result.Output))
         {
-            throw new InvalidDataException("投稿 ZIP 路径为空。");
+            throw new InvalidDataException("投稿附件路径为空。");
         }
-        var zipPath = Path.GetFullPath(result.Output);
-        var expectedName = $"UserGameStatsSchema_{game.AppId}.zip";
-        if (!Path.GetFileName(zipPath).Equals(expectedName, StringComparison.OrdinalIgnoreCase))
+        var attachmentPath = Path.GetFullPath(result.Output);
+        var isJson = Path.GetExtension(attachmentPath).Equals(".json", StringComparison.OrdinalIgnoreCase);
+        var expectedName = $"UserGameStatsSchema_{game.AppId}.{(isJson ? "json" : "zip")}";
+        if (!Path.GetFileName(attachmentPath).Equals(expectedName, StringComparison.OrdinalIgnoreCase))
         {
             throw new InvalidDataException($"投稿文件必须命名为 {expectedName}。");
         }
-        if (!File.Exists(zipPath))
+        if (!File.Exists(attachmentPath))
         {
-            throw new FileNotFoundException("找不到刚导出的投稿 ZIP。", zipPath);
+            throw new FileNotFoundException("找不到刚导出的投稿附件。", attachmentPath);
         }
 
-        var schema = SchemaZipArchive.ReadSingleSchema(zipPath, game.AppId);
+        if (isJson && new FileInfo(attachmentPath).Length > TranslationJson.MaximumBytes)
+            throw new InvalidDataException("投稿 JSON 超过 32 MiB 限制。");
+        var schema = isJson ? File.ReadAllBytes(attachmentPath)
+            : SchemaZipArchive.ReadSingleSchema(attachmentPath, game.AppId);
         var schemaSha256 = Convert.ToHexString(SHA256.HashData(schema)).ToLowerInvariant();
         if (!schemaSha256.Equals(result.OutputSha256, StringComparison.OrdinalIgnoreCase))
         {
-            throw new InvalidDataException("投稿 ZIP 内 schema 的 SHA-256 与导出结果不一致。");
+            throw new InvalidDataException("投稿附件内容与导出结果不一致。");
         }
-        var languages = (result.SubmissionLanguages ?? result.CompleteLanguages ?? [])
+        var json = isJson ? TranslationJson.Parse(schema, game.AppId) : null;
+        if (json is not null && json["version"]!.GetValue<int>() != 2)
+            throw new InvalidDataException("独立投稿必须使用格式 2 JSON。");
+        var languages = (json is not null
+                ? json["languages"]!.AsArray().Select(item => item!.GetValue<string>())
+                : result.SubmissionLanguages ?? result.CompleteLanguages ?? [])
             .Where(value => !string.IsNullOrWhiteSpace(value))
             .Select(value => value.Trim().ToLowerInvariant())
             .Distinct(StringComparer.OrdinalIgnoreCase)
@@ -65,13 +78,17 @@ public sealed class ContributionWorkflowService
         if (isUpdate)
         {
             fields["update_summary"] = summary;
-            if (game.Variants.Count > 1 && !string.IsNullOrWhiteSpace(game.SelectedVariantId))
+            if (json is not null)
+            {
+                fields["variant_id"] = json["variant_id"]!.GetValue<string>();
+            }
+            else if (game.Variants.Count > 1 && !string.IsNullOrWhiteSpace(game.SelectedVariantId))
             {
                 fields["variant_id"] = game.SelectedVariantId;
             }
         }
         return new ContributionDraft(
-            zipPath,
+            attachmentPath,
             GitHubIssueFormUriBuilder.Build(template, title, fields),
             isUpdate,
             string.Join(", ", languages),
@@ -85,7 +102,7 @@ public sealed class ContributionWorkflowService
             throw new InvalidOperationException("系统未能打开 GitHub 投稿表单。");
         }
         var startInfo = new ProcessStartInfo("explorer.exe") { UseShellExecute = true };
-        startInfo.ArgumentList.Add($"/select,{draft.ZipPath}");
+        startInfo.ArgumentList.Add($"/select,{draft.AttachmentPath}");
         Process.Start(startInfo);
     }
 }

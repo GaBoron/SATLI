@@ -116,6 +116,29 @@ public sealed partial class LocalGamesPage : Page
         finally { _isImporting = false; }
     }
 
+    private async void ExportJson_Click(object sender, RoutedEventArgs e)
+    {
+        if (_isImporting) return;
+        _isImporting = true;
+        try
+        {
+            var source = await PickImportSourceAsync();
+            if (source is null)
+            {
+                await App.Logs.WriteAsync("信息", "翻译 JSON", "用户取消选择 BIN/ZIP 来源。");
+                return;
+            }
+            var artifact = await Task.Run(() => Satli.Core.Imports.LocalImportReader.Read(source, requireAchievements: false));
+            await TranslationJsonExportService.ExportAsync(XamlRoot, artifact.AppId, "default",
+                ["schema", "export", artifact.AppId, "--source", source]);
+        }
+        catch (Exception exception)
+        {
+            await TranslationJsonExportService.ReportFailureAsync(exception);
+        }
+        finally { _isImporting = false; }
+    }
+
     private void Edit_Click(object sender, RoutedEventArgs e)
     {
         if (sender is Button { Tag: GameItem game })

@@ -168,7 +168,7 @@
                         </Grid.ColumnDefinitions>
                         <StackPanel VerticalAlignment="Center" Spacing="3">
                             <TextBlock Text="记录运行日志" Style="{StaticResource BodyStrongTextBlockStyle}" />
-                            <TextBlock Text="记录启动与设置、扫描与缓存、安装与恢复、本地编辑、草稿、修订、导出、Steam 进程保护、网络与更新、GitHub 表单和异常；不记录凭据或成就文件正文。" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
+                            <TextBlock Text="记录启动与设置、扫描与缓存、安装与恢复、本地编辑、草稿、修订、BIN/ZIP/JSON 导出、Steam 进程保护、网络与更新、GitHub 表单和异常；不记录凭据或成就文件正文。" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
                         </StackPanel>
                         <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
                             <TextBlock x:Name="LoggingStateText" Style="{StaticResource SettingsToggleStateTextStyle}" />

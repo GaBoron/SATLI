@@ -72,7 +72,8 @@ public sealed class SchemaEditorService
         IReadOnlyList<AchievementEditorRow> rows,
         bool allowIncomplete,
         string format,
-        string output) =>
+        string output,
+        string? variantId = null) =>
         RunEditCommandAsync(
             inspection,
             targetLanguage,
@@ -82,10 +83,11 @@ public sealed class SchemaEditorService
                 "--format", format,
                 "--output", output,
                 "--game-name", inspection.GameName,
-                "--variant-id", inspection.VariantId,
+                "--variant-id", variantId ?? inspection.VariantId,
                 "--jsonl",
             ],
-            allowIncomplete);
+            allowIncomplete,
+            runInBackground: format == "json");
 
     public Task<SchemaEditResult> RecordDraftAsync(
         SchemaInspection inspection,
@@ -120,7 +122,8 @@ public sealed class SchemaEditorService
         string targetLanguage,
         IReadOnlyList<AchievementEditorRow> rows,
         List<string> arguments,
-        bool allowIncomplete)
+        bool allowIncomplete,
+        bool runInBackground = false)
     {
         var temporary = Path.Combine(
             Path.GetTempPath(),
@@ -150,12 +153,14 @@ public sealed class SchemaEditorService
             {
                 arguments.Add("--allow-incomplete");
             }
-            var result = await RunAsync(arguments);
+            var result = runInBackground
+                ? await Task.Run(() => RunAsync(arguments))
+                : await RunAsync(arguments);
             return ParseResult(RequiredPayload(result, "item-succeeded"));
         }
         finally
         {
-            File.Delete(temporary);
+            Satli.Core.FileSystem.RecycleBin.FileIfExists(temporary);
         }
     }
 

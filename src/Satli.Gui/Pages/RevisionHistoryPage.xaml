@@ -51,6 +51,7 @@
                             <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
                                 <Button Content="预览" Click="Preview_Click" Tag="{x:Bind}" IsEnabled="{x:Bind CanPreview}" />
                                 <Button Content="导出" Click="Export_Click" Tag="{x:Bind}" IsEnabled="{x:Bind CanPreview}" />
+                                <Button Content="导出 JSON" Click="ExportJson_Click" Tag="{x:Bind}" IsEnabled="{x:Bind CanPreview}" />
                                 <Button Content="设为当前" Click="Activate_Click" Tag="{x:Bind}" IsEnabled="{x:Bind CanActivate}" />
                             </StackPanel>
                         </Grid>

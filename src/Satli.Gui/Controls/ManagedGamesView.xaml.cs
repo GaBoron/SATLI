@@ -143,6 +143,18 @@ public sealed partial class ManagedGamesView : UserControl
         }
     }
 
+    private async void ExportJson_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not MenuFlyoutItem { Tag: GameItem game } item) return;
+        item.IsEnabled = false;
+        try
+        {
+            await TranslationJsonExportService.ExportAsync(XamlRoot, game.AppId,
+                game.InstalledVariantId, ["schema", "export", game.AppId, "--managed"]);
+        }
+        finally { item.IsEnabled = game.CanViewInstalledTranslation; }
+    }
+
     private async void RestoreItem_Click(object sender, RoutedEventArgs e)
     {
         if (sender is FrameworkElement { Tag: GameItem game } && game.CanRestore)

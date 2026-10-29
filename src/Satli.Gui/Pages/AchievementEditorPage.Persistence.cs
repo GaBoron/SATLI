@@ -7,6 +7,40 @@ namespace Satli_Gui.Pages;
 
 public sealed partial class AchievementEditorPage
 {
+    private async void ExportJson_Click(object sender, RoutedEventArgs e)
+    {
+        if (_inspection is null || _isBusy) return;
+        await RunBusyAsync(async () =>
+        {
+            SchemaEditResult result;
+            try
+            {
+                var destination = await TranslationJsonExportService.PickAsync(XamlRoot,
+                    _inspection.AppId, _inspection.VariantId);
+                if (destination is null) return;
+                result = await _editor.ExportAsync(_inspection, _targetLanguage,
+                    _inspection.Rows, true, "json", destination.Output, destination.VariantId);
+                await TranslationJsonExportService.LogCompletedAsync(_inspection.AppId, destination);
+                App.ViewModel.ShowInfo($"已导出翻译 JSON：{result.Output}", InfoBarSeverity.Success);
+            }
+            catch (Exception exception)
+            {
+                await TranslationJsonExportService.ReportFailureAsync(exception);
+                return;
+            }
+            try
+            {
+                await OfferContributionAsync(result);
+            }
+            catch (Exception exception)
+            {
+                App.ViewModel.ShowInfo($"JSON 已导出，但投稿准备未完成：{exception.Message}", InfoBarSeverity.Warning);
+                await App.Logs.WriteAsync("警告", "翻译投稿", "JSON 导出成功，但投稿准备或打开表单失败。");
+                await App.Logs.WriteAsync("详细", "翻译投稿", $"异常类型={exception.GetType().Name}。", detailed: true);
+            }
+        });
+    }
+
     private async void SendLite_Click(object sender, RoutedEventArgs e)
     {
         if (_inspection is null || _game is null || !await ConfirmIncompleteAsync("发送到 SATLI-lite")) return;
@@ -136,16 +170,18 @@ public sealed partial class AchievementEditorPage
 
     private async Task OfferContributionAsync(SchemaEditResult result)
     {
-        var draft = _contributions.Prepare(_game!, result);
+        var draft = await _contributions.PrepareAsync(_game!, result);
+        var attachmentType = Path.GetExtension(draft.AttachmentPath).Equals(".json", StringComparison.OrdinalIgnoreCase)
+            ? "JSON" : "ZIP";
         var dialog = new ContentDialog
         {
             XamlRoot = XamlRoot,
             Title = "投稿到社区",
-            Content = $"ZIP 已完成结构、语言字段和 SHA-256 校验。\n\n"
+            Content = $"{attachmentType} 已完成结构、语言字段和完整性校验。\n\n"
                 + $"类型：{(draft.IsUpdate ? "更新已有译本" : "新译本投稿")}\n"
                 + $"检测到的语言：{draft.Languages}\n"
                 + $"摘要：{draft.Summary}\n\n"
-                + "打开表单后，请把资源管理器中选中的 ZIP 拖入附件区域，并由你确认提交。",
+                + $"打开表单后，请把资源管理器中选中的 {attachmentType} 拖入附件区域，并由你确认提交。",
             PrimaryButtonText = "打开投稿表单",
             CloseButtonText = "稍后投稿",
             DefaultButton = ContentDialogButton.Primary,
@@ -159,7 +195,7 @@ public sealed partial class AchievementEditorPage
                 "翻译投稿",
                 $"投稿已准备。App ID={_game!.AppId}；游戏={_game.GameName}；" +
                 $"类型={(draft.IsUpdate ? "更新" : "新投稿")}；语言={draft.Languages}；" +
-                $"文件={Path.GetFileName(draft.ZipPath)}。",
+                $"文件={Path.GetFileName(draft.AttachmentPath)}。",
                 detailed: true);
         }
         else

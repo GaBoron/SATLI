@@ -111,6 +111,7 @@ BIN 转换保留源文件标识与各语言文本，缺失文本保留为空；�
 - 允许保存不完整翻译，但会明确提示缺失项。
 - 保存前会再次检查源文件、成就集合和文本内容。
 - 可导出校验后的 BIN，或根目录仅含该 BIN 的标准投稿 ZIP。
+- “导出翻译 JSON”可直接导出当前编辑结果或已恢复的草稿，无需先“保存到本机”。导出会重新核对源文件，并保留原有语言；JSON 导出本身不会写回 Steam、创建备份或记录新修订。
 
 写回本机前必须完全退出 Steam。连续编辑可恢复最近几次修改。
 
@@ -135,13 +136,28 @@ BIN 转换保留源文件标识与各语言文本，缺失文本保留为空；�
 
 管理器不会修改所选源文件。确认预览后，它会使用与社区译本相同的备份、安装与恢复流程。
 
+### 独立导出翻译 JSON
+
+以下入口使用同一套翻译库格式 2 校验：
+
+- 编辑页的“导出翻译 JSON”：包括当前尚未写回 BIN 的编辑内容。
+- “本地”页的“文件导出为 JSON”：从规范命名的 BIN/ZIP 转换，无需先安装文件，也不要求本机存在该游戏的 Steam 缓存。
+- 已管理 BIN 译本的“更多 → 导出翻译 JSON”：使用经完整性校验的管理译文；本机 BIN 被修改时优先使用可信快照，找不到可信来源时停止。
+- 修订历史的“导出 JSON”：使用所选修订内容，不激活该修订。
+
+选择保存位置前可明确填写 `variant_id`。它表示译本版本，与目标语言无关；默认使用当前记录的版本，未记录时为 `default`。文件名必须为 `UserGameStatsSchema_<app_id>.json`。
+
+导出保留全部可用语言，不自动补译或丢弃缺失语言。每项成就的名称与描述分别检查：该字段在所有声明语言中都有内容，或在所有语言中全部为空。若只有部分语言缺失，导出会停止并报告对应成就 API name、字段与缺失语言，请补齐后重试。未通过校验的内容不会覆盖已有导出文件。
+
+JSON 使用 UTF-8、LF 和结尾换行；相同内容与版本 ID 可重复生成相同字节。独立格式 2 仅含显示文本，不含 `source_sha256`，不能取代完整 Steam BIN，也不包含解锁状态、进度或图标。BIN 和 ZIP 导出继续保留。
+
 ### 请求或贡献翻译
 
 没有云端译本时，可在搜索页点击“未找到游戏？”。本地游戏的成就 schema 能正常读取、没有简体或繁体中文且翻译库也未收录时，游戏卡片还会直接显示“请求翻译”。
 
 填写目标语言和可选备注后，应用会导出并校验原始 schema ZIP，只自动填写 GitHub 翻译请愿中已经确定的游戏名、App ID、目标语言和备注，并在资源管理器中选中 ZIP。应用不会自动上传文件或提交 Issue；请把选中的 ZIP 拖到网页表单的上传区域，检查内容后自行提交。
 
-如果已经完成翻译，可从编辑页或投稿流程导出标准 ZIP，再提交到翻译库。ZIP 根目录只能包含一个 `UserGameStatsSchema_<app_id>.bin`。
+如果已经完成翻译，可从编辑页导出独立 JSON 或标准 ZIP，并在导出后选择打开新投稿或更新投稿表单。JSON 会再次核对格式、语言覆盖和附件内容，并按文件中的 `variant_id` 填写更新版本。请自行上传附件、检查表单并确认提交；应用不会自动投稿。ZIP 根目录只能包含一个 `UserGameStatsSchema_<app_id>.bin`。完整规范见翻译库的[翻译 JSON 格式](https://github.com/GaBoron/steam-achievement-translation-library/blob/main/docs/translation-json.md)。
 
 导出不会修改 Steam 文件。找不到原始文件时，请先启动对应游戏，让 Steam 生成一次成就缓存。
 
@@ -170,6 +186,18 @@ dotnet run --project src/Satli.Cli.Host -- lite resume 570 --steam-dir '<Steam�
 `lite-install` 的 `already_installed: true` 表示原样保留已有安装，没有重新下载或校验现有包；首次安装仍需联网。`lite retire-legacy` 要求已退出 Steam，只回收旧插件安装包，不清理任何译文或快照。
 
 导入来源三选一：`--source FILE`、`--catalog --variant ID` 或 `--managed`（哈希验证的已管理 BIN 快照）。导入前可用 `--dry-run --preview-content` 校验并预览。默认拒绝覆盖；只有查询后确认覆盖时，才提供 `--replace-revision REVISION --yes`，含本地编辑还需 `--allow-local-edits`。状态变化导致 `STALE_REVISION` 时必须重新查询和确认。`status` 在已有待处理请求时只刷新原请求，避免重复导入；`resume` 不会新建查询。退出码 0 也可能只是排队成功，必须检查返回的 `state`、`pending`、`succeeded` 和 `app.effective_enabled`；这些都不代表 Steam 页面渲染验收。
+
+独立 JSON 导出也可从源码调用：
+
+```powershell
+dotnet run --project src/Satli.Cli.Host -- schema export 570 --source '<BIN或ZIP路径>' --format json --variant-id default --output '<输出目录>\UserGameStatsSchema_570.json' --jsonl
+
+dotnet run --project src/Satli.Cli.Host -- schema export 570 --edits-file '<编辑数据JSON>' --target-language schinese --steam-dir '<Steam目录>' --format json --variant-id default --output '<输出目录>\UserGameStatsSchema_570.json' --jsonl
+
+dotnet run --project src/Satli.Cli.Host -- schema revisions export 570 '<修订ID>' --data-dir '<SATLI数据目录>' --format json --variant-id default --output '<输出目录>\UserGameStatsSchema_570.json' --jsonl
+```
+
+不指定 `--source` 时读取本机 BIN；加 `--managed` 则读取可信管理译文。`--source` 与 `--managed` 互斥。编辑数据仍使用编辑器现有的 version 1 结构，包含 `app_id`、真实 `source_sha256`、`target_language` 和按 `api_name` 对应的 `rows`；导出前检查源文件一致性。`--allow-incomplete` 不会绕过 JSON 的正式译文覆盖校验。JSON 导出不要求 `--yes`，不会创建修订；原有 BIN/ZIP 导出行为不变。
 
 ## 软件更新与网络
 
