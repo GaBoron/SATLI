@@ -94,3 +94,6 @@ scripts/StoreMsixPackage.psm1
 .DS_Store
 Thumbs.db
 Desktop.ini
+
+# Other files and directories to ignore
+tests/
