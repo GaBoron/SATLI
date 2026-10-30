@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128"
+     viewBox="0 0 32 32" role="img" aria-labelledby="title desc">
+  <title id="title">SATLI</title>
+  <desc id="desc">小尺寸光学校正：保留奖杯、Steam 连杆和“文”字，减少细线。</desc>
+  <path fill="#1374FC" d="M8 1.5 H24 C28 1.5 30.5 4 30.5 8 V24
+    C30.5 28 28 30.5 24 30.5 H8 C4 30.5 1.5 28 1.5 24 V8 C1.5 4 4 1.5 8 1.5 Z"/>
+  <path fill="#FFFFFF" fill-rule="evenodd" d="M9 7 H23 V9 H26 V12
+    C26 16 24 18 21 18 C20 20 18 21 17 21 V24 H20 V26 H10 V24 H13 V21
+    C11 20 9 19 8 17 C5 16 4 14 4 11 V9 H9 Z
+    M6 11 V12 C6 14 7 15 9 15 V11 Z
+    M23 11 V15 C24 14 24 13 24 11 Z"/>
+  <path fill="#1374FC" d="M10 14 L13 15 L18 9 L21 12 L15 18 L12 17 L9 16 Z"/>
+  <circle cx="19" cy="11" r="3" fill="#1374FC"/>
+  <circle cx="19" cy="11" r="1.5" fill="#FFFFFF"/>
+  <circle cx="13" cy="16" r="2" fill="#1374FC"/>
+  <circle cx="24" cy="23" r="6" fill="#C0DDFD"/>
+  <path fill="#085DD1" d="M23 18 H25 V20 H28 V22 H27
+    C26.5 23.5 26 24.5 25.5 25 L28 26 L27 28
+    C25.5 27.5 24.5 27 24 26.5 C23 27 22 27.5 20 28 L19.5 26
+    C21 25.5 22 25 22.5 24.5 C22 24 21.5 23 21 22 H20 V20 H23 Z
+    M23 22 C23.3 22.6 23.6 23.2 24 23.5 C24.4 23.1 24.7 22.5 25 22 Z"/>
+</svg>

@@ -25,6 +25,17 @@ public sealed partial class SettingsPage : Page
         Loaded += SettingsPage_Loaded;
     }
 
+    private void AboutIcon_ImageOpened(object sender, RoutedEventArgs e)
+    {
+        _ = App.Logs.WriteAsync("详细", "界面资源", "关于图标已加载：AppIcon.preview.png。", detailed: true);
+    }
+
+    private void AboutIcon_ImageFailed(object sender, ExceptionRoutedEventArgs e)
+    {
+        _ = App.Logs.WriteAsync("警告", "界面资源", "关于图标加载失败：AppIcon.preview.png。");
+        _ = App.Logs.WriteAsync("调试", "界面资源", e.ErrorMessage, debug: true);
+    }
+
     private void SettingsPage_Loaded(object sender, RoutedEventArgs e)
     {
         _isInitializing = true;
@@ -253,7 +264,7 @@ public sealed partial class SettingsPage : Page
         var level = (LogLevelBox.SelectedItem as ComboBoxItem)?.Tag?.ToString();
         LogLevelDescriptionText.Text = level switch
         {
-            "detailed" => "包含基础日志，并增加 App ID、游戏名、语言、数量、文件名、逐项事件、后台预加载与并行准备耗时和异常类型，适合排查具体项目。",
+            "detailed" => "包含基础日志，并增加 App ID、游戏名、语言、数量、文件名、界面资源加载结果、逐项事件、后台预加载与并行准备耗时和异常类型，适合排查具体项目。",
             "debug" => "包含详细日志，并记录参数、CLI 事件摘要、标准错误、耗时、完整路径、异常堆栈和运行环境；不记录译文正文，重启后自动恢复为“详细”。",
             _ => "记录各功能的关键开始与结果、用户取消、警告和错误摘要，包括 JSON 校验、本地译文发送、lite 安装与旧桥迁移、连接及请求结果；不记录译文正文。",
         };

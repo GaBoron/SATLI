@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024"
+     viewBox="125 126 1000 1000" role="img" aria-labelledby="title desc">
+  <title id="title">SATLI</title>
+  <desc id="desc">蓝色圆角底上的 Steam 成就奖杯与文 A 翻译徽章。</desc>
+  <!-- Keep a transparent safety margin around the complete, centered silhouette. -->
+  <path id="background" fill="#1374FC" d="
+    M373 177 H875 C986 177 1075 267 1075 379 V872
+    C1075 985 985 1074 873 1074 H374
+    C263 1074 175 984 175 872 V380 C175 267 262 177 373 177 Z"/>
+  <path id="trophy" fill="#FFFFFF" fill-rule="evenodd" d="
+    M413 358 H801 C814 358 823 369 823 382 V416
+    H886 C906 416 921 431 921 451 V480
+    C921 542 900 583 854 614 C836 626 817 636 793 643
+    C768 696 724 729 650 747 L630 748
+    C623 748 619 753 619 761 V790 C619 805 629 815 646 815
+    C688 815 721 842 730 883 C732 894 725 900 716 900
+    H441 C432 900 426 894 429 883 C437 842 468 815 513 815
+    C531 815 541 805 541 790 V739 C487 720 456 687 434 643
+    C344 631 293 566 293 475 V449 C293 429 309 416 327 416
+    H392 V384 C392 368 400 358 413 358 Z
+    M342 467 H392 C394 511 399 554 412 587 C366 569 342 527 342 467 Z
+    M823 467 H872 V479 C872 527 846 567 801 587 C815 553 821 510 823 467 Z"/>
+  <path id="steam-connector" fill="#1374FC" d="
+    M686 429 C724 429 754 459 754 496 C754 534 725 564 686 564 H681
+    L626 608 C625 639 600 663 572 663 C544 663 527 646 523 614 L478 596
+    C465 591 461 584 462 573 C463 559 473 550 486 550 H500 L542 567
+    C552 559 563 555 575 555 L619 500 C617 461 648 429 686 429 Z"/>
+  <circle id="steam-ring-outer" cx="686.5" cy="496.5" r="41.5" fill="#FFFFFF"/>
+  <circle id="steam-ring-inner" cx="686.5" cy="496.5" r="29" fill="#1374FC"/>
+  <path id="steam-lever-arc" fill="none" stroke="#FFFFFF" stroke-width="10"
+        stroke-linecap="round" stroke-linejoin="round" d="
+    M576 574 C594 578 606 595 604 611 C602 626 590 637 574 638
+    C564 638 554 633 550 629"/>
+  <circle id="language-background" cx="812" cy="773" r="166" fill="#C0DDFD"/>
+  <!-- Outlined glyphs keep the mark independent of installed fonts. -->
+  <path id="han-glyph" fill="#085DD1" d="
+    M779 676 H789 C795 676 798 681 798 687 V702
+    H852 C859 702 862 706 862 712 V720 C862 726 858 729 852 729 H837
+    C830 751 818 773 802 792 L818 801 C822 804 822 807 819 813 L814 827
+    C811 830 808 829 804 826 L784 811 C766 825 746 835 723 843
+    C718 845 715 841 713 837 L709 827 C707 821 710 819 715 817
+    C732 812 748 803 763 792 C753 780 746 769 740 756
+    C738 752 738 749 742 746 L753 740 C758 738 761 741 764 746
+    C770 757 776 765 784 772 C795 757 804 742 809 729 H713
+    C708 729 704 725 704 720 V711 C704 706 708 702 713 702 H770 V685
+    C770 680 773 676 779 676 Z"/>
+  <path id="latin-a" fill="#085DD1" fill-rule="evenodd" d="
+    M858 751 H882 L931 867 H904 L893 842 H847 L836 868 H808 Z
+    M870 787 L857 818 H883 Z"/>
+</svg>

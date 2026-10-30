@@ -30,7 +30,14 @@
 
   <ItemGroup>
     <Content Include="Assets\AppIcon.ico" />
+    <Content Remove="Assets\AppIcon*.source.*" />
   </ItemGroup>
+
+  <Target Name="GenerateApplicationIcons" BeforeTargets="PrepareForBuild"
+          Inputs="$(MSBuildProjectDirectory)\Assets\AppIcon.source.svg;$(MSBuildProjectDirectory)\Assets\AppIcon.small.source.svg;$(MSBuildProjectDirectory)\..\..\scripts\generate_app_icon.ps1"
+          Outputs="$(MSBuildProjectDirectory)\Assets\AppIcon.source.png;$(MSBuildProjectDirectory)\Assets\AppIcon.small.source.png;$(MSBuildProjectDirectory)\Assets\AppIcon.preview.png;$(MSBuildProjectDirectory)\Assets\AppIcon.ico">
+    <Exec Command="powershell.exe -NoProfile -File &quot;$(MSBuildProjectDirectory)\..\..\scripts\generate_app_icon.ps1&quot;" />
+  </Target>
 
   <ItemGroup>
     <Content Update="Assets\AppIcon.ico">
@@ -38,8 +45,8 @@
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
     </Content>
     <Content Update="Assets\AppIcon.preview.png">
-      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-      <CopyToPublishDirectory>Never</CopyToPublishDirectory>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
     </Content>
   </ItemGroup>
 
