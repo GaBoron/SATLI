@@ -67,12 +67,13 @@ public sealed partial class AchievementEditorPage
                 if (requested.Length > 0)
                 {
                     using var cancel = new CancellationTokenSource();
-                    using var progressContent = new AiGenerationProgress(requested.Length);
+                    using var progressContent = new AiGenerationProgress(requested.Length, XamlRoot.Size.Height);
                     var progressDialog = new ContentDialog
                     {
                         XamlRoot = XamlRoot, Title = "正在生成 AI 参考译文", Content = progressContent,
                         CloseButtonText = "取消并保留已完成结果",
                     };
+                    SizeAiDialog(progressDialog);
                     progressDialog.CloseButtonClick += (_, args) => { args.Cancel = true; cancel.Cancel(); };
                     var visible = progressDialog.ShowAsync();
                     await App.Logs.WriteAsync("信息", "AI 翻译", $"开始生成。App ID={_inspection.AppId}；目标语言={_targetLanguage}；项目={requested.Length}。");
@@ -124,7 +125,7 @@ public sealed partial class AchievementEditorPage
     private async Task PreviewAiAsync(Dictionary<string, AchievementTranslation> proposals, Dictionary<string, string> errors,
         IReadOnlyList<AiReference> references)
     {
-        var list = new ListView { SelectionMode = ListViewSelectionMode.Multiple, Height = 360, MaxWidth = 680,
+        var list = new ListView { SelectionMode = ListViewSelectionMode.Multiple, Height = 360,
             ItemTemplate = (DataTemplate)Resources["AiPreviewTemplate"] };
         list.ItemsSource = _inspection!.Rows.Where(row => proposals.ContainsKey(row.ApiName)).Select(row =>
         {
@@ -169,6 +170,7 @@ public sealed partial class AchievementEditorPage
             SecondaryButtonText = proposals.Count > 0 ? "覆盖选中项" : "", CloseButtonText = "保留待审，暂不填充",
             DefaultButton = ContentDialogButton.Close,
         };
+        SizeAiDialog(dialog);
         dialog.SecondaryButtonClick += (_, args) => { if (list.SelectedItems.Count == 0) args.Cancel = true; };
         var result = await dialog.ShowAsync();
         if (result == ContentDialogResult.None) return;
@@ -193,5 +195,13 @@ public sealed partial class AchievementEditorPage
         await SaveDraftCheckpointAsync(recordHistory: false);
         _isBusy = true;
         UpdateStatus();
+    }
+
+    private void SizeAiDialog(ContentDialog dialog)
+    {
+        var width = Math.Clamp(XamlRoot.Size.Width - 64, 280, 900);
+        dialog.Resources["ContentDialogMinWidth"] = width;
+        dialog.Resources["ContentDialogMaxWidth"] = width;
+        dialog.Resources["ContentDialogMaxHeight"] = Math.Max(280, XamlRoot.Size.Height - 64);
     }
 }

@@ -15,16 +15,19 @@ internal sealed class AiGenerationProgress : StackPanel, IDisposable
     private readonly TextBlock _stageText = new() { TextWrapping = TextWrapping.Wrap };
     private readonly TextBlock _countsText = new() { TextWrapping = TextWrapping.Wrap };
     private readonly TextBlock _clockText = new() { TextWrapping = TextWrapping.Wrap };
-    private readonly TextBox _summaryText = new()
+    private readonly TextBlock _summaryText = new()
     {
-        Header = "服务提供的思考过程 / 摘要",
-        IsReadOnly = true,
+        IsTextSelectionEnabled = true,
         TextWrapping = TextWrapping.Wrap,
-        AcceptsReturn = true,
-        Height = 150,
-        MaxWidth = 620,
         Text = "等待服务返回思考文本或摘要；部分接口或模型不提供。",
     };
+    private readonly ScrollViewer _summaryScroll = new()
+    {
+        HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
+        VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+        Padding = new Thickness(0, 8, 12, 8),
+    };
+    private readonly CheckBox _followLatest = new() { Content = "跟随最新内容", IsChecked = true, MinWidth = 0 };
     private readonly StringBuilder _summary = new();
     private string _stage = "正在连接服务";
     private string _counts;
@@ -32,7 +35,7 @@ internal sealed class AiGenerationProgress : StackPanel, IDisposable
     private int _characters;
     private bool _summaryChanged;
 
-    public AiGenerationProgress(int total)
+    public AiGenerationProgress(int total, double availableHeight)
     {
         Spacing = 12;
         _counts = $"待生成 {total} 项。";
@@ -40,10 +43,33 @@ internal sealed class AiGenerationProgress : StackPanel, IDisposable
         Children.Add(_stageText);
         Children.Add(_countsText);
         Children.Add(_clockText);
-        Children.Add(_summaryText);
+        var summaryHeader = new Grid();
+        summaryHeader.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        summaryHeader.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        summaryHeader.Children.Add(new TextBlock { Text = "服务提供的思考过程 / 摘要", VerticalAlignment = VerticalAlignment.Center });
+        Grid.SetColumn(_followLatest, 1);
+        summaryHeader.Children.Add(_followLatest);
+        Children.Add(summaryHeader);
+        _summaryScroll.Content = _summaryText;
+        _summaryScroll.Height = Math.Clamp(availableHeight - 360, 180, 440);
+        Children.Add(_summaryScroll);
+        _summaryText.SizeChanged += Summary_SizeChanged;
+        _followLatest.Checked += FollowLatest_Checked;
         _timer.Tick += Tick;
         Tick(null, null);
         _timer.Start();
+    }
+
+    private void Summary_SizeChanged(object sender, SizeChangedEventArgs args) => ScrollToLatest();
+    private void FollowLatest_Checked(object sender, RoutedEventArgs args) => ScrollToLatest();
+    private void ScrollToLatest()
+    {
+        if (_followLatest.IsChecked != true) return;
+        // Wait until the new text has been measured and the scroll extent is current.
+        DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Low, () =>
+        {
+            if (_followLatest.IsChecked == true) _summaryScroll.ChangeView(null, _summaryScroll.ScrollableHeight, null, true);
+        });
     }
 
     public void Activity(AiStreamActivity activity)
@@ -86,5 +112,12 @@ internal sealed class AiGenerationProgress : StackPanel, IDisposable
         }
     }
 
-    public void Dispose() { _timer.Stop(); _timer.Tick -= Tick; _elapsed.Stop(); }
+    public void Dispose()
+    {
+        _timer.Stop();
+        _timer.Tick -= Tick;
+        _summaryText.SizeChanged -= Summary_SizeChanged;
+        _followLatest.Checked -= FollowLatest_Checked;
+        _elapsed.Stop();
+    }
 }
