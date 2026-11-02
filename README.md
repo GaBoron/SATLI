@@ -38,20 +38,8 @@
 > **Steam 更新后，直接替换本地 `.bin` 成就缓存的方式已不稳定**，修改可能被 Steam 重新获取的成就数据覆盖，无法保证译文始终生效。
 >
 > 如果只需在 Steam 中显示社区译文，**建议优先使用 [SATLI lite](https://github.com/GaBoron/SATLI-lite)**。它通过 Millennium 插件替换显示文字，无需改写本地 `.bin`。制作和校对译文、导出投稿文件或管理 BIN 时，可使用本项目的桌面版。
-
-## 下载与安装
-
-制作翻译可从无 BIN 的 [JSON 工程](docs/USAGE.md#无-bin-的-json-翻译工程)开始，也可编辑本地成就文件。
-
-> [!TIP]
-> **强烈推荐从 [Microsoft Store](https://apps.microsoft.com/detail/9PB7V9S03K80) 安装。** 这是 SATLI 的首选安装方式：Microsoft Store 会负责安装并自动提供软件更新，应用设置页也支持主动检查 Store 新版、查看发布说明并打开更新页面。商店版还已确认不会触发目前已知的安全软件行为误报。
-
-Microsoft Store 的产品可用性可能因市场而异。产品页面在当前市场不可用、无法使用 Microsoft Store，或希望手动管理安装程序时，可从 [GitHub Releases](https://github.com/GaBoron/SATLI/releases/latest) 获取独立安装版。独立安装器会检查 .NET 10 Desktop Runtime 和 Windows App Runtime，仅在缺少时从微软官方下载并安装；独立安装版通过应用内的 GitHub Releases 更新功能获取新版。
-
-两个渠道提供相同的翻译管理功能并使用相同的数据格式，但不会相互安装对方的更新包。通常只需安装其中一个版本；切换渠道前请先退出并卸载当前版本。更多安装与更新说明见 [使用指南](docs/USAGE.md#安装与首次运行)。
-
-> [!IMPORTANT]
-> 部分安全软件可能把独立安装版的 `SATLI.exe` 误判为恶意程序并阻止启动。遇到这种情况，**首要解决方案是改用 Microsoft Store 版**；不要关闭安全防护，也不要排除整个安装目录。无法使用 Store 时，再按照 [安全软件报警怎么办](docs/USAGE.md#安全软件报警怎么办) 核对文件并向安全软件厂商提交误报复核。
+>
+> **你也可以继续使用本软件通过桥接使用 SATLI lite 功能。**
 
 ## 快速开始
 
@@ -61,10 +49,7 @@ Microsoft Store 的产品可用性可能因市场而异。产品页面在当前�
 
 BIN 安装会在确认后关闭 Steam、校验译本并备份原文件。JSON 路线只向 lite 的公开本机接口导入译文并读取结果，不写入 Steam BIN；浏览、下载和预览不要求安装插件。首次安装 lite 或写入受保护目录时会请求管理员权限。
 
-也可先打开“设置 → Steam 译文显示 → 安装 / 管理 SATLI-lite”，独立安装插件、查看启用指引或将旧显示桥移入回收站，无需先选择游戏。SATLI 仅从 lite 官方正式 Release 下载插件，已有安装由 lite 自身更新；Millennium 需按官方指南另行安装。
-
-> [!IMPORTANT]
-> Steam 可能重新获取成就数据并还原本地 BIN 修改。可选择通过 [SATLI-lite](https://github.com/GaBoron/SATLI-lite) 的独立 JSON 链路管理显示；这也是首次安装即可选择的正常路线。旧显示桥已退役，迁移步骤见[使用指南](docs/USAGE.md#通过-satli-lite-管理)。
+也可先打开“设置 → Steam 译文显示 → 安装 / 管理 SATLI-lite”。SATLI 仅从 lite 官方正式 Release 下载插件，已有安装由 lite 自身更新；Millennium 需按官方指南另行安装。
 
 > [!TIP]
 > 找不到游戏时，请先启动一次游戏，让 Steam 生成成就缓存，再返回应用重新扫描。
@@ -88,7 +73,7 @@ BIN 安装会在确认后关闭 Steam、校验译本并备份原文件。JSON �
 - x64 处理器
 - 已安装 Steam；使用离线缓存时可暂时不联网
 
-无需手动安装 .NET、Windows App SDK 或 Git。Microsoft Store 会处理商店版的 Windows App Runtime 共享框架；独立安装器会在需要时联网补齐微软运行库。
+无需手动安装依赖运行库。Microsoft Store 会自动处理商店版的依赖；独立安装器会在需要时联网补齐微软运行库。
 
 ## 请求或贡献翻译
 
@@ -108,10 +93,6 @@ BIN 安装会在确认后关闭 Steam、校验译本并备份原文件。JSON �
 | [SATLI lite](https://github.com/GaBoron/SATLI-lite) | 独立 Millennium 插件 | 在 Steam 内下载、切换、编辑和显示社区译本 |
 | [Steam 成就翻译库](https://github.com/GaBoron/steam-achievement-translation-library) | 社区翻译数据仓库 | 查找、请求、提交和维护译本 |
 | [Steam Achievement Localizer Skill](https://github.com/GaBoron/steam-achievement-localizer-skill) | Codex 翻译与审核工作流 | 研究多语言语境并制作可验证译本 |
-
-Localizer Skill 生成的标准 BIN/ZIP 可直接导入管理器，也可提交到翻译库供社区使用。偏好独立桌面编辑器时，可了解第三方项目 [SteamAchievementLocalizer](https://github.com/PanVena/SteamAchievementLocalizer)。
-
-SATLI 与 SATLI-lite 使用同一社区翻译库，分别保存设置和本地编辑。桌面端可主动发送在线 JSON 或可信的本地 BIN 译文到 lite；保存编辑不会自动覆盖 lite 中的内容。JSON 只包含显示文本，不能当作完整 BIN 安装。
 
 ## 文档
 
