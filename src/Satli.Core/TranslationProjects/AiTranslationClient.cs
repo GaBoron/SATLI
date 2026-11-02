@@ -20,11 +20,18 @@ public sealed class AiTranslationClient(HttpClient client)
         + "Cross-check EVERY available language and your knowledge of this game, including terminology, characters, items, mechanics, wordplay and tone. "
         + "Do not invent game facts, achievement IDs or missing original text. Preserve meaning, placeholders and proper nouns. "
         + "Translate name and description independently: if all source values of a field are empty, return an empty field. "
-        + "Return ONLY JSON: {\"target_language\":\"...\",\"rows\":[{\"api_name\":\"...\",\"name\":\"...\",\"description\":\"...\"}]}. "
+        + "Return the final translation result ONLY as JSON: {\"target_language\":\"...\",\"rows\":[{\"api_name\":\"...\",\"name\":\"...\",\"description\":\"...\"}]}. "
         + "Include every supplied API ID exactly once, no other IDs. Avoid line breaks and control characters. "
         + "Do not add URLs, source lists or research notes to the translation JSON. Sources are collected separately from API metadata. "
-        + "If search tools are available, use them when needed to verify game terminology. If submit_translations is available, call it after any research. "
+        + "If submit_translations is available, call it after any research. "
         + "Never claim web verification without an actual search tool result.";
+
+    private const string WebSearchInstructions = " Web search is enabled for this request. "
+        + "You are explicitly allowed to search the web using the web_search tool. "
+        + "Before translating, search for this game and verify relevant terminology, achievement context, proper names and wordplay. "
+        + "Prefer official sources and reliable game references; cross-check them against every supplied language. "
+        + "The JSON-only requirement applies to the final translation result: you may call search tools before producing it. "
+        + "Do not enumerate websites in progress text or the translation JSON; source links are collected separately from tool metadata.";
 
     public async Task<AiTranslationResult> TranslateAsync(AiTranslationOptions options, string apiKey,
         string appId, string gameName, string targetLanguage, IReadOnlyList<AchievementPreviewRow> rows,
@@ -204,11 +211,13 @@ public sealed class AiTranslationClient(HttpClient client)
         schema["properties"]!["rows"]!["items"]!["properties"]!["api_name"]!["enum"] =
             new JsonArray(rows.Select(row => (JsonNode)JsonValue.Create(row.ApiName)!).ToArray());
         var body = new JsonObject { ["model"] = options.Model };
+        var instructions = Instructions + (search ? WebSearchInstructions
+            : " Web search is not enabled for this request. Use the supplied texts and your knowledge without claiming online verification.");
         if (options.Protocol == "responses")
         {
             body["store"] = false;
             body["max_output_tokens"] = 12000;
-            body["instructions"] = Instructions;
+            body["instructions"] = instructions;
             body["input"] = context;
             if (structured) body["text"] = new JsonObject { ["format"] = new JsonObject
                 { ["type"] = "json_schema", ["name"] = "achievement_translations", ["strict"] = true, ["schema"] = schema } };
@@ -221,7 +230,7 @@ public sealed class AiTranslationClient(HttpClient client)
         else
         {
             body["messages"] = options.Protocol == "chat"
-                ? new JsonArray(new JsonObject { ["role"] = "system", ["content"] = Instructions },
+                ? new JsonArray(new JsonObject { ["role"] = "system", ["content"] = instructions },
                     new JsonObject { ["role"] = "user", ["content"] = context })
                 : new JsonArray(new JsonObject { ["role"] = "user", ["content"] = context });
             if (options.Protocol == "chat")
@@ -231,7 +240,7 @@ public sealed class AiTranslationClient(HttpClient client)
             }
             else
             {
-                body["system"] = Instructions;
+                body["system"] = instructions;
                 body["max_tokens"] = 8192;
                 if (structured)
                 {
