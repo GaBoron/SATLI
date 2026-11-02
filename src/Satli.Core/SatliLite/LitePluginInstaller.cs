@@ -70,7 +70,7 @@ public static class LitePluginInstaller
         try
         {
             using var request = new HttpRequestMessage(HttpMethod.Get, "https://api.github.com/repos/GaBoron/SATLI-lite/releases/latest");
-            request.Headers.UserAgent.ParseAdd("SATLI/3.0.0");
+            request.Headers.UserAgent.ParseAdd("SATLI/3.0.1");
             using var response = await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, deadline.Token).ConfigureAwait(false);
             response.EnsureSuccessStatusCode();
             var metadataBytes = await ReadLimitedAsync(response.Content, 1024 * 1024, deadline.Token).ConfigureAwait(false);

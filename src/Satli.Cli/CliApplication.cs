@@ -41,7 +41,7 @@ public static class CliApplication
 
             if (args.Contains("--version", StringComparer.Ordinal))
             {
-                await output.WriteLineAsync("satli 3.0.0");
+                await output.WriteLineAsync("satli 3.0.1");
                 return 0;
             }
 
@@ -49,7 +49,7 @@ public static class CliApplication
                 || args.Contains("--help", StringComparer.Ordinal)
                 || args.Contains("-h", StringComparer.Ordinal))
             {
-                await output.WriteLineAsync("SATLI 3.0.0 - 安全安装、管理和恢复 Steam 成就翻译");
+                await output.WriteLineAsync("SATLI 3.0.1 - 安全安装、管理和恢复 Steam 成就翻译");
                 await output.WriteLineAsync("命令：scan, install, catalog-json, lite, lite-install, local-import, status, restore, cache, petition, schema");
                 await output.WriteLineAsync("catalog-json APP_ID --variant VARIANT：校验并缓存 JSON，不修改 Steam BIN。");
                 await output.WriteLineAsync("schema export APP_ID --format json --output FILE [--variant-id ID] [--source BIN_OR_ZIP | --managed]：导出独立翻译 JSON；可加 --edits-file FILE --target-language CODE 导出编辑结果，不写回 Steam 或修订历史。");
