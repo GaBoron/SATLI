@@ -104,7 +104,8 @@ internal sealed class AiGenerationProgress : StackPanel, IDisposable
             _stageText.Text = _stage;
             _countsText.Text = _counts;
             var quiet = Math.Max(0, (_elapsed.ElapsedMilliseconds - _lastEvent) / 1000);
-            _clockText.Text = $"已用时 {_elapsed.Elapsed:mm\\:ss} · 距上次响应 {quiet} 秒"
+            _clockText.Text = $"已用时 {_elapsed.Elapsed:mm\\:ss}"
+                + (quiet > 0 ? $" · 未收到新响应 {quiet} 秒" : "")
                 + (_characters > 0 ? $" · 本批已接收 {_characters} 字符" : "");
             if (!_summaryChanged) return;
             _summaryText.Text = _summary.ToString();
