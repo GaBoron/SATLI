@@ -3,6 +3,8 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
 using Satli_Gui.Models;
 using Satli_Gui.Services;
+using Satli.Core.TranslationProjects;
+using Microsoft.UI.Xaml;
 
 namespace Satli_Gui.Pages;
 
@@ -20,18 +22,31 @@ public sealed partial class AchievementEditorPage : Page
     private bool _allowNavigation;
     private bool _allowClose;
     private string _targetLanguage = "schinese";
+    private TranslationProject? _project;
+    private readonly DispatcherTimer _autosave = new() { Interval = TimeSpan.FromSeconds(3) };
+    private readonly SemaphoreSlim _draftSaveGate = new(1, 1);
+    private bool _draftNeedsRevision;
 
     public ObservableCollection<AchievementEditorRow> VisibleRows { get; } = [];
 
     public AchievementEditorPage()
     {
         InitializeComponent();
+        _autosave.Tick += async (_, _) =>
+        {
+            _autosave.Stop();
+            if (!_isBusy) await SaveDraftCheckpointAsync(recordHistory: false);
+        };
     }
 
     protected override async void OnNavigatedTo(NavigationEventArgs e)
     {
         base.OnNavigatedTo(e);
-        _game = e.Parameter as GameItem;
+        _project = e.Parameter as TranslationProject;
+        _game = e.Parameter as GameItem ?? (_project is null ? null : new GameItem
+        {
+            AppId = _project.AppId, GameName = _project.GameName,
+        });
         if (_game is null)
         {
             SetBusyState(false);
@@ -47,6 +62,9 @@ public sealed partial class AchievementEditorPage : Page
     {
         Frame.Navigating -= Frame_Navigating;
         App.Window.AppWindow.Closing -= AppWindow_Closing;
+        _autosave.Stop();
+        if (_inspection is not null)
+            foreach (var row in _inspection.Rows) row.PropertyChanged -= Row_PropertyChanged;
         base.OnNavigatedFrom(e);
     }
 
@@ -62,10 +80,18 @@ public sealed partial class AchievementEditorPage : Page
     private async Task LoadCoreAsync()
     {
         var game = _game ?? throw new InvalidOperationException("缺少待编辑游戏。");
-        _inspection = await _editor.InspectAsync(game);
+        if (_inspection is not null)
+            foreach (var row in _inspection.Rows) row.PropertyChanged -= Row_PropertyChanged;
+        _inspection = _project is null ? await _editor.InspectAsync(game)
+            : await Task.Run(() => TranslationProjectService.Inspect(_project));
+        _changingLanguage = true;
         TitleText.Text = $"编辑 {game.GameName}";
         MetadataText.Text =
-            $"App ID {_game.AppId} · {_inspection.Rows.Count} 个成就 · SHA-256 {_inspection.SourceSha256}";
+            $"App ID {_game.AppId} · {_inspection.Rows.Count} 个成就 · " + (_project is null ? "本地 BIN" :
+                $"JSON 工程 · {_project.VariantId} · 来源：{_project.Source} · 获取于 {_project.RetrievedAt.ToLocalTime():g}");
+        SaveButton.Label = _project is null ? "保存到本机" : "保存工程";
+        ExportBinButton.Visibility = ExportZipButton.Visibility = HistoryButton.Visibility =
+            _project is null ? Visibility.Visible : Visibility.Collapsed;
         var referenceLanguageOptions = _inspection.Languages
             .Select(SteamLanguageCatalog.CreateOption)
             .ToArray();
@@ -77,17 +103,18 @@ public sealed partial class AchievementEditorPage : Page
             : _inspection.Languages.FirstOrDefault() ?? string.Empty;
         ReferenceLanguageBox.SelectedItem = referenceLanguageOptions.FirstOrDefault(option =>
             option.Code.Equals(reference, StringComparison.OrdinalIgnoreCase));
-        _targetLanguage = _inspection.Languages.Contains("schinese", StringComparer.OrdinalIgnoreCase)
+        _targetLanguage = _project?.TargetLanguage ?? (_inspection.Languages.Contains("schinese", StringComparer.OrdinalIgnoreCase)
             ? "schinese"
-            : _inspection.Languages.FirstOrDefault() ?? "schinese";
+            : _inspection.Languages.FirstOrDefault() ?? "schinese");
         SelectTargetLanguageOption(_targetLanguage);
-        foreach (var row in _inspection.Rows)
+        foreach (var row in _inspection!.Rows)
         {
             row.PropertyChanged += Row_PropertyChanged;
             row.SelectReference(reference);
             row.SelectTarget(_targetLanguage);
         }
-        await RestoreDraftAsync();
+        if (_project is null) await RestoreDraftAsync();
+        _changingLanguage = false;
         ApplyFilter();
         _editState.Accept(_targetLanguage, _inspection.Rows);
         UpdateStatus();
@@ -104,7 +131,7 @@ public sealed partial class AchievementEditorPage : Page
         SchemaDraft? draft;
         try
         {
-            draft = await _drafts.LoadAsync(_inspection!.AppId);
+            draft = await _drafts.LoadAsync(_inspection!, _targetLanguage);
         }
         catch (Exception exception)
         {
@@ -122,12 +149,15 @@ public sealed partial class AchievementEditorPage : Page
             App.ViewModel.ShowInfo(compatibilityError, InfoBarSeverity.Warning);
             return;
         }
+        if (draft.Version == 1 && !await ConfirmAsync("恢复旧版草稿",
+                $"发现 {draft.TargetLanguage} 的旧版草稿。源文件与 API ID 已核对，但旧版未记录 Variant。是否恢复？", "恢复草稿"))
+            return;
 
         _changingLanguage = true;
         _targetLanguage = draft.TargetLanguage;
         SelectTargetLanguageOption(_targetLanguage);
         var values = draft.Rows.ToDictionary(row => row.ApiName, StringComparer.Ordinal);
-        foreach (var row in _inspection.Rows)
+        foreach (var row in _inspection!.Rows)
         {
             row.SelectTarget(_targetLanguage);
             row.TargetName = values[row.ApiName].Name;

@@ -9,7 +9,7 @@ public sealed partial class AchievementEditorPage
 {
     private async void Back_Click(object sender, RoutedEventArgs e)
     {
-        if (!await SaveDraftCheckpointAsync())
+        if (!await SaveDraftCheckpointAsync() || HasUnsavedChanges)
         {
             return;
         }
@@ -22,12 +22,13 @@ public sealed partial class AchievementEditorPage
 
     private async void Frame_Navigating(object? sender, NavigatingCancelEventArgs e)
     {
-        if (_allowNavigation || !HasUnsavedChanges)
+        if (_isBusy) { e.Cancel = true; return; }
+        if (_allowNavigation || (!HasUnsavedChanges && !_draftNeedsRevision))
         {
             return;
         }
         e.Cancel = true;
-        if (!await SaveDraftCheckpointAsync())
+        if (!await SaveDraftCheckpointAsync() || HasUnsavedChanges)
         {
             return;
         }
@@ -44,12 +45,13 @@ public sealed partial class AchievementEditorPage
 
     private async void AppWindow_Closing(AppWindow sender, AppWindowClosingEventArgs args)
     {
-        if (_allowClose || !HasUnsavedChanges)
+        if (_isBusy) { args.Cancel = true; return; }
+        if (_allowClose || (!HasUnsavedChanges && !_draftNeedsRevision))
         {
             return;
         }
         args.Cancel = true;
-        if (!await SaveDraftCheckpointAsync())
+        if (!await SaveDraftCheckpointAsync() || HasUnsavedChanges)
         {
             return;
         }
@@ -94,6 +96,7 @@ public sealed partial class AchievementEditorPage
             PageLayout.IsHitTestVisible = true;
             SetBusyState(false);
             _isBusy = false;
+            if (HasUnsavedChanges) _autosave.Start();
         }
     }
 

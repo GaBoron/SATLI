@@ -5,6 +5,11 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:controls="using:Satli_Gui.Controls"
     xmlns:models="using:Satli_Gui.Models">
+    <Page.Resources>
+        <DataTemplate x:Key="AiPreviewTemplate">
+            <TextBlock Text="{Binding Text}" TextWrapping="Wrap" Margin="0,6" />
+        </DataTemplate>
+    </Page.Resources>
     <Grid x:Name="PageLayout" Padding="32,24,32,16" RowSpacing="12">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -64,12 +69,13 @@
                     LostFocus="TargetLanguageBox_LostFocus" />
             </StackPanel>
             <CommandBar Grid.Column="1" VerticalAlignment="Bottom" DefaultLabelPosition="Right" IsDynamicOverflowEnabled="True">
-                <AppBarButton Icon="Save" Label="保存到本机" Click="Save_Click" />
+                <AppBarButton x:Name="SaveButton" Icon="Save" Label="保存到本机" Click="Save_Click" />
+                <AppBarButton Icon="Edit" Label="AI 翻译" Click="AiTranslate_Click" />
                 <AppBarButton Icon="Send" Label="发送到 SATLI-lite" Click="SendLite_Click" />
                 <AppBarButton Icon="Download" Label="导出翻译 JSON" Click="ExportJson_Click" />
-                <AppBarButton Icon="Download" Label="导出 BIN" Click="ExportBin_Click" />
-                <AppBarButton Icon="Folder" Label="导出投稿 ZIP" Click="ExportZip_Click" />
-                <AppBarButton Icon="Clock" Label="修订历史" Click="History_Click" />
+                <AppBarButton x:Name="ExportBinButton" Icon="Download" Label="导出 BIN" Click="ExportBin_Click" />
+                <AppBarButton x:Name="ExportZipButton" Icon="Folder" Label="导出投稿 ZIP" Click="ExportZip_Click" />
+                <AppBarButton x:Name="HistoryButton" Icon="Clock" Label="修订历史" Click="History_Click" />
             </CommandBar>
         </Grid>
 

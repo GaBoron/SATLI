@@ -15,10 +15,10 @@ public sealed record ContributionDraft(
 
 public sealed class ContributionWorkflowService
 {
-    public Task<ContributionDraft> PrepareAsync(GameItem game, SchemaEditResult result) =>
-        Task.Run(() => Prepare(game, result));
+    public Task<ContributionDraft> PrepareAsync(GameItem game, SchemaEditResult result, string? sourceNotes = null) =>
+        Task.Run(() => Prepare(game, result, sourceNotes));
 
-    public ContributionDraft Prepare(GameItem game, SchemaEditResult result)
+    public ContributionDraft Prepare(GameItem game, SchemaEditResult result, string? sourceNotes = null)
     {
         if (string.IsNullOrWhiteSpace(result.Output))
         {
@@ -73,7 +73,7 @@ public sealed class ContributionWorkflowService
         {
             ["game_name"] = game.GameName,
             ["app_id"] = game.AppId,
-            ["notes"] = "由 SATLI 上传。",
+            ["notes"] = sourceNotes ?? "由 SATLI 准备，请人工审校后提交。",
         };
         if (isUpdate)
         {

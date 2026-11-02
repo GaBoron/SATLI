@@ -63,7 +63,8 @@ public sealed record SchemaInspection(
     IReadOnlyList<string> Languages,
     IReadOnlyList<AchievementEditorRow> Rows,
     string GameName = "",
-    string VariantId = "");
+    string VariantId = "",
+    Satli.Core.TranslationProjects.TranslationProject? Project = null);
 
 public sealed record SchemaEditResult(
     string OutputSha256,

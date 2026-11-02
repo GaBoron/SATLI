@@ -6,7 +6,9 @@ namespace Satli_Gui.Services;
 
 public static class NetworkHttpClientFactory
 {
-    public static HttpClient Create(NetworkSettings? rawSettings = null)
+    public static HttpClient Create(NetworkSettings? rawSettings = null) => Create(rawSettings, true);
+
+    public static HttpClient Create(NetworkSettings? rawSettings, bool allowAutoRedirect)
     {
         var settings = NetworkSettingsValidator.Normalize(rawSettings);
         var handler = new SocketsHttpHandler
@@ -15,6 +17,7 @@ public static class NetworkHttpClientFactory
             ConnectTimeout = TimeSpan.FromSeconds(15),
             PooledConnectionLifetime = TimeSpan.FromMinutes(10),
             UseProxy = settings.ProxyMode != "direct",
+            AllowAutoRedirect = allowAutoRedirect,
         };
 
         if (settings.ProxyMode == "manual")

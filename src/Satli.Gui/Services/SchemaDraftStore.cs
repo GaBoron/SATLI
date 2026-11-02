@@ -12,11 +12,12 @@ public sealed record SchemaDraft(
     string SourceSha256,
     string TargetLanguage,
     DateTimeOffset SavedAt,
-    IReadOnlyList<SchemaDraftRow> Rows);
+    IReadOnlyList<SchemaDraftRow> Rows,
+    string VariantId = "");
 
 public sealed class SchemaDraftStore
 {
-    private const int CurrentVersion = 1;
+    private const int CurrentVersion = 2;
     private static readonly Regex LanguagePattern =
         new("^[a-z][a-z0-9_]{1,31}$", RegexOptions.CultureInvariant);
     private readonly string _directory;
@@ -49,8 +50,9 @@ public sealed class SchemaDraftStore
             inspection.SourceSha256,
             language,
             DateTimeOffset.UtcNow,
-            draftRows);
-        var path = DraftPath(inspection.AppId);
+            draftRows,
+            inspection.VariantId);
+        var path = DraftPath(inspection, language);
         Directory.CreateDirectory(_directory);
         var temporary = $"{path}.{Guid.NewGuid():N}.tmp";
         try
@@ -58,27 +60,32 @@ public sealed class SchemaDraftStore
             await File.WriteAllTextAsync(
                 temporary,
                 JsonSerializer.Serialize(draft, new JsonSerializerOptions { WriteIndented = true }));
-            File.Move(temporary, path, true);
+            Satli.Core.FileSystem.FileOperations.ReplaceStaged(temporary, path);
         }
         finally
         {
-            File.Delete(temporary);
+            Satli.Core.FileSystem.RecycleBin.FileIfExists(temporary);
         }
         return draft;
     }
 
-    public async Task<SchemaDraft?> LoadAsync(string appId)
+    public async Task<SchemaDraft?> LoadAsync(SchemaInspection inspection, string language)
     {
-        var path = DraftPath(appId);
+        var appId = inspection.AppId;
+        var path = DraftPath(inspection, ValidateLanguage(language));
+        if (!File.Exists(path)) path = DraftPath(appId);
         if (!File.Exists(path))
         {
+            if (Directory.Exists(_directory) && Directory.EnumerateFiles(_directory, $"{appId}-*.json").Any())
+                throw new InvalidDataException("没有与当前来源、Variant 和目标语言匹配的草稿。其他草稿保留，未自动套用。");
             return null;
         }
         try
         {
             var draft = JsonSerializer.Deserialize<SchemaDraft>(
                 await File.ReadAllTextAsync(path));
-            if (draft is null || draft.Version != CurrentVersion || draft.AppId != appId)
+            if (draft is null || draft.Version is not (1 or CurrentVersion) || draft.AppId != appId
+                || (draft.Version == CurrentVersion && (draft.VariantId != inspection.VariantId || draft.TargetLanguage != language)))
             {
                 throw new InvalidDataException("草稿版本或 App ID 无效。");
             }
@@ -96,12 +103,12 @@ public sealed class SchemaDraftStore
         }
     }
 
-    public void Delete(string appId)
+    public void Delete(SchemaInspection inspection, string language)
     {
-        var path = DraftPath(appId);
+        var path = DraftPath(inspection, ValidateLanguage(language));
         if (File.Exists(path))
         {
-            File.Delete(path);
+            Satli.Core.FileSystem.RecycleBin.FileIfExists(path);
         }
     }
 
@@ -130,6 +137,15 @@ public sealed class SchemaDraftStore
             throw new ArgumentException("草稿 App ID 无效。", nameof(appId));
         }
         return Path.Combine(_directory, $"{appId}.json");
+    }
+
+    private string DraftPath(SchemaInspection inspection, string language)
+    {
+        var basePath = DraftPath(inspection.AppId);
+        var identity = System.Text.Encoding.UTF8.GetBytes(
+            $"bin\n{inspection.VariantId}\n{inspection.SourceSha256}\n{language}");
+        return Path.Combine(_directory,
+            $"{Path.GetFileNameWithoutExtension(basePath)}-{Satli.Core.FileSystem.FileOperations.Sha256(identity)}.json");
     }
 
     private static string ValidateLanguage(string value)

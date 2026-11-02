@@ -52,6 +52,7 @@ public sealed partial class SettingsPage : Page
         RefreshLogLevelDescription();
         RefreshToggleStateLabels();
         NetworkSettingsEditor.LoadSettings(ViewModel.Settings.Network);
+        AiSettingsEditor.LoadSettings(ViewModel.Settings.Ai);
         DownloadSourceSettingsEditor.LoadSettings(ViewModel.Settings.DownloadSources);
         SteamLibrarySettingsEditor.LoadSettings(
             ViewModel.Settings.SteamLibrary,
@@ -102,13 +103,16 @@ public sealed partial class SettingsPage : Page
                 Network = NetworkSettingsEditor.ReadSettings(),
                 DownloadSources = DownloadSourceSettingsEditor.ReadSettings(),
                 SteamLibrary = SteamLibrarySettingsEditor.ReadSettings(),
+                Ai = AiSettingsEditor.ReadSettings(),
             });
             SteamLibrarySettingsEditor.MarkSaved(ViewModel.Settings.SteamLibrary);
+            AiSettingsEditor.ReportSaved(true);
             RefreshDirectoryLabels();
             _ = RefreshLiteDescriptionAsync();
         }
         catch (Exception exception)
         {
+            AiSettingsEditor.ReportSaved(false);
             _ = App.Logs.WriteExceptionDetailsAsync("设置", exception);
             ViewModel.ShowInfo($"无法应用设置：{exception.Message}", InfoBarSeverity.Error);
         }
@@ -116,6 +120,11 @@ public sealed partial class SettingsPage : Page
         {
             _settingsGate.Release();
         }
+    }
+
+    private async void AiSettingsEditor_SettingsChanged(object? sender, EventArgs e)
+    {
+        if (!_isInitializing) await ApplySettingsAsync();
     }
 
     private async void CheckForUpdates_Click(object sender, RoutedEventArgs e)
@@ -264,7 +273,7 @@ public sealed partial class SettingsPage : Page
         var level = (LogLevelBox.SelectedItem as ComboBoxItem)?.Tag?.ToString();
         LogLevelDescriptionText.Text = level switch
         {
-            "detailed" => "包含基础日志，并增加 App ID、游戏名、语言、数量、文件名、界面资源加载结果、逐项事件、后台预加载与并行准备耗时和异常类型，适合排查具体项目。",
+            "detailed" => "包含基础日志，并增加 App ID、游戏名、语言、数量、文件名、工程与 AI 生成结果摘要、界面资源加载结果、逐项事件、后台预加载与并行准备耗时和异常类型；不记录 AI 密钥、请求或回复正文。",
             "debug" => "包含详细日志，并记录参数、CLI 事件摘要、标准错误、耗时、完整路径、异常堆栈和运行环境；不记录译文正文，重启后自动恢复为“详细”。",
             _ => "记录各功能的关键开始与结果、用户取消、警告和错误摘要，包括 JSON 校验、本地译文发送、lite 安装与旧桥迁移、连接及请求结果；不记录译文正文。",
         };

@@ -18,8 +18,11 @@ public sealed partial class AchievementEditorPage
                 var destination = await TranslationJsonExportService.PickAsync(XamlRoot,
                     _inspection.AppId, _inspection.VariantId);
                 if (destination is null) return;
-                result = await _editor.ExportAsync(_inspection, _targetLanguage,
-                    _inspection.Rows, true, "json", destination.Output, destination.VariantId);
+                result = _project is null
+                    ? await _editor.ExportAsync(_inspection, _targetLanguage,
+                        _inspection.Rows, true, "json", destination.Output, destination.VariantId)
+                    : await TranslationProjectService.ExportAsync(_inspection, _targetLanguage,
+                        _inspection.Rows, destination.Output, destination.VariantId);
                 await TranslationJsonExportService.LogCompletedAsync(_inspection.AppId, destination);
                 App.ViewModel.ShowInfo($"已导出翻译 JSON：{result.Output}", InfoBarSeverity.Success);
             }
@@ -44,12 +47,23 @@ public sealed partial class AchievementEditorPage
     private async void SendLite_Click(object sender, RoutedEventArgs e)
     {
         if (_inspection is null || _game is null || !await ConfirmIncompleteAsync("发送到 SATLI-lite")) return;
+        if (_project is not null)
+        {
+            if (!await SaveDraftCheckpointAsync(force: true)) return;
+            try { await Task.Run(() => _project.Build(forPublication: true)); }
+            catch (Exception exception)
+            {
+                App.ViewModel.ShowInfo($"译文校验未通过：{exception.Message}", InfoBarSeverity.Error);
+                return;
+            }
+        }
         var rows = _inspection.Rows.Select(row => new Satli.Core.Formats.AchievementPreviewRow(row.Index, row.ApiName,
             new Dictionary<string, Satli.Core.Formats.AchievementTranslation>(StringComparer.Ordinal)
             {
                 [_targetLanguage] = new(row.TargetName, row.TargetDescription),
             })).ToArray();
-        await RunBusyAsync(() => App.ViewModel.Translations.SendEditedLiteAsync(XamlRoot, _game, _targetLanguage, rows));
+        await RunBusyAsync(() => App.ViewModel.Translations.SendEditedLiteAsync(XamlRoot, _game, _targetLanguage, rows,
+            _project?.VariantId ?? "local-edit"));
     }
 
     private async void Save_Click(object sender, RoutedEventArgs e)
@@ -59,6 +73,7 @@ public sealed partial class AchievementEditorPage
 
     private async Task<bool> SaveChangesAsync()
     {
+        if (_project is not null) return await SaveDraftCheckpointAsync(force: true);
         if (!await ConfirmIncompleteAsync("保存到本机"))
         {
             return false;
@@ -99,13 +114,14 @@ public sealed partial class AchievementEditorPage
                         : InfoBarSeverity.Warning);
                 try
                 {
-                    _drafts.Delete(_inspection.AppId);
+                    _drafts.Delete(_inspection, _targetLanguage);
                 }
                 catch (Exception exception)
                 {
                     await App.Logs.WriteAsync("警告", "成就草稿", $"本机写回成功，但删除草稿失败：{exception.Message}");
                     await App.Logs.WriteExceptionDetailsAsync("成就草稿", exception);
                 }
+                _draftNeedsRevision = false;
                 await LoadCoreAsync();
                 saved = true;
             });
@@ -130,6 +146,7 @@ public sealed partial class AchievementEditorPage
 
     private async Task ExportAsync(string format)
     {
+        if (_project is not null) return;
         if (!await ConfirmIncompleteAsync(format == "bin" ? "导出 BIN" : "导出投稿 ZIP"))
         {
             return;
@@ -170,7 +187,9 @@ public sealed partial class AchievementEditorPage
 
     private async Task OfferContributionAsync(SchemaEditResult result)
     {
-        var draft = await _contributions.PrepareAsync(_game!, result);
+        var catalogGame = App.ViewModel.Translations.Games.FirstOrDefault(game => game.AppId == _game!.AppId) ?? _game!;
+        var draft = await _contributions.PrepareAsync(catalogGame, result, _project is null ? null :
+            $"来源：{_project.Source}\n获取时间：{_project.RetrievedAt:O}\n请人工审校译文；公开列表可能不含隐藏或未公开成就。");
         var attachmentType = Path.GetExtension(draft.AttachmentPath).Equals(".json", StringComparison.OrdinalIgnoreCase)
             ? "JSON" : "ZIP";
         var dialog = new ContentDialog
@@ -208,50 +227,55 @@ public sealed partial class AchievementEditorPage
         }
     }
 
-    private async Task<bool> SaveDraftCheckpointAsync()
+    private async Task<bool> SaveDraftCheckpointAsync(bool recordHistory = true, bool force = false)
     {
-        if (!HasUnsavedChanges)
+        _autosave.Stop();
+        await _draftSaveGate.WaitAsync();
+        try
         {
+            if (_inspection is null) return false;
+            if (!HasUnsavedChanges && !force && (!recordHistory || !_draftNeedsRevision)) return true;
+            var language = _targetLanguage;
+            var snapshot = _inspection.Rows.Select(row => new AchievementEditorRow
+            {
+                Index = row.Index, ApiName = row.ApiName, Translations = row.Translations,
+                TargetName = row.TargetName, TargetDescription = row.TargetDescription,
+            }).ToArray();
+            if (_project is not null)
+            {
+                await TranslationProjectService.SaveAsync(_inspection, language, snapshot);
+            }
+            else
+            {
+                await _drafts.SaveAsync(_inspection, language, snapshot);
+                _draftNeedsRevision = true;
+                if (recordHistory)
+                {
+                    var revision = await _editor.RecordDraftAsync(_inspection, language, snapshot);
+                    _draftNeedsRevision = !string.IsNullOrWhiteSpace(revision.RevisionWarning);
+                    if (_draftNeedsRevision)
+                    {
+                        App.ViewModel.ShowInfo($"草稿已保存；{revision.RevisionWarning}", InfoBarSeverity.Warning);
+                        await App.Logs.WriteAsync("警告", "成就草稿", "草稿已保存，但修订历史记录未完成。");
+                    }
+                }
+            }
+            _editState.Accept(language, snapshot);
+            UpdateStatus();
+            StatusText.Text += " · 草稿已保存";
+            await App.Logs.WriteAsync("信息", "成就草稿", $"草稿已保存；成就={snapshot.Length}。");
+            await App.Logs.WriteAsync("详细", "成就草稿",
+                $"草稿检查点。App ID={_inspection.AppId}；目标语言={language}。", detailed: true);
+            if (HasUnsavedChanges) _autosave.Start();
             return true;
         }
-        if (_inspection is null)
+        catch (Exception exception)
         {
+            App.ViewModel.ShowInfo($"草稿保存失败：{exception.Message}", InfoBarSeverity.Error);
+            await App.Logs.WriteAsync("错误", "成就草稿", $"保存失败；异常类型={exception.GetType().Name}。");
             return false;
         }
-
-        var saved = false;
-        await RunBusyAsync(async () =>
-        {
-            var draft = await _drafts.SaveAsync(
-                _inspection,
-                _targetLanguage,
-                _inspection.Rows);
-            var result = await _editor.RecordDraftAsync(
-                _inspection,
-                _targetLanguage,
-                _inspection.Rows);
-            _editState.Accept(_targetLanguage, _inspection.Rows);
-            UpdateStatus();
-            saved = true;
-            await App.Logs.WriteAsync(
-                "信息",
-                "成就草稿",
-                $"草稿已保存；包含 {draft.Rows.Count} 个成就。" +
-                (string.IsNullOrWhiteSpace(result.RevisionWarning) ? "" : $" {result.RevisionWarning}"));
-            await App.Logs.WriteAsync(
-                "详细",
-                "成就草稿",
-                $"草稿检查点已保存。App ID={_inspection.AppId}；目标语言={_targetLanguage}。",
-                detailed: true);
-            App.ViewModel.ShowInfo(
-                string.IsNullOrWhiteSpace(result.RevisionWarning)
-                    ? $"已自动保存 {_targetLanguage} 草稿并记录修改历史（{draft.Rows.Count} 个成就）。"
-                    : $"已自动保存 {_targetLanguage} 草稿；{result.RevisionWarning}",
-                string.IsNullOrWhiteSpace(result.RevisionWarning)
-                    ? InfoBarSeverity.Success
-                    : InfoBarSeverity.Warning);
-        });
-        return saved;
+        finally { _draftSaveGate.Release(); }
     }
 
     private async Task<string?> PickDestinationAsync(string format)

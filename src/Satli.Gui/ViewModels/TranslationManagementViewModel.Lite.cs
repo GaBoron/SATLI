@@ -19,11 +19,12 @@ public sealed partial class TranslationManagementViewModel
         RunLiteImportAsync(game, () => _lite.ApplyAsync(root, game, variantId, language, _settings(), local),
             local ? "可信本地快照" : "在线 JSON");
 
-    public Task SendEditedLiteAsync(XamlRoot root, GameItem game, string language, IReadOnlyList<CorePreviewRow> rows) =>
+    public Task SendEditedLiteAsync(XamlRoot root, GameItem game, string language, IReadOnlyList<CorePreviewRow> rows,
+        string variantId = "local-edit") =>
         RunLiteImportAsync(game, async () =>
         {
             // The editor supplies an immutable text snapshot, with no invented BIN hash or draft writeback.
-            var translation = await Task.Run(() => LiteTranslation.FromRows(game.AppId, "local-edit", rows));
+            var translation = await Task.Run(() => LiteTranslation.FromRows(game.AppId, variantId, rows));
             var preview = await Task.Run(() => LitePreview(game, translation));
             return await _lite.ApplyTranslationAsync(root, game, translation, preview,
                 language, _settings(), "edited");

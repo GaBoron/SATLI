@@ -37,11 +37,11 @@
 > [!IMPORTANT]
 > **Steam 更新后，直接替换本地 `.bin` 成就缓存的方式已不稳定**，修改可能被 Steam 重新获取的成就数据覆盖，无法保证译文始终生效。
 >
-> 如果没有手动修改成就文本、管理原始 BIN 文件的需求，**建议优先使用 [SATLI lite](https://github.com/GaBoron/SATLI-lite)**。它通过 Millennium 插件直接替换 Steam 中显示的成就文字，不需要安装 SATLI 桌面版，也无需改写本地 `.bin` 文件。需要编辑或导出 BIN、制作投稿 ZIP、备份及恢复原始文件时，再使用本项目的桌面版。
+> 如果只需在 Steam 中显示社区译文，**建议优先使用 [SATLI lite](https://github.com/GaBoron/SATLI-lite)**。它通过 Millennium 插件替换显示文字，无需改写本地 `.bin`。制作和校对译文、导出投稿文件或管理 BIN 时，可使用本项目的桌面版。
 
 ## 下载与安装
 
-SATLI 桌面版适合需要直接管理 BIN、制作投稿 ZIP、编辑原始成就文件或恢复本机文件的用户。若只需在 Steam 中显示成就译文，建议使用 [SATLI lite](https://github.com/GaBoron/SATLI-lite#前置要求)，并按其 README 中的安装说明操作。
+制作翻译可从无 BIN 的 [JSON 工程](docs/USAGE.md#无-bin-的-json-翻译工程)开始，也可编辑本地成就文件。
 
 > [!TIP]
 > **强烈推荐从 [Microsoft Store](https://apps.microsoft.com/detail/9PB7V9S03K80) 安装。** 这是 SATLI 的首选安装方式：Microsoft Store 会负责安装并自动提供软件更新，应用设置页也支持主动检查 Store 新版、查看发布说明并打开更新页面。商店版还已确认不会触发目前已知的安全软件行为误报。
@@ -76,7 +76,7 @@ BIN 安装会在确认后关闭 Steam、校验译本并备份原文件。JSON �
 | 🔎 | 自动发现 | 扫描 Steam 目录和本机成就缓存，支持按名称或 App ID 搜索 |
 | 🛡️ | 安全安装 | 安装前预览与校验，自动备份，支持批量安装、状态检查和安全恢复 |
 | 🔒 | JSON 显示管理 | 浏览 BIN+JSON 与 JSON-only 译本，按需安装 SATLI-lite、发送译文并查询真实状态，SATLI 无需后台运行 |
-| ✍️ | 本地编辑 | 按成就编辑目标语言，自动保存草稿，独立导出翻译 JSON、BIN 或投稿 ZIP |
+| ✍️ | 翻译制作 | 从公开数据或 JSON 创建无 BIN 工程，手动编辑或生成 AI 参考译文，校对后导出与投稿；保留本地 BIN 编辑能力 |
 | ☁️ | 社区协作 | 获取社区译本、请求新翻译、贡献成果，并报告过期或无效文件 |
 | 🌐 | 稳定连接 | 支持离线缓存、系统代理、HTTP/SOCKS 代理、自定义 DNS 与镜像 |
 

@@ -18,7 +18,8 @@ public sealed class TranslationProjectStore(string directory)
             {
                 Validate(project);
                 project.SavedAt = DateTimeOffset.UtcNow;
-                var bytes = JsonSerializer.SerializeToUtf8Bytes(project);
+                var bytes = JsonSerializer.SerializeToUtf8Bytes(project, new JsonSerializerOptions
+                    { Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping });
                 FileOperations.WriteDurable(Path.Combine(directory, $"{project.Id:N}.json"), bytes);
             });
         }

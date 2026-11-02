@@ -60,6 +60,7 @@ public sealed class SettingsService
             settings.SteamLibrary = LoadSteamLibrarySettings(
                 settings.SteamLibrary,
                 ref requiresRewrite);
+            settings.Ai ??= new AiSettings();
             if (requiresRewrite)
             {
                 await SaveAsync(settings);
@@ -125,6 +126,7 @@ public sealed class SettingsService
                         SteamId = steamLibrary.SteamId,
                         ProtectedApiKey = protectedSteamApiKey,
                     },
+                    Ai = settings.Ai,
                 };
                 await JsonSerializer.SerializeAsync(
                     stream,

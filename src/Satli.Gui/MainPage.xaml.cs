@@ -67,6 +67,7 @@ public sealed partial class MainPage : Page
             "managed-locked" => typeof(ManagedLockedPage),
             "local" => typeof(LocalGamesPage),
             "cloud" => typeof(CloudGamesPage),
+            "projects" => typeof(TranslationProjectsPage),
             "logs" => typeof(LogsPage),
             "settings" => typeof(SettingsPage),
             _ => typeof(GamesPage),

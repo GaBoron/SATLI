@@ -34,6 +34,9 @@
                     <NavigationViewItem Content="SATLI-lite" Tag="managed-locked" />
                 </NavigationViewItem.MenuItems>
             </NavigationViewItem>
+            <NavigationViewItem Content="翻译工程" Tag="projects">
+                <NavigationViewItem.Icon><SymbolIcon Symbol="Edit" /></NavigationViewItem.Icon>
+            </NavigationViewItem>
             <NavigationViewItem Content="日志" Tag="logs">
                 <NavigationViewItem.Icon><SymbolIcon Symbol="Document" /></NavigationViewItem.Icon>
             </NavigationViewItem>

@@ -1,0 +1,40 @@
+<Page
+    x:Class="Satli_Gui.Pages.TranslationProjectsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Grid Padding="32,24" RowSpacing="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <TextBlock Text="翻译工程" Style="{StaticResource TitleTextBlockStyle}" />
+        <ScrollViewer Grid.Row="1" MaxHeight="350" HorizontalScrollBarVisibility="Disabled">
+            <StackPanel x:Name="CreationForm" Spacing="10" MaxWidth="780" HorizontalAlignment="Stretch">
+                <TextBlock Text="新建 JSON 工程无需购买或安装游戏，也无需本地 BIN 或 SATLI-lite。公开页面可能缺少隐藏成就，获取失败时可保存待补充来源的工程。" TextWrapping="Wrap" />
+                <TextBox x:Name="AppIdBox" Header="Steam App ID" InputScope="Number" />
+                <TextBox x:Name="GameNameBox" Header="游戏名称（可选）" />
+                <TextBox x:Name="VariantBox" Header="Variant" Text="default" />
+                <ComboBox x:Name="TargetBox" Header="目标语言" DisplayMemberPath="DisplayName" HorizontalAlignment="Stretch" />
+                <TextBox x:Name="SourceLanguageBox" Header="Steam 公开原文语言代码（1–4 种，以逗号分隔；首种必须可用）" Text="english" />
+                <CommandBar DefaultLabelPosition="Right" HorizontalContentAlignment="Left">
+                    <AppBarButton Icon="Add" Label="获取公开数据" Click="Public_Click" />
+                    <AppBarButton Icon="OpenFile" Label="导入 JSON" Click="Import_Click" />
+                    <AppBarButton Icon="Download" Label="从在线翻译库创建" Click="Catalog_Click" />
+                </CommandBar>
+            </StackPanel>
+        </ScrollViewer>
+        <StackPanel Grid.Row="2" Spacing="8">
+            <ProgressBar x:Name="Busy" IsIndeterminate="True" Visibility="Collapsed" />
+            <Button x:Name="CancelButton" Content="取消获取" Click="Cancel_Click" Visibility="Collapsed" />
+            <TextBlock x:Name="StatusText" TextWrapping="Wrap" />
+            <TextBlock Text="已保存工程：双击继续编辑。来源更新会另存工程，并保留旧版。" TextWrapping="Wrap" />
+            <CommandBar DefaultLabelPosition="Right" HorizontalContentAlignment="Left">
+                <AppBarButton Icon="Edit" Label="继续编辑" Click="Resume_Click" />
+                <AppBarButton Icon="OpenFile" Label="用 JSON 更新所选来源" Click="UpdateSource_Click" />
+            </CommandBar>
+        </StackPanel>
+        <ListView Grid.Row="3" x:Name="ProjectsList" DisplayMemberPath="Label" IsDoubleTapEnabled="True" DoubleTapped="Projects_DoubleTapped" />
+    </Grid>
+</Page>

@@ -48,11 +48,13 @@ public static partial class AchievementEditorPresentation
         var missingDescriptions = 0;
         foreach (var row in rows)
         {
-            if (string.IsNullOrEmpty(row.TargetName))
+            if (string.IsNullOrWhiteSpace(row.TargetName)
+                && row.Translations.Values.Any(value => !string.IsNullOrWhiteSpace(value.Name)))
             {
                 missingNames++;
             }
-            if (string.IsNullOrEmpty(row.TargetDescription))
+            if (string.IsNullOrWhiteSpace(row.TargetDescription)
+                && row.Translations.Values.Any(value => !string.IsNullOrWhiteSpace(value.Description)))
             {
                 missingDescriptions++;
             }

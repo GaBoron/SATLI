@@ -14,7 +14,7 @@ public sealed class SchemaEditorService
 
     public async Task<SchemaInspection> InspectAsync(GameItem game)
     {
-        var result = await RunAsync(["schema", "inspect", game.AppId, "--jsonl"]);
+        var result = await Task.Run(() => RunAsync(["schema", "inspect", game.AppId, "--jsonl"]));
         var payload = RequiredPayload(result, "item-succeeded");
         var rows = new List<AchievementEditorRow>();
         foreach (var row in payload.GetProperty("rows").EnumerateArray())
@@ -103,7 +103,8 @@ public sealed class SchemaEditorService
                 "--variant-id", inspection.VariantId,
                 "--jsonl",
             ],
-            allowIncomplete: true);
+            allowIncomplete: true,
+            runInBackground: true);
 
     public async Task<SchemaEditResult> RestoreAsync(string appId, bool force)
     {

@@ -15,4 +15,5 @@ public sealed class GuiSettings
     public NetworkSettings Network { get; set; } = new();
     public DownloadSourceSettings DownloadSources { get; set; } = new();
     public SteamLibrarySettings SteamLibrary { get; set; } = new();
+    public AiSettings Ai { get; set; } = new();
 }

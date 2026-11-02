@@ -14,6 +14,11 @@ public sealed partial class AchievementEditorPage
             or nameof(AchievementEditorRow.TargetDescription))
         {
             UpdateStatus();
+            if (!_changingLanguage && !_isBusy)
+            {
+                _autosave.Stop();
+                _autosave.Start();
+            }
         }
     }
 
@@ -97,13 +102,23 @@ public sealed partial class AchievementEditorPage
             {
                 return;
             }
-            if (HasUnsavedChanges
-                && !await ConfirmAsync(
-                    "切换目标语言",
-                    "当前未保存的修改将被放弃。是否继续？",
-                    "继续"))
+            if (!await SaveDraftCheckpointAsync() || HasUnsavedChanges)
             {
                 SelectTargetLanguageOption(_targetLanguage);
+                return;
+            }
+            if (_project is not null)
+            {
+                var sourceTime = _project.RetrievedAt;
+                var existing = await TranslationProjectService.Store().LoadAllAsync();
+                _project = existing.Projects.FirstOrDefault(project => project.AppId == _project.AppId
+                    && project.VariantId == _project.VariantId && project.SourceFingerprint == _project.SourceFingerprint
+                    && project.TargetLanguage == normalizedLanguage)
+                    ?? Satli.Core.TranslationProjects.TranslationProject.Create(_project.Original!, _project.GameName,
+                        normalizedLanguage, _project.Source);
+                _project.RetrievedAt = sourceTime;
+                await TranslationProjectService.Store().SaveAsync(_project);
+                await LoadAsync();
                 return;
             }
             _targetLanguage = normalizedLanguage;
@@ -111,6 +126,7 @@ public sealed partial class AchievementEditorPage
             {
                 row.SelectTarget(normalizedLanguage);
             }
+            await RestoreDraftAsync();
             _editState.Accept(_targetLanguage, _inspection.Rows);
             UpdateStatus();
         }

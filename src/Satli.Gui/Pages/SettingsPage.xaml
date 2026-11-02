@@ -15,6 +15,8 @@
                 <TextBlock Text="管理 SATLI 使用的目录、连接方式和外观。更改会立即生效。" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
             </StackPanel>
 
+            <TextBlock Text="AI 翻译" Style="{StaticResource SubtitleTextBlockStyle}" Margin="0,12,0,0" />
+            <controls:AiSettingsControl x:Name="AiSettingsEditor" SettingsChanged="AiSettingsEditor_SettingsChanged" />
             <TextBlock Text="路径" Style="{StaticResource SubtitleTextBlockStyle}" Margin="0,12,0,0" />
             <StackPanel Spacing="8">
                 <Border Style="{StaticResource SettingsCardStyle}">
