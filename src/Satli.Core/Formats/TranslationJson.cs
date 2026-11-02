@@ -33,7 +33,7 @@ public static partial class TranslationJson
     }
 
     /// <summary>Validates the public lite translation format without requiring catalog metadata or a local BIN.</summary>
-    public static JsonObject Parse(byte[] payload, string appId)
+    public static JsonObject Parse(byte[] payload, string appId, bool allowIncomplete = false)
     {
         if (payload.Length is < 1 or > MaximumBytes)
             throw new IntegrityException("显示文本 JSON 大小无效");
@@ -101,7 +101,7 @@ public static partial class TranslationJson
             }
             if (count < 1 || count > (version == 1 ? 100000 : 10000))
                 throw new IntegrityException("JSON 成就数量无效");
-            if (incompleteFields > 0)
+            if (incompleteFields > 0 && !allowIncomplete)
                 throw new IntegrityException($"JSON 校验未通过：{incompleteFields} 个字段的语言覆盖不完整，不能作为正式译本导出。\n"
                     + string.Join("\n", coverageErrors)
                     + (incompleteFields > coverageErrors.Count ? "\n仅显示前 20 项。" : ""));

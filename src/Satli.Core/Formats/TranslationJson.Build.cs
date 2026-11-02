@@ -47,7 +47,7 @@ public static partial class TranslationJson
     }
 
     public static JsonObject FromRows(string appId, string variantId,
-        IReadOnlyList<AchievementPreviewRow> rows, string? sourceSha256 = null)
+        IReadOnlyList<AchievementPreviewRow> rows, string? sourceSha256 = null, bool allowIncomplete = false)
     {
         var languages = rows.SelectMany(row => row.Translations.Keys)
             .Select(language => language.ToLowerInvariant()).Distinct(StringComparer.Ordinal)
@@ -86,6 +86,6 @@ public static partial class TranslationJson
         // Missing text stays empty; no source language is silently substituted.
         // Apply the byte limit to UTF-8 text, rather than an ASCII-escaped expansion of that text.
         return Parse(JsonSerializer.SerializeToUtf8Bytes(translation,
-            new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping }), appId);
+            new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping }), appId, allowIncomplete);
     }
 }
