@@ -186,7 +186,7 @@ public sealed class SchemaEditorService
         result.Events.LastOrDefault(item => item.Event == eventName)?.Payload
         ?? throw new InvalidDataException($"SATLI schema 操作未返回 {eventName} 事件。");
 
-    private static SchemaEditResult ParseResult(JsonElement payload) => new(
+    internal static SchemaEditResult ParseResult(JsonElement payload) => new(
         payload.TryGetProperty("output_sha256", out var outputHash)
             ? outputHash.GetString() ?? string.Empty
             : payload.TryGetProperty("restored_sha256", out var restoredHash)

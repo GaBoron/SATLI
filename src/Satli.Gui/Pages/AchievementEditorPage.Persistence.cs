@@ -31,16 +31,7 @@ public sealed partial class AchievementEditorPage
                 await TranslationJsonExportService.ReportFailureAsync(exception);
                 return;
             }
-            try
-            {
-                await OfferContributionAsync(result);
-            }
-            catch (Exception exception)
-            {
-                App.ViewModel.ShowInfo($"JSON 已导出，但投稿准备未完成：{exception.Message}", InfoBarSeverity.Warning);
-                await App.Logs.WriteAsync("警告", "翻译投稿", "JSON 导出成功，但投稿准备或打开表单失败。");
-                await App.Logs.WriteAsync("详细", "翻译投稿", $"异常类型={exception.GetType().Name}。", detailed: true);
-            }
+            await OfferContributionAsync(result);
         });
     }
 
@@ -185,48 +176,9 @@ public sealed partial class AchievementEditorPage
         });
     }
 
-    private async Task OfferContributionAsync(SchemaEditResult result)
-    {
-        var catalogGame = App.ViewModel.Translations.Games.FirstOrDefault(game => game.AppId == _game!.AppId) ?? _game!;
-        var draft = await _contributions.PrepareAsync(catalogGame, result, _project is null ? null :
+    private Task OfferContributionAsync(SchemaEditResult result) =>
+        _contributions.OfferAsync(XamlRoot, _game!, result, _project is null ? null :
             $"来源：{_project.Source}\n获取时间：{_project.RetrievedAt:O}\n请人工审校译文；公开列表可能不含隐藏或未公开成就。");
-        var attachmentType = Path.GetExtension(draft.AttachmentPath).Equals(".json", StringComparison.OrdinalIgnoreCase)
-            ? "JSON" : "ZIP";
-        var dialog = new ContentDialog
-        {
-            XamlRoot = XamlRoot,
-            Title = "投稿到社区",
-            Content = $"{attachmentType} 已完成结构、语言字段和完整性校验。\n\n"
-                + $"类型：{(draft.IsUpdate ? "更新已有译本" : "新译本投稿")}\n"
-                + $"检测到的语言：{draft.Languages}\n"
-                + $"摘要：{draft.Summary}\n\n"
-                + $"打开表单后，请把资源管理器中选中的 {attachmentType} 拖入附件区域，并由你确认提交。",
-            PrimaryButtonText = "打开投稿表单",
-            CloseButtonText = "稍后投稿",
-            DefaultButton = ContentDialogButton.Primary,
-        };
-        if (await dialog.ShowAsync() == ContentDialogResult.Primary)
-        {
-            await _contributions.OpenAsync(draft);
-            await App.Logs.WriteAsync("信息", "翻译投稿", "已打开预填的 GitHub 投稿表单。");
-            await App.Logs.WriteAsync(
-                "详细",
-                "翻译投稿",
-                $"投稿已准备。App ID={_game!.AppId}；游戏={_game.GameName}；" +
-                $"类型={(draft.IsUpdate ? "更新" : "新投稿")}；语言={draft.Languages}；" +
-                $"文件={Path.GetFileName(draft.AttachmentPath)}。",
-                detailed: true);
-        }
-        else
-        {
-            await App.Logs.WriteAsync(
-                "详细",
-                "翻译投稿",
-                $"用户稍后投稿。App ID={_game!.AppId}。",
-                detailed: true);
-        }
-    }
-
     private async Task<bool> SaveDraftCheckpointAsync(bool recordHistory = true, bool force = false)
     {
         _autosave.Stop();

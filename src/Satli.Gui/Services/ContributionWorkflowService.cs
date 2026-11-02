@@ -3,6 +3,8 @@ using System.Security.Cryptography;
 using Satli.Core.Formats;
 using Satli_Gui.Models;
 using Windows.System;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 
 namespace Satli_Gui.Services;
 
@@ -15,6 +17,42 @@ public sealed record ContributionDraft(
 
 public sealed class ContributionWorkflowService
 {
+    public async Task OfferAsync(XamlRoot root, GameItem game, SchemaEditResult result, string? sourceNotes = null)
+    {
+        try
+        {
+            await App.Logs.WriteAsync("信息", "翻译投稿", "开始校验已导出的投稿附件。");
+            var catalogGame = App.ViewModel.Translations.Games.FirstOrDefault(item => item.AppId == game.AppId) ?? game;
+            var draft = await PrepareAsync(catalogGame, result, sourceNotes);
+            var attachmentType = Path.GetExtension(draft.AttachmentPath).Equals(".json", StringComparison.OrdinalIgnoreCase)
+                ? "JSON" : "ZIP";
+            var dialog = new ContentDialog
+            {
+                XamlRoot = root, Title = "投稿到社区",
+                Content = $"{attachmentType} 已完成结构、语言字段和完整性校验。\n\n"
+                    + $"类型：{(draft.IsUpdate ? "更新已有译本" : "新译本投稿")}\n"
+                    + $"检测到的语言：{draft.Languages}\n摘要：{draft.Summary}\n\n"
+                    + $"打开表单后，请把资源管理器中选中的 {attachmentType} 拖入附件区域，并由你确认提交。",
+                PrimaryButtonText = "打开投稿表单", CloseButtonText = "稍后投稿", DefaultButton = ContentDialogButton.Close,
+            };
+            if (await dialog.ShowAsync() == ContentDialogResult.Primary)
+            {
+                await OpenAsync(draft);
+                await App.Logs.WriteAsync("信息", "翻译投稿", "已打开预填的 GitHub 投稿表单。");
+            }
+            else await App.Logs.WriteAsync("信息", "翻译投稿", "用户稍后投稿；已导出附件保留。");
+            await App.Logs.WriteAsync("详细", "翻译投稿",
+                $"投稿准备完成。App ID={game.AppId}；类型={(draft.IsUpdate ? "更新" : "新投稿")}；语言={draft.Languages}；"
+                + $"文件={Path.GetFileName(draft.AttachmentPath)}。", detailed: true);
+        }
+        catch (Exception exception)
+        {
+            App.ViewModel.ShowInfo($"文件已导出，但投稿准备未完成：{exception.Message}", InfoBarSeverity.Warning);
+            await App.Logs.WriteAsync("警告", "翻译投稿", "附件导出成功，但投稿准备或打开表单失败。");
+            await App.Logs.WriteAsync("详细", "翻译投稿", $"异常类型={exception.GetType().Name}。", detailed: true);
+        }
+    }
+
     public Task<ContributionDraft> PrepareAsync(GameItem game, SchemaEditResult result, string? sourceNotes = null) =>
         Task.Run(() => Prepare(game, result, sourceNotes));
 

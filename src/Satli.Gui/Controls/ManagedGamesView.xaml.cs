@@ -150,7 +150,7 @@ public sealed partial class ManagedGamesView : UserControl
         try
         {
             await TranslationJsonExportService.ExportAsync(XamlRoot, game.AppId,
-                game.InstalledVariantId, ["schema", "export", game.AppId, "--managed"]);
+                game.InstalledVariantId, ["schema", "export", game.AppId, "--managed"], game);
         }
         finally { item.IsEnabled = game.CanViewInstalledTranslation; }
     }

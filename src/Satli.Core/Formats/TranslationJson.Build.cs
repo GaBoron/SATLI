@@ -18,10 +18,13 @@ public static partial class TranslationJson
         {
             foreach (var achievement in bits.Children.Where(node => node.TypeId == 0))
             {
-                var apiName = BinaryKeyValues.FirstString(achievement, "name");
-                if (string.IsNullOrEmpty(apiName)) throw new IntegrityException("BIN 中的成就缺少 API name，拒绝转换");
-                var names = LanguageValues(BinaryKeyValues.NestedObject(achievement, "display", "name"));
-                var descriptions = LanguageValues(BinaryKeyValues.NestedObject(achievement, "display", "desc"));
+                var identities = achievement.Children.Where(child => child.Name == "name").ToArray();
+                if (identities.Length != 1 || identities[0].TypeId != 1 || string.IsNullOrWhiteSpace(identities[0].Value))
+                    throw new IntegrityException("BIN 中的成就缺少唯一的文本 API name，拒绝转换");
+                var apiName = identities[0].Value!;
+                var display = SingleDisplayObject(achievement, "display", apiName);
+                var names = LanguageValues(SingleDisplayObject(display, "name", apiName), apiName, "name");
+                var descriptions = LanguageValues(SingleDisplayObject(display, "desc", apiName), apiName, "description");
                 var translations = names.Keys.Concat(descriptions.Keys).Distinct(StringComparer.Ordinal)
                     .ToDictionary(language => language, language => new AchievementTranslation(
                         names.GetValueOrDefault(language, ""), descriptions.GetValueOrDefault(language, "")), StringComparer.Ordinal);
@@ -32,16 +35,27 @@ public static partial class TranslationJson
         return FromRows(appId, variantId, rows, standalone ? null : FileOperations.Sha256(payload));
     }
 
-    private static Dictionary<string, string> LanguageValues(BinaryKeyValuesNode? node)
+    private static BinaryKeyValuesNode? SingleDisplayObject(BinaryKeyValuesNode? parent, string name, string apiName)
+    {
+        if (parent is null) return null;
+        var matches = parent.Children.Where(child => child.Name == name).ToArray();
+        if (matches.Length > 1 || (matches.Length == 1 && matches[0].TypeId != 0))
+            throw new IntegrityException($"{apiName} · {name}：BIN 显示文本节点重复或类型无效，拒绝转换");
+        return matches.FirstOrDefault();
+    }
+
+    private static Dictionary<string, string> LanguageValues(BinaryKeyValuesNode? node, string apiName, string field)
     {
         var values = new Dictionary<string, string>(StringComparer.Ordinal);
         if (node is null) return values;
-        foreach (var child in node.Children.Where(child => child.TypeId == 1))
+        foreach (var child in node.Children)
         {
             var language = child.Name.ToLowerInvariant();
             if (language is "token" or "tokens") continue;
-            if (!values.TryAdd(language, child.Value ?? ""))
-                throw new IntegrityException("BIN 含重复语言映射，拒绝转换");
+            if (child.TypeId != 1 || child.Value is null)
+                throw new IntegrityException($"{apiName} · {field} · {language}：BIN 语言文本类型无效，拒绝转换");
+            if (!values.TryAdd(language, child.Value))
+                throw new IntegrityException($"{apiName} · {field} · {language}：BIN 含重复语言映射，拒绝转换");
         }
         return values;
     }

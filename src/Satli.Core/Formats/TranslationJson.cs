@@ -87,7 +87,8 @@ public static partial class TranslationJson
                             : text.EnumerateRunes().Count() > 65536;
                         if (tooLong || text.Contains('\0'))
                             throw new IntegrityException("JSON 文本过长或含 NUL");
-                        if (!string.IsNullOrWhiteSpace(text)) populated++;
+                        // Match the reference Python validator's strip(), including U+001C–U+001F separators.
+                        if (!text.All(character => char.IsWhiteSpace(character) || character is >= '\u001c' and <= '\u001f')) populated++;
                         else missing.Add(language);
                     }
                     if (version == 2 && populated != 0 && populated != languages.Count)

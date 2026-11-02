@@ -184,14 +184,21 @@ internal sealed partial class CommandDispatcher
         }
         else if (command == "export")
         {
-            revision = store.Export(
-                appId,
-                revisionId,
-                args.Required("--output"),
-                args.Required("--format"),
-                args.Value("--variant-id"));
-            result = revision.ToJson();
-            result["output"] = Path.GetFullPath(args.Required("--output"));
+            if (args.Required("--format") == "json")
+            {
+                var exported = TranslationJsonExport.Write(revision.Schema, appId,
+                    args.Value("--variant-id") ?? (string.IsNullOrWhiteSpace(revision.VariantId) ? "default" : revision.VariantId),
+                    args.Required("--output"));
+                result = revision.ToJson();
+                Merge(result, exported);
+                result["revision_commit"] = revision.Commit;
+            }
+            else
+            {
+                revision = store.Export(appId, revisionId, args.Required("--output"), args.Required("--format"));
+                result = revision.ToJson();
+                result["output"] = Path.GetFullPath(args.Required("--output"));
+            }
         }
         else if (command == "activate")
         {

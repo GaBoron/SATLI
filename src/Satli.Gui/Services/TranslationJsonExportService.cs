@@ -1,6 +1,7 @@
 using System.Text.RegularExpressions;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Satli_Gui.Models;
 
 namespace Satli_Gui.Services;
 
@@ -59,7 +60,8 @@ public static partial class TranslationJsonExportService
         return new(output, variantBox.Text);
     }
 
-    public static async Task ExportAsync(XamlRoot root, string appId, string variantId, List<string> arguments)
+    public static async Task ExportAsync(XamlRoot root, string appId, string variantId, List<string> arguments,
+        GameItem? game = null)
     {
         try
         {
@@ -75,8 +77,18 @@ public static partial class TranslationJsonExportService
             var result = await Task.Run(() => new SatliCliService().RunAsync(arguments,
                 networkSettings: settings.Network, downloadSourceSettings: settings.DownloadSources));
             if (!result.IsSuccess) throw new InvalidDataException(result.ErrorMessage);
+            var payload = result.Events.Single(item => item.Event == "item-succeeded").Payload;
+            if (payload.GetProperty("format").GetString() != "json" || !payload.GetProperty("validated").GetBoolean()
+                || payload.GetProperty("app_id").GetString() != appId
+                || payload.GetProperty("variant_id").GetString() != destination.VariantId
+                || !Path.GetFullPath(payload.GetProperty("output").GetString()!).Equals(
+                    Path.GetFullPath(destination.Output), StringComparison.OrdinalIgnoreCase))
+                throw new InvalidDataException("JSON 导出回执与所选内容不一致。");
+            var exported = SchemaEditorService.ParseResult(payload);
             await LogCompletedAsync(appId, destination);
             App.ViewModel.ShowInfo($"已导出翻译 JSON：{destination.Output}", InfoBarSeverity.Success);
+            await new ContributionWorkflowService().OfferAsync(root,
+                game ?? new GameItem { AppId = appId, GameName = $"Steam 游戏 {appId}" }, exported);
         }
         catch (Exception exception)
         {

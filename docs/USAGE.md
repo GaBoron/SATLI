@@ -181,7 +181,7 @@ JSON 使用 UTF-8、LF 和结尾换行；相同内容与版本 ID 可重复生�
 
 填写目标语言和可选备注后，应用会导出并校验原始 schema ZIP，只自动填写 GitHub 翻译请愿中已经确定的游戏名、App ID、目标语言和备注，并在资源管理器中选中 ZIP。应用不会自动上传文件或提交 Issue；请把选中的 ZIP 拖到网页表单的上传区域，检查内容后自行提交。
 
-如果已经完成翻译，可从编辑页导出独立 JSON 或标准 ZIP，并在导出后选择打开新投稿或更新投稿表单。JSON 会再次核对格式、语言覆盖和附件内容，并按文件中的 `variant_id` 填写更新版本。请自行上传附件、检查表单并确认提交；应用不会自动投稿。ZIP 根目录只能包含一个 `UserGameStatsSchema_<app_id>.bin`。完整规范见翻译库的[翻译 JSON 格式](https://github.com/GaBoron/steam-achievement-translation-library/blob/main/docs/translation-json.md)。
+独立 JSON 的各个导出入口，以及编辑页的标准 ZIP 导出，都会提供新投稿或更新投稿的准备入口。JSON 会再次核对格式、语言覆盖和附件内容，并按文件中的 `variant_id` 填写更新版本。文件来源未提供游戏名称时，请在表单中补充真实名称。请自行上传附件、检查表单并确认提交；选择“稍后投稿”会保留导出文件。ZIP 根目录只能包含一个 `UserGameStatsSchema_<app_id>.bin`。完整规范见翻译库的[翻译 JSON 格式](https://github.com/GaBoron/steam-achievement-translation-library/blob/main/docs/translation-json.md)。
 
 导出不会修改 Steam 文件。BIN 编辑需要原始文件，可启动对应游戏生成缓存；无 BIN 时可使用 JSON 翻译工程。
 
