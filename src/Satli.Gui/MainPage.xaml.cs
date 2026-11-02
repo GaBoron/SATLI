@@ -62,9 +62,8 @@ public sealed partial class MainPage : Page
         }
         var destination = tag switch
         {
-            "managed-all" => typeof(ManagedAllPage),
-            "managed-modified" => typeof(ManagedModifiedPage),
-            "managed-locked" => typeof(ManagedLockedPage),
+            "managed-bin" => typeof(ManagedAllPage),
+            "managed-json" => typeof(ManagedLockedPage),
             "local" => typeof(LocalGamesPage),
             "cloud" => typeof(CloudGamesPage),
             "projects" => typeof(TranslationProjectsPage),

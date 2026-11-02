@@ -117,7 +117,7 @@ public sealed partial class TranslationManagementViewModel
             {
                 observed = previous;
                 ObserveLite(game, previous);
-                if (!connection.Connected) game.LiteStateText += " " + connection.Message;
+                if (!connection.Connected) LiteLibraryMessage = connection.Message;
             }
             else if (connection.Connected)
             {
@@ -126,8 +126,8 @@ public sealed partial class TranslationManagementViewModel
             }
             else
             {
-                game.LiteStateText = connection.Message + " 上次结果不能代表当前启用状态。"
-                    + (previous is null ? "" : " 上次结果：" + LiteWorkflowService.Describe(previous));
+                game.LiteStateText = previous is null ? "尚未连接" : "上次记录";
+                LiteLibraryMessage = connection.Message;
             }
             if (!game.LiteKnown) game.LiteStatusVisible = true;
             ShowInfo(game.LiteStateText, observed?.State == "failed" ? InfoBarSeverity.Warning : InfoBarSeverity.Informational);
@@ -140,9 +140,16 @@ public sealed partial class TranslationManagementViewModel
 
     private void ObserveLite(GameItem game, LiteResult result, bool historical = false)
     {
-        game.LiteStateText = (historical ? "上次处理结果（请刷新）：" : "") + LiteWorkflowService.Describe(result);
-        if (result.App?["exists"]?.GetValue<bool>() == true)
-            game.LiteStateText += " " + LiteWorkflowService.DescribeUpdate(game, result.App);
+        game.LitePending = result.Pending;
+        if (result.App is not null)
+        {
+            game.LiteInstalled = result.App["exists"]?.GetValue<bool>() == true;
+            game.LiteEnabled = result.App["effective_enabled"]?.GetValue<bool>() == true;
+            game.LiteVariantId = result.App["variant_id"]?.ToString() ?? "";
+            game.LiteLanguage = result.App["language"]?.ToString() ?? "";
+        }
+        game.LiteStateText = result.Pending ? "等待 lite 处理" : !result.Succeeded ? $"处理失败：{result.ErrorCode}"
+            : historical ? "上次处理结果，可刷新确认" : game.LiteInstalled ? "已读取译文状态" : "尚未安装此游戏译文";
         game.LiteKnown = result.Pending || result.Operation == "import" || result.LastImport is not null
             || result.App?["exists"]?.GetValue<bool>() == true;
         var managed = ManagedGames.FirstOrDefault(item => item.AppId == game.AppId);
@@ -151,6 +158,11 @@ public sealed partial class TranslationManagementViewModel
         {
             managed.LiteKnown = game.LiteKnown;
             managed.LiteStateText = game.LiteStateText;
+            managed.LiteInstalled = game.LiteInstalled;
+            managed.LitePending = game.LitePending;
+            managed.LiteEnabled = game.LiteEnabled;
+            managed.LiteVariantId = game.LiteVariantId;
+            managed.LiteLanguage = game.LiteLanguage;
         }
         if (managed is not null && !managed.LiteKnown && managed.InstalledState == "unmanaged")
             ManagedGames.Remove(managed);
@@ -165,7 +177,7 @@ public sealed partial class TranslationManagementViewModel
             {
                 var legacyIds = (await client.LegacyAppIdsAsync()).ToHashSet(StringComparer.Ordinal);
                 foreach (var game in ManagedGames.Concat(Games).Where(game => legacyIds.Contains(game.AppId)))
-                    game.LiteStateText = "发现旧显示桥锁定记录；可主动发送可信译文到 SATLI-lite。旧记录不代表 lite 已导入。";
+                    game.LiteStateText = "旧显示桥记录";
             }
             catch (Exception exception)
             {
@@ -189,6 +201,7 @@ public sealed partial class TranslationManagementViewModel
                     await App.Logs.WriteExceptionDetailsAsync("SATLI-lite", exception);
                 }
             }
+            await LoadLiteLibraryCoreAsync();
         }
         catch (Exception exception)
         {

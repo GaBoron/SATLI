@@ -9,7 +9,7 @@ public sealed partial class ManagedAllPage : Page
     public ManagedAllPage()
     {
         InitializeComponent();
-        Content = new ManagedGamesView(ManagedGameFilter.All, NavigateFromManagedPage);
+        Content = new ManagedGamesView(ManagedGameFilter.Bin, NavigateFromManagedPage);
     }
 
     private void NavigateFromManagedPage(Type destination, object parameter) =>

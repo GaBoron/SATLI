@@ -35,6 +35,18 @@ public sealed class GameItem : ObservableObject
     private string _liteStateText = "尚未查询 SATLI-lite";
     private bool _liteKnown;
     private bool _liteStatusVisible;
+    private bool _liteInstalled;
+    private bool _litePending;
+    private bool _liteEnabled;
+    private bool _liteReadable;
+    private string _liteVariantId = "";
+    private string _liteLanguage = "";
+    public bool LiteInstalled { get => _liteInstalled; set => SetProperty(ref _liteInstalled, value); }
+    public bool LitePending { get => _litePending; set => SetProperty(ref _litePending, value); }
+    public bool LiteEnabled { get => _liteEnabled; set => SetProperty(ref _liteEnabled, value); }
+    public bool LiteReadable { get => _liteReadable; set => SetProperty(ref _liteReadable, value); }
+    public string LiteVariantId { get => _liteVariantId; set => SetProperty(ref _liteVariantId, value); }
+    public string LiteLanguage { get => _liteLanguage; set => SetProperty(ref _liteLanguage, value); }
 
     public bool LiteStatusVisible
     {
@@ -225,7 +237,7 @@ public sealed class GameItem : ObservableObject
     public string StateText => InstalledState switch
     {
         "installed" => "已安装",
-        "modified" => "BIN 已被修改 · 可通过 SATLI-lite 管理显示",
+        "modified" => "文件已变化",
         "missing" => "文件缺失",
         "restored" => "已恢复",
         "unreadable" => "无法读取",

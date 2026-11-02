@@ -3,6 +3,7 @@ using Microsoft.UI.Xaml.Controls;
 using Satli.Core.Formats;
 using Satli.Core.TranslationProjects;
 using Satli_Gui.Services;
+using Satli_Gui.Controls;
 
 namespace Satli_Gui.Pages;
 
@@ -19,6 +20,7 @@ public sealed partial class AchievementEditorPage
         {
             var store = new AiProposalStore(_inspection, _targetLanguage);
             var proposals = await store.LoadAsync();
+            var references = (await store.LoadReferencesAsync()).ToDictionary(item => item.Url, StringComparer.Ordinal);
             var sources = _inspection.Rows.Select(row => new AchievementPreviewRow(row.Index, row.ApiName,
                 row.Translations.ToDictionary(pair => pair.Key,
                     pair => new AchievementTranslation(pair.Value.Name, pair.Value.Description), StringComparer.Ordinal))).ToArray();
@@ -65,10 +67,7 @@ public sealed partial class AchievementEditorPage
                 if (requested.Length > 0)
                 {
                     using var cancel = new CancellationTokenSource();
-                    var status = new TextBlock { Text = $"正在生成 {requested.Length} 项…", TextWrapping = TextWrapping.Wrap };
-                    var progressContent = new StackPanel { Spacing = 12 };
-                    progressContent.Children.Add(new ProgressBar { IsIndeterminate = true });
-                    progressContent.Children.Add(status);
+                    using var progressContent = new AiGenerationProgress(requested.Length);
                     var progressDialog = new ContentDialog
                     {
                         XamlRoot = XamlRoot, Title = "正在生成 AI 参考译文", Content = progressContent,
@@ -85,12 +84,11 @@ public sealed partial class AchievementEditorPage
                             async (result, progress) =>
                             {
                                 foreach (var pair in result.Translations) proposals[pair.Key] = pair.Value;
+                                foreach (var reference in result.References ?? []) references[reference.Url] = reference;
                                 errors = result.Errors.ToDictionary(pair => pair.Key, pair => pair.Value);
-                                await store.SaveAsync(proposals);
-                                DispatcherQueue.TryEnqueue(() => status.Text =
-                                    $"已校验 {progress.Completed}/{progress.Total} 项；失败 {progress.Failed} 项。\n"
-                                    + (progress.SearchUsed ? "服务返回了已完成的搜索调用。" : "未确认使用网页搜索。"));
-                            }, cancel.Token));
+                                await store.SaveAsync(proposals, references.Values.ToArray());
+                                progressContent.Batch(progress);
+                            }, cancel.Token, progressContent.Activity));
                         await App.Logs.WriteAsync("信息", "AI 翻译", $"生成结束；有效待审={proposals.Count}；失败={errors.Count}。");
                     }
                     catch (OperationCanceledException)
@@ -108,8 +106,8 @@ public sealed partial class AchievementEditorPage
                     errors[pair.Key] = "BIN 文本不能包含换行或控制字符，请重试此项。";
                 }
             }
-            await store.SaveAsync(proposals);
-            await PreviewAiAsync(proposals, errors);
+            await store.SaveAsync(proposals, references.Values.ToArray());
+            await PreviewAiAsync(proposals, errors, references.Values.ToArray());
         }
         catch
         {
@@ -123,7 +121,8 @@ public sealed partial class AchievementEditorPage
         }
     }
 
-    private async Task PreviewAiAsync(Dictionary<string, AchievementTranslation> proposals, Dictionary<string, string> errors)
+    private async Task PreviewAiAsync(Dictionary<string, AchievementTranslation> proposals, Dictionary<string, string> errors,
+        IReadOnlyList<AiReference> references)
     {
         var list = new ListView { SelectionMode = ListViewSelectionMode.Multiple, Height = 360, MaxWidth = 680,
             ItemTemplate = (DataTemplate)Resources["AiPreviewTemplate"] };
@@ -143,6 +142,26 @@ public sealed partial class AchievementEditorPage
         content.Children.Add(list);
         if (errors.Count > 0) content.Children.Add(new TextBlock { TextWrapping = TextWrapping.Wrap,
             Text = string.Join("\n", errors.Take(5).Select(pair => $"{pair.Key}：{pair.Value}")) + "\n再次点击 AI 翻译可重试缺少项目。" });
+        var referenceList = new StackPanel { Spacing = 4 };
+        referenceList.Children.Add(new TextBlock { Text = "参考网站", FontWeight = Microsoft.UI.Text.FontWeights.SemiBold });
+        if (references.Count == 0) referenceList.Children.Add(new TextBlock
+        {
+            Text = "服务未返回可核验的网站来源。", TextWrapping = TextWrapping.Wrap,
+        });
+        foreach (var reference in references)
+        {
+            var link = new HyperlinkButton
+            {
+                Content = new TextBlock { Text = $"{reference.Title} · {new Uri(reference.Url).Host}",
+                    TextWrapping = TextWrapping.Wrap },
+                NavigateUri = new Uri(reference.Url), HorizontalAlignment = HorizontalAlignment.Left,
+                Padding = new Thickness(0, 4, 0, 4),
+            };
+            ToolTipService.SetToolTip(link, reference.Url);
+            referenceList.Children.Add(link);
+        }
+        content.Children.Add(new ScrollViewer { Content = referenceList, MaxHeight = 130,
+            HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled });
         var dialog = new ContentDialog
         {
             XamlRoot = XamlRoot, Title = "审阅 AI 参考译文", Content = content,

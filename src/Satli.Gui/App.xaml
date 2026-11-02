@@ -9,6 +9,9 @@
         <ResourceDictionary>
             <ResourceDictionary.ThemeDictionaries>
                 <ResourceDictionary x:Key="Light">
+                    <!-- Keep the toolbar on the selected window material when its overflow menu opens. -->
+                    <SolidColorBrush x:Key="CommandBarBackgroundOpen" Color="Transparent" />
+                    <SolidColorBrush x:Key="CommandBarBorderBrushOpen" Color="Transparent" />
                     <SolidColorBrush x:Key="BinBadgeBackground" Color="#DDF4FF" />
                     <SolidColorBrush x:Key="BinBadgeForeground" Color="#0969DA" />
                     <SolidColorBrush x:Key="BinBadgeStroke" Color="#540969DA" />
@@ -17,6 +20,8 @@
                     <SolidColorBrush x:Key="JsonBadgeStroke" Color="#541A7F37" />
                 </ResourceDictionary>
                 <ResourceDictionary x:Key="Default">
+                    <SolidColorBrush x:Key="CommandBarBackgroundOpen" Color="Transparent" />
+                    <SolidColorBrush x:Key="CommandBarBorderBrushOpen" Color="Transparent" />
                     <SolidColorBrush x:Key="BinBadgeBackground" Color="#1A2C42" />
                     <SolidColorBrush x:Key="BinBadgeForeground" Color="#79C0FF" />
                     <SolidColorBrush x:Key="BinBadgeStroke" Color="#5479C0FF" />

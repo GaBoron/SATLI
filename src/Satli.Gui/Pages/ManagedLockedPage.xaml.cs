@@ -9,7 +9,7 @@ public sealed partial class ManagedLockedPage : Page
     public ManagedLockedPage()
     {
         InitializeComponent();
-        Content = new ManagedGamesView(ManagedGameFilter.Locked, NavigateFromManagedPage);
+        Content = new ManagedGamesView(ManagedGameFilter.Json, NavigateFromManagedPage);
     }
 
     private void NavigateFromManagedPage(Type destination, object parameter) =>

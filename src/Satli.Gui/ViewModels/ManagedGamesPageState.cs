@@ -5,11 +5,30 @@ using Satli_Gui.Models;
 
 namespace Satli_Gui.ViewModels;
 
-public sealed class ManagedGameRow(GameItem game) : ObservableObject
+public sealed class ManagedGameRow : ObservableObject, IDisposable
 {
     private bool _isSelected;
 
-    public GameItem Game { get; } = game;
+    public GameItem Game { get; }
+    private readonly bool _json;
+    public ManagedGameRow(GameItem game, bool json)
+    {
+        Game = game;
+        _json = json;
+        Game.PropertyChanged += Changed;
+    }
+    public string Status => _json ? (Game.LitePending ? "等待处理" : Game.LiteEnabled ? "已启用" : "已停用") : Game.StateText;
+    public string Summary => _json ? $"版本：{Game.LiteVariantId} · 语言：{Game.LiteLanguage}" : Game.ManagedSummaryText;
+    public string Hint => _json ? Game.LiteStateText : Game.IsModified ? "文件与安装时不同，可恢复原文件或改用 JSON 显示。" : "";
+    public Visibility HintVisibility => Hint.Length == 0 ? Visibility.Collapsed : Visibility.Visible;
+    public Visibility BinVisibility => _json ? Visibility.Collapsed : Visibility.Visible;
+    public Visibility JsonVisibility => _json ? Visibility.Visible : Visibility.Collapsed;
+    public bool CanEdit => _json ? Game.LiteInstalled && Game.LiteReadable : Game.CanViewInstalledTranslation;
+    private void Changed(object? sender, System.ComponentModel.PropertyChangedEventArgs args)
+    {
+        foreach (var name in new[] { nameof(Status), nameof(Summary), nameof(Hint), nameof(HintVisibility), nameof(CanEdit) }) OnPropertyChanged(name);
+    }
+    public void Dispose() => Game.PropertyChanged -= Changed;
 
     public bool IsSelected
     {
@@ -34,37 +53,23 @@ public sealed class ManagedGamesPageState : ObservableObject
 
     public ManagedGameFilter Filter { get; }
     public ObservableCollection<ManagedGameRow> Items { get; } = [];
-    public string Title => Filter switch
-    {
-        ManagedGameFilter.Modified => "被修改",
-        ManagedGameFilter.Locked => "SATLI-lite 译文",
-        _ => "全部已管理",
-    };
-    public string Description => Filter switch
-    {
-        ManagedGameFilter.Modified => "BIN 可能被 Steam 或其他程序修改。可选用可信快照发送到 SATLI-lite，通过独立 JSON 管理显示；也可恢复 BIN。",
-        ManagedGameFilter.Locked => "显示经公开接口查询或导入的 lite 译文。可刷新状态；游戏和全局显示开关请在 Steam 的 SATLI-lite 中管理。",
-        _ => "分别查看 BIN 安装记录与 lite 返回的译文状态。JSON 安装不创建 BIN 记录；只有 BIN 记录可恢复文件。",
-    };
-    public string EmptyTitle => Filter switch
-    {
-        ManagedGameFilter.Modified => "没有被修改的游戏",
-        ManagedGameFilter.Locked => "暂无已查询或导入的 lite 译文",
-        _ => "暂无已管理的游戏",
-    };
-    public string EmptyDescription => Filter switch
-    {
-        ManagedGameFilter.Modified => "SATLI 检测到已管理文件被替换后，会自动显示在这里。",
-        ManagedGameFilter.Locked => "从云端游戏直接应用 JSON 或查询 lite 状态，无需先安装 BIN。",
-        _ => "安装、导入或保存本地编辑后会显示在这里。",
-    };
+    public string Title => Filter == ManagedGameFilter.Json ? "JSON 译文" : "BIN 译文";
+    public string Description => Filter == ManagedGameFilter.Json ? "读取 SATLI-lite 已保存的译文，打开即可校对和修改。" : "管理本机 BIN 译文、备份和恢复。";
+    public string EmptyTitle => Filter == ManagedGameFilter.Json ? "暂无已读取的 JSON 译文" : "暂无 BIN 管理记录";
+    public string EmptyDescription => Filter == ManagedGameFilter.Json ? "刷新以读取 lite 清单；旧版插件需要更新后才能提供公开快照。" : "安装或导入 BIN 后会显示在这里。";
     public int SelectedCount => Items.Count(item => item.IsSelected);
     public string SelectedCountText => $"已选 {SelectedCount} 项";
     public string SelectionActionText =>
         Items.Count > 0 && Items.All(item => item.IsSelected) ? "取消全选" : "全选";
-    public Visibility LockActionVisibility => Filter is ManagedGameFilter.All or ManagedGameFilter.Modified
+    public Visibility LockActionVisibility => Filter == ManagedGameFilter.Bin
         ? Visibility.Visible
         : Visibility.Collapsed;
+    public Visibility JsonVisibility => Filter == ManagedGameFilter.Json ? Visibility.Visible : Visibility.Collapsed;
+    public void Release()
+    {
+        foreach (var row in Items) row.Dispose();
+        Items.Clear();
+    }
     public bool IsLoading => _isLoading;
     public Visibility ListVisibility => IsLoading ? Visibility.Collapsed : Visibility.Visible;
     public Visibility EmptyVisibility => !IsLoading && Items.Count == 0
@@ -89,10 +94,11 @@ public sealed class ManagedGamesPageState : ObservableObject
                 .Where(item => item.IsSelected)
                 .Select(item => item.Game.AppId)
                 .ToHashSet(StringComparer.Ordinal);
+            foreach (var row in Items) row.Dispose();
             Items.Clear();
             foreach (var game in filtered)
             {
-                Items.Add(new ManagedGameRow(game)
+                Items.Add(new ManagedGameRow(game, Filter == ManagedGameFilter.Json)
                 {
                     IsSelected = selectedAppIds.Contains(game.AppId),
                 });

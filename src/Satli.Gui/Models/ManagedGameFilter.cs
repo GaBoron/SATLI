@@ -2,9 +2,8 @@ namespace Satli_Gui.Models;
 
 public enum ManagedGameFilter
 {
-    All,
-    Modified,
-    Locked,
+    Bin,
+    Json,
 }
 
 public static class ManagedGameFiltering
@@ -12,8 +11,7 @@ public static class ManagedGameFiltering
     public static bool Matches(GameItem game, ManagedGameFilter filter) =>
         filter switch
         {
-            ManagedGameFilter.Modified => game.IsModified,
-            ManagedGameFilter.Locked => game.LiteKnown,
-            _ => true,
+            ManagedGameFilter.Json => game.LiteInstalled || game.LitePending,
+            _ => game.InstalledState != "unmanaged",
         };
 }

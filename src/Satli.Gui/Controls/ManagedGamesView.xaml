@@ -12,6 +12,7 @@
         <StackPanel Spacing="4">
             <TextBlock Text="{x:Bind State.Title, Mode=OneWay}" Style="{StaticResource TitleTextBlockStyle}" />
             <TextBlock Text="{x:Bind State.Description, Mode=OneWay}" TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+            <TextBlock Text="{x:Bind ViewModel.LiteLibraryMessage, Mode=OneWay}" Visibility="{x:Bind State.JsonVisibility}" TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
         </StackPanel>
         <CommandBar Grid.Row="1" DefaultLabelPosition="Right">
             <CommandBar.Content>
@@ -32,11 +33,6 @@
                 AutomationProperties.Name="通过 SATLI-lite 管理所选译文">
                 <AppBarButton.Icon><FontIcon Glyph="&#xE72E;" /></AppBarButton.Icon>
             </AppBarButton>
-            <AppBarButton
-                Icon="UnPin"
-                Label="刷新 lite 状态"
-                Click="UnlockSelected_Click"
-                AutomationProperties.Name="查询所选游戏的 SATLI-lite 状态" />
             <AppBarButton Icon="Refresh" Label="刷新状态" Click="Refresh_Click" KeyboardAcceleratorTextOverride="F5" />
         </CommandBar>
         <Grid Grid.Row="2">
@@ -62,32 +58,33 @@
                             <StackPanel Grid.Column="1" Spacing="4">
                                 <TextBlock Text="{x:Bind Game.GameName}" Style="{StaticResource BodyStrongTextBlockStyle}" />
                                 <TextBlock Text="{x:Bind Game.Subtitle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Style="{StaticResource CaptionTextBlockStyle}" />
-                                <TextBlock Text="{x:Bind Game.ManagedSummaryText, Mode=OneWay}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Style="{StaticResource CaptionTextBlockStyle}" TextTrimming="CharacterEllipsis" />
+                                <TextBlock Text="{x:Bind Summary, Mode=OneWay}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Style="{StaticResource CaptionTextBlockStyle}" TextTrimming="CharacterEllipsis" />
                                 <TextBlock
-                                    Text="{x:Bind Game.ProtectionStatusText, Mode=OneWay}"
-                                    Visibility="{x:Bind Game.ProtectionVisibility, Mode=OneWay}"
-                                    Foreground="{ThemeResource SystemFillColorCriticalBrush}"
+                                    Text="{x:Bind Hint, Mode=OneWay}"
+                                    Visibility="{x:Bind HintVisibility, Mode=OneWay}"
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                     Style="{StaticResource CaptionTextBlockStyle}" />
                             </StackPanel>
-                            <TextBlock Grid.Column="2" VerticalAlignment="Center" Text="{x:Bind Game.StateText}" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                            <TextBlock Grid.Column="2" VerticalAlignment="Center" Text="{x:Bind Status, Mode=OneWay}" Style="{StaticResource BodyStrongTextBlockStyle}" />
                             <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                                <Button Width="80" HorizontalContentAlignment="Center" Content="编辑" Click="Edit_Click" Tag="{x:Bind Game}" IsEnabled="{x:Bind Game.CanViewInstalledTranslation}" AutomationProperties.Name="编辑当前翻译" />
+                                <Button Width="80" HorizontalContentAlignment="Center" Content="编辑" Click="Edit_Click" Tag="{x:Bind Game}" IsEnabled="{x:Bind CanEdit, Mode=OneWay}" AutomationProperties.Name="编辑当前翻译" />
                                 <Button Width="80" HorizontalContentAlignment="Center" Content="更多" AutomationProperties.Name="更多操作">
                                     <Button.Flyout>
                                         <MenuFlyout>
-                                            <MenuFlyoutItem Text="查看当前" Click="ViewCurrent_Click" Tag="{x:Bind Game}" IsEnabled="{x:Bind Game.CanViewInstalledTranslation}">
+                                            <MenuFlyoutItem Visibility="{x:Bind BinVisibility}" Text="查看当前" Click="ViewCurrent_Click" Tag="{x:Bind Game}" IsEnabled="{x:Bind Game.CanViewInstalledTranslation}">
                                                 <MenuFlyoutItem.Icon><SymbolIcon Symbol="View" /></MenuFlyoutItem.Icon>
                                             </MenuFlyoutItem>
-                                            <MenuFlyoutItem Text="修改历史" Click="History_Click" Tag="{x:Bind Game}">
+                                            <MenuFlyoutItem Visibility="{x:Bind BinVisibility}" Text="修改历史" Click="History_Click" Tag="{x:Bind Game}">
                                                 <MenuFlyoutItem.Icon><SymbolIcon Symbol="Clock" /></MenuFlyoutItem.Icon>
                                             </MenuFlyoutItem>
-                                            <MenuFlyoutItem Text="导出翻译 JSON" Click="ExportJson_Click" Tag="{x:Bind Game}" IsEnabled="{x:Bind Game.CanViewInstalledTranslation}" />
-                                            <MenuFlyoutSeparator />
-                                            <MenuFlyoutItem Text="{x:Bind Game.ProtectionActionText, Mode=OneWay}" Click="Protection_Click" Tag="{x:Bind Game}" IsEnabled="{x:Bind Game.CanToggleProtection}">
+                                            <MenuFlyoutItem Visibility="{x:Bind BinVisibility}" Text="导出翻译 JSON" Click="ExportJson_Click" Tag="{x:Bind Game}" IsEnabled="{x:Bind Game.CanViewInstalledTranslation}" />
+                                            <MenuFlyoutSeparator Visibility="{x:Bind BinVisibility}" />
+                                            <MenuFlyoutItem Visibility="{x:Bind BinVisibility}" Text="{x:Bind Game.ProtectionActionText, Mode=OneWay}" Click="Protection_Click" Tag="{x:Bind Game}" IsEnabled="{x:Bind Game.CanToggleProtection}">
                                                 <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE72E;" /></MenuFlyoutItem.Icon>
                                             </MenuFlyoutItem>
-                                            <MenuFlyoutSeparator />
-                                            <MenuFlyoutItem Text="恢复安装前文件" Click="RestoreItem_Click" Tag="{x:Bind Game}" IsEnabled="{x:Bind Game.CanRestore}">
+                                            <MenuFlyoutItem Visibility="{x:Bind JsonVisibility}" Text="刷新译文状态" Click="Protection_Click" Tag="{x:Bind Game}" />
+                                            <MenuFlyoutSeparator Visibility="{x:Bind BinVisibility}" />
+                                            <MenuFlyoutItem Visibility="{x:Bind BinVisibility}" Text="恢复安装前文件" Click="RestoreItem_Click" Tag="{x:Bind Game}" IsEnabled="{x:Bind Game.CanRestore}">
                                                 <MenuFlyoutItem.Icon><SymbolIcon Symbol="Undo" /></MenuFlyoutItem.Icon>
                                             </MenuFlyoutItem>
                                         </MenuFlyout>

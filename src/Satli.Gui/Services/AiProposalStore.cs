@@ -2,6 +2,7 @@ using System.Text;
 using System.Text.Json;
 using Satli.Core.FileSystem;
 using Satli.Core.Formats;
+using Satli.Core.TranslationProjects;
 using Satli_Gui.Models;
 using AchievementTranslation = Satli.Core.Formats.AchievementTranslation;
 
@@ -26,7 +27,34 @@ internal sealed class AiProposalStore
             ?? new(StringComparer.Ordinal);
     }
 
-    public Task SaveAsync(IReadOnlyDictionary<string, AchievementTranslation> values) =>
-        Task.Run(() => FileOperations.WriteDurable(_path, JsonSerializer.SerializeToUtf8Bytes(values,
-            new JsonSerializerOptions { Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping })));
+    public async Task<IReadOnlyList<AiReference>> LoadReferencesAsync()
+    {
+        var path = Path.ChangeExtension(_path, ".sources.json");
+        if (!File.Exists(path)) return [];
+        try
+        {
+            if (new FileInfo(path).Length > 1024 * 1024) throw new InvalidDataException();
+            var values = JsonSerializer.Deserialize<AiReference[]>(await File.ReadAllTextAsync(path)) ?? [];
+            return CleanReferences(values);
+        }
+        catch (Exception exception) when (exception is JsonException or InvalidDataException)
+        {
+            await App.Logs.WriteAsync("警告", "AI 翻译", "待审参考来源无法读取，已忽略；译文仍可审阅。");
+            return [];
+        }
+    }
+
+    public Task SaveAsync(IReadOnlyDictionary<string, AchievementTranslation> values,
+        IReadOnlyList<AiReference>? references = null) => Task.Run(() =>
+    {
+        FileOperations.WriteDurable(_path, JsonSerializer.SerializeToUtf8Bytes(values,
+            new JsonSerializerOptions { Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping }));
+        if (references is not null)
+            FileOperations.WriteDurable(Path.ChangeExtension(_path, ".sources.json"),
+                JsonSerializer.SerializeToUtf8Bytes(CleanReferences(references)));
+    });
+
+    private static AiReference[] CleanReferences(IEnumerable<AiReference> values) => values
+        .OfType<AiReference>().Select(value => AiReference.Create(value.Title, value.Url)).OfType<AiReference>()
+        .DistinctBy(value => value.Url, StringComparer.Ordinal).Take(100).ToArray();
 }

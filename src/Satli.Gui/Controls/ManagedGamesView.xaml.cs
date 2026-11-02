@@ -18,6 +18,8 @@ public sealed partial class ManagedGamesView : UserControl
     private readonly SteamMutationDialogService _steamMutations = new();
     private bool _stateSyncQueued;
     private bool _subscribed;
+    private readonly HashSet<GameItem> _observedGames = [];
+    private readonly DispatcherTimer _liteRefresh = new() { Interval = TimeSpan.FromSeconds(3) };
 
     public TranslationManagementViewModel ViewModel => App.ViewModel.Translations;
     public ManagedGamesPageState State { get; }
@@ -31,6 +33,7 @@ public sealed partial class ManagedGamesView : UserControl
         Unloaded += ManagedGamesView_Unloaded;
         AddShortcut(VirtualKey.A, VirtualKeyModifiers.Control, ToggleSelection_Invoked);
         AddShortcut(VirtualKey.F5, VirtualKeyModifiers.None, Refresh_Invoked);
+        _liteRefresh.Tick += async (_, _) => await ViewModel.RefreshLiteLibraryAsync(quiet: true);
     }
 
     private void ManagedGamesView_Loaded(object sender, RoutedEventArgs e)
@@ -43,6 +46,12 @@ public sealed partial class ManagedGamesView : UserControl
         ViewModel.ManagedGames.CollectionChanged += ManagedGames_CollectionChanged;
         ViewModel.PropertyChanged += ViewModel_PropertyChanged;
         State.Synchronize(ViewModel.ManagedGames, ViewModel.IsLoading);
+        ObserveGames();
+        if (State.Filter == ManagedGameFilter.Json)
+        {
+            _ = ViewModel.RefreshLiteLibraryAsync();
+            _liteRefresh.Start();
+        }
     }
 
     private void ManagedGamesView_Unloaded(object sender, RoutedEventArgs e)
@@ -54,10 +63,28 @@ public sealed partial class ManagedGamesView : UserControl
         _subscribed = false;
         ViewModel.ManagedGames.CollectionChanged -= ManagedGames_CollectionChanged;
         ViewModel.PropertyChanged -= ViewModel_PropertyChanged;
+        _liteRefresh.Stop();
+        foreach (var game in _observedGames) game.PropertyChanged -= Game_Changed;
+        _observedGames.Clear();
+        State.Release();
     }
 
-    private void ManagedGames_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e) =>
+    private void ManagedGames_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        ObserveGames();
         QueueStateSynchronization();
+    }
+    private void ObserveGames()
+    {
+        foreach (var game in _observedGames.Where(game => !ViewModel.ManagedGames.Contains(game)).ToArray())
+        {
+            game.PropertyChanged -= Game_Changed;
+            _observedGames.Remove(game);
+        }
+        foreach (var game in ViewModel.ManagedGames)
+            if (_observedGames.Add(game)) game.PropertyChanged += Game_Changed;
+    }
+    private void Game_Changed(object? sender, PropertyChangedEventArgs e) => QueueStateSynchronization();
 
     private void ViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
@@ -77,7 +104,7 @@ public sealed partial class ManagedGamesView : UserControl
         if (!DispatcherQueue.TryEnqueue(() =>
             {
                 _stateSyncQueued = false;
-                State.Synchronize(ViewModel.ManagedGames, ViewModel.IsLoading);
+                if (_subscribed) State.Synchronize(ViewModel.ManagedGames, ViewModel.IsLoading);
             }))
         {
             _stateSyncQueued = false;
@@ -86,7 +113,8 @@ public sealed partial class ManagedGamesView : UserControl
 
     private async void Refresh_Click(object sender, RoutedEventArgs e)
     {
-        await ViewModel.ScanAsync();
+        if (State.Filter == ManagedGameFilter.Json) await ViewModel.RefreshLiteLibraryAsync();
+        else await ViewModel.ScanAsync();
         State.Synchronize(ViewModel.ManagedGames, ViewModel.IsLoading);
     }
     private async Task ConfirmRestoreAsync(IReadOnlyList<GameItem> selected, bool force)
@@ -127,9 +155,15 @@ public sealed partial class ManagedGamesView : UserControl
         }
     }
 
-    private void Edit_Click(object sender, RoutedEventArgs e)
+    private async void Edit_Click(object sender, RoutedEventArgs e)
     {
-        if (sender is Button { Tag: GameItem game } && game.CanViewInstalledTranslation)
+        if (sender is not Button { Tag: GameItem game }) return;
+        if (State.Filter == ManagedGameFilter.Json)
+        {
+            var project = await ViewModel.OpenLiteEditorAsync(game);
+            if (project is not null) _navigate(typeof(AchievementEditorPage), project);
+        }
+        else if (game.CanViewInstalledTranslation)
         {
             _navigate(typeof(AchievementEditorPage), game);
         }
@@ -166,7 +200,9 @@ public sealed partial class ManagedGamesView : UserControl
     private async void Protection_Click(object sender, RoutedEventArgs e)
     {
         if (sender is not FrameworkElement { Tag: GameItem game }) return;
-        if (game.CanRestore || game.InstalledState == "unreadable")
+        if (State.Filter == ManagedGameFilter.Json)
+            await ViewModel.RefreshLiteLibraryAsync();
+        else if (game.CanRestore || game.InstalledState == "unreadable")
             await ViewModel.ApplyLiteAsync(XamlRoot, game, local: true);
         else
             await ViewModel.RefreshLiteAsync(game);
@@ -205,7 +241,8 @@ public sealed partial class ManagedGamesView : UserControl
     private async void Refresh_Invoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
     {
         args.Handled = true;
-        await ViewModel.ScanAsync();
+        if (State.Filter == ManagedGameFilter.Json) await ViewModel.RefreshLiteLibraryAsync();
+        else await ViewModel.ScanAsync();
         State.Synchronize(ViewModel.ManagedGames, ViewModel.IsLoading);
     }
 

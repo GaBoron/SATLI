@@ -1,26 +1,57 @@
-<UserControl
-    x:Class="Satli_Gui.Controls.AiSettingsControl"
-    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-    <StackPanel Spacing="10">
-        <TextBlock Text="AI 调用可能产生费用。翻译时仅向你选择的服务发送游戏名、App ID、成就 API ID 和实际可用的多语言文本；不发送完整 BIN、Steam 凭据或其他本机文件。" TextWrapping="Wrap" />
-        <ComboBox x:Name="ProtocolBox" Header="接口类型" SelectedIndex="0" SelectionChanged="Protocol_Changed" HorizontalAlignment="Stretch">
-            <ComboBoxItem Content="OpenAI Responses" Tag="responses" />
-            <ComboBoxItem Content="OpenAI Chat Completions / 兼容接口" Tag="chat" />
-            <ComboBoxItem Content="Anthropic Messages / 兼容接口" Tag="anthropic" />
-        </ComboBox>
-        <TextBox x:Name="EndpointBox" Header="完整 HTTPS 接口地址" />
-        <TextBox x:Name="ModelBox" Header="模型名称（填写服务商提供的模型 ID）" />
-        <PasswordBox x:Name="KeyBox" Header="API Key（留空保留已保存密钥）" />
-        <TextBlock x:Name="KeyStatus" TextWrapping="Wrap" />
-        <CheckBox x:Name="StructuredBox" Content="请求结构化输出（不支持时自动回退并在本地校验）" IsChecked="True" />
-        <CheckBox x:Name="SearchBox" Content="允许 Responses / Anthropic 接口使用网页搜索（可能额外收费；不支持时回退）" />
-        <TextBlock Text="密钥按当前 Windows 用户在本机加密保存。修改服务地址或接口类型时，需要重新填写密钥。AI 生成结果必须经人工校对。" TextWrapping="Wrap" />
-        <StackPanel Orientation="Horizontal" Spacing="8">
-            <Button Content="保存 AI 设置" Click="Save_Click" />
-            <Button Content="清除密钥" Click="Clear_Click" />
-            <Button x:Name="TestButton" Content="测试模型（会调用 API）" Click="Test_Click" />
+<UserControl xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" x:Class="Satli_Gui.Controls.AiSettingsControl">
+    <StackPanel Spacing="8">
+        <Border Style="{StaticResource SettingsCardStyle}">
+            <StackPanel>
+                <Grid Style="{StaticResource SettingsRowStyle}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Spacing="3" VerticalAlignment="Center">
+                        <TextBlock Text="AI 服务" Style="{StaticResource BodyStrongTextBlockStyle}"/>
+                        <TextBlock Text="连接你选择的服务商或兼容接口。" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap"/>
+                    </StackPanel>
+                    <ComboBox Grid.Column="1" x:Name="ProtocolBox" Width="260" VerticalAlignment="Center" SelectedIndex="0" SelectionChanged="Protocol_Changed" AutomationProperties.Name="AI 接口类型">
+                        <ComboBoxItem Content="OpenAI Responses" Tag="responses"/>
+                        <ComboBoxItem Content="OpenAI Chat Completions / 兼容接口" Tag="chat"/>
+                        <ComboBoxItem Content="Anthropic Messages / 兼容接口" Tag="anthropic"/>
+                    </ComboBox>
+                </Grid>
+                <Border Height="1" Background="{ThemeResource CardStrokeColorDefaultBrush}"/>
+                <StackPanel Padding="20,16" Spacing="12">
+                    <TextBox x:Name="EndpointBox" Header="接口地址" PlaceholderText="完整 HTTPS 地址"/>
+                    <TextBox x:Name="ModelBox" Header="模型" PlaceholderText="服务商提供的模型 ID"/>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+        <Border Style="{StaticResource SettingsCardStyle}">
+            <StackPanel>
+                <Grid Style="{StaticResource SettingsRowStyle}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Spacing="3" VerticalAlignment="Center">
+                        <TextBlock Text="API 密钥" Style="{StaticResource BodyStrongTextBlockStyle}"/>
+                        <TextBlock x:Name="KeyStatus" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap"/>
+                    </StackPanel>
+                    <PasswordBox Grid.Column="1" x:Name="KeyBox" Width="260" VerticalAlignment="Center" PlaceholderText="留空保留已保存密钥" AutomationProperties.Name="AI API 密钥"/>
+                </Grid>
+                <TextBlock Margin="20,0,20,16" Text="仅当前 Windows 用户可解密。更换服务地址或接口类型时需重新填写。" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap"/>
+            </StackPanel>
+        </Border>
+        <Border Style="{StaticResource SettingsCardStyle}">
+            <StackPanel Padding="20,16" Spacing="8">
+                <CheckBox x:Name="StructuredBox" Content="优先使用结构化译文输出" IsChecked="True"/>
+                <CheckBox x:Name="SearchBox" Content="允许联网查证术语（Responses / Anthropic）"/>
+                <TextBlock Text="调用和搜索可能产生费用，仅向所选服务发送游戏信息及多语言成就文本。生成结果需人工校对。" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap"/>
+            </StackPanel>
+        </Border>
+        <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,4,0,0">
+            <Button Content="保存 AI 设置" Click="Save_Click"/>
+            <Button Content="清除密钥" Click="Clear_Click"/>
+            <Button x:Name="TestButton" Content="测试模型（会调用 API）" Click="Test_Click"/>
         </StackPanel>
-        <TextBlock x:Name="StatusText" TextWrapping="Wrap" />
+        <TextBlock x:Name="StatusText" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap"/>
     </StackPanel>
 </UserControl>

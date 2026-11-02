@@ -244,7 +244,7 @@ public sealed class LiteClient
         && value.TryGetValue<long>(out var timestamp) && timestamp is >= 0 and <= 253402300799
             ? timestamp : throw new IntegrityException("lite 处理结果缺少有效时间");
 
-    private static void ValidateApp(JsonObject app)
+    internal static void ValidateApp(JsonObject app)
     {
         if (IsBoolean(app["exists"], false)) return;
         if (!IsBoolean(app["exists"], true)) throw new IntegrityException("lite 游戏状态缺少 exists");
