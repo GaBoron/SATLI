@@ -38,7 +38,7 @@ public static class MillenniumInstaller
     private static void RequireSteamStopped(Func<bool>? steamRunning)
     {
         if ((steamRunning ?? SteamLocator.IsSteamRunning)())
-            throw new PreflightException("请先正常退出 Steam，再安装 Millennium。");
+            throw new PreflightException("检测到 Steam 仍在运行，未写入 Millennium 组件。");
     }
 
     private static void InstallArchive(byte[] payload, string steam, CancellationToken cancellationToken, Func<bool>? steamRunning)

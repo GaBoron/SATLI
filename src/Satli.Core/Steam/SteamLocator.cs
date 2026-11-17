@@ -53,7 +53,17 @@ public static partial class SteamLocator
     {
         try
         {
-            return Process.GetProcessesByName("steam").Length > 0;
+            var processes = Process.GetProcessesByName("steam");
+            try
+            {
+                foreach (var process in processes)
+                {
+                    try { if (!process.HasExited) return true; }
+                    catch (InvalidOperationException) { }
+                }
+                return false;
+            }
+            finally { foreach (var process in processes) process.Dispose(); }
         }
         catch
         {

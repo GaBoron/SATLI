@@ -7,7 +7,7 @@ public enum SteamRunningChoice
     CloseAndRestart,
 }
 
-public sealed record SteamRestartTarget(string? ExecutablePath);
+public sealed record SteamRestartTarget(string? ExecutablePath, bool ShowWindow = false);
 
 public sealed record SteamMutationOutcome(
     bool OperationStarted,

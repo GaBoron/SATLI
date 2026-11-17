@@ -2,6 +2,9 @@ using System.Text.Json.Nodes;
 
 namespace Satli.Core.SatliLite;
 
+public sealed class LiteConnectionUnavailableException()
+    : SatliException("SATLI-lite 连接已中断，请连接后继续。", 3);
+
 public sealed record LiteSetupStatus(bool MillenniumInstalled, bool PluginInstalled, bool? PluginEnabled, LiteConnection Connection);
 
 public sealed record LiteConnection(string State, string Message, IReadOnlyList<int> TranslationVersions,

@@ -5,10 +5,13 @@ namespace Satli_Gui.Services;
 
 public sealed class SteamProcessOperationException : Exception
 {
-    public SteamProcessOperationException(string message, Exception? innerException = null)
+    public SteamProcessOperationException(string message, Exception? innerException = null, bool timedOut = false)
         : base(message, innerException)
     {
+        TimedOut = timedOut;
     }
+
+    public bool TimedOut { get; }
 }
 
 public sealed class SteamProcessController : ISteamProcessController
@@ -96,9 +99,9 @@ public sealed class SteamProcessController : ISteamProcessController
             process = Process.Start(new ProcessStartInfo
             {
                 FileName = target.ExecutablePath,
-                Arguments = "-silent",
+                Arguments = target.ShowWindow ? "" : "-silent",
                 UseShellExecute = true,
-                WindowStyle = ProcessWindowStyle.Minimized,
+                WindowStyle = target.ShowWindow ? ProcessWindowStyle.Normal : ProcessWindowStyle.Minimized,
             });
         }
         else
@@ -120,15 +123,19 @@ public sealed class SteamProcessController : ISteamProcessController
     private async Task WaitForExitAsync(string action)
     {
         var deadline = DateTimeOffset.UtcNow + ExitTimeout;
-        while (IsRunning() && DateTimeOffset.UtcNow < deadline)
+        DateTimeOffset? stoppedSince = null;
+        while (DateTimeOffset.UtcNow < deadline)
         {
+            if (IsRunning()) stoppedSince = null;
+            else
+            {
+                stoppedSince ??= DateTimeOffset.UtcNow;
+                if (DateTimeOffset.UtcNow - stoppedSince.Value >= TimeSpan.FromMilliseconds(600)) return;
+            }
             await Task.Delay(200);
         }
-        if (IsRunning())
-        {
-            throw new SteamProcessOperationException(
-                $"Steam 在等待 20 秒后仍未完成{action}，已取消翻译操作。可重试并选择“强制关闭 Steam”。");
-        }
+        throw new SteamProcessOperationException(
+            $"Steam 在等待 20 秒后仍未完成{action}，未执行后续操作。", timedOut: true);
     }
 
     private static string? FindExecutablePath()

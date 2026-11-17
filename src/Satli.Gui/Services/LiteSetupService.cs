@@ -37,22 +37,26 @@ internal sealed class LiteSetupService
                     : $"\n旧桥记录了 {ids.Count} 个游戏。移除安装包会保留这些快照，可随后逐个选择可信译文发送到 lite。";
                 await App.Logs.WriteAsync("信息", "SATLI-lite 安装", $"检测到旧桥迁移记录。游戏数={ids.Count}。");
             }
-            var queue = requireReady && connection.CanSubmit;
             var action = connection.State switch
             {
                 "not_installed" => "下载并安装 lite",
                 "millennium_missing" => "安装 Millennium 和 lite",
                 "legacy_bridge" => "将旧桥移入回收站",
-                _ => queue ? "排队发送" : "刷新状态",
+                _ => "刷新状态",
             };
             var statusView = new LiteSetupStatusControl();
             statusView.Update(status);
             var content = new StackPanel { Spacing = 16, MinWidth = 340, MaxWidth = 480 };
             content.Children.Add(statusView);
-            if (migration.Length > 0) content.Children.Add(new TextBlock { Text = migration.Trim(), TextWrapping = TextWrapping.Wrap });
-            if (queue) content.Children.Add(new TextBlock
+            if (connection.State is "not_installed" or "millennium_missing") content.Children.Add(new TextBlock
             {
-                Text = "排队请求不会直接覆盖已有译本；发生冲突时，需连接后重新查询并确认。",
+                Text = "确认后将自动关闭 Steam、安装组件并重新启动；退出超时时会强制结束 Steam。",
+                TextWrapping = TextWrapping.Wrap,
+            });
+            if (migration.Length > 0) content.Children.Add(new TextBlock { Text = migration.Trim(), TextWrapping = TextWrapping.Wrap });
+            if (requireReady) content.Children.Add(new TextBlock
+            {
+                Text = "在 Steam 中启用 SATLI lite 后点击“刷新状态”；连接成功后将自动继续安装刚才选中的译文。",
                 TextWrapping = TextWrapping.Wrap,
             });
             var dialog = new ContentDialog
@@ -67,7 +71,6 @@ internal sealed class LiteSetupService
                 await App.Logs.WriteAsync("信息", "SATLI-lite 安装", "用户关闭安装或连接提示；未执行后续操作。");
                 return false;
             }
-            if (queue) return true;
             if (connection.State == "legacy_bridge")
             {
                 if (new SteamProcessController().IsRunning())
@@ -79,16 +82,19 @@ internal sealed class LiteSetupService
                 if (settings.Offline) throw new InvalidOperationException("离线模式下无法首次下载 Millennium 或 SATLI-lite；本地译文和 JSON 缓存保留。");
                 var arguments = new List<string> { "lite-install", "--steam-dir", client.SteamDirectory, "--yes", "--jsonl" };
                 CliConfiguredPaths.AppendDataDirectory(arguments, settings);
-                if (connection.State == "millennium_missing")
-                {
-                    var installed = await new SteamMutationDialogService().ExecuteAsync(root, async () =>
+                var outcome = await new LiteComponentSetupWorkflow(new SteamProcessController()).ExecuteAsync(
+                    client.SteamDirectory,
+                    async () => { await RunSetupCommandAsync(arguments.ToArray(), settings); },
+                    message =>
                     {
-                        await RunSetupCommandAsync(arguments.ToArray(), settings);
-                        return true;
-                    }, "安装 Millennium 需要先退出 Steam。");
-                    if (!installed) return false;
+                        App.ViewModel.Operation.SetStatus(message);
+                        _ = App.Logs.WriteAsync("信息", "SATLI-lite 安装", message);
+                    });
+                if (!string.IsNullOrEmpty(outcome.RestartWarning))
+                {
+                    await App.Logs.WriteAsync("警告", "SATLI-lite 安装", outcome.RestartWarning);
+                    App.ViewModel.ShowInfo(outcome.RestartWarning, InfoBarSeverity.Warning);
                 }
-                else await RunSetupCommandAsync(arguments.ToArray(), settings);
             }
         }
     }

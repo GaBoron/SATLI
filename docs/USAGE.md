@@ -26,13 +26,13 @@ Steam 可能在更新后重建 BIN 缓存，因此更推荐使用 lite 显示译
 
 可以在“设置 → Steam 译文显示 → 安装 / 管理 SATLI-lite”检查或安装插件，也可在选择 JSON 安装时按提示操作。SATLI 会从官方 Release 下载并校验缺少的 [Millennium](https://github.com/SteamClientHomebrew/Millennium/releases/latest) 和 [lite](https://github.com/GaBoron/SATLI-lite/releases/latest)，无需另行下载安装器；本机已有组件时保留原安装，不重复下载或覆盖。
 
-首次安装 Millennium 需要退出 Steam，程序会提供关闭及完成后重启的选择。下载沿用 SATLI 的代理与 DNS 设置；GitHub 发布信息接口不可用时，改用已核实的官方固定版本。失败时可重试，已校验的安装包会保留供后续安装使用。
+确认安装后，SATLI 自动关闭 Steam、安装组件并重新启动；正常退出超时时会强制结束 Steam，无需再选择关闭方式。下载沿用 SATLI 的代理与 DNS 设置；GitHub 发布信息接口不可用时，改用已核实的官方固定版本。失败时可重试，已校验的安装包会保留供后续安装使用。
 
-安装后，在 **Steam → Millennium → Plugins** 启用 SATLI lite，并彻底退出、重新启动 Steam，再回到 SATLI 连接。
+安装后，在 **Steam → Millennium → Plugins** 启用 SATLI lite，再回到 SATLI 点击“刷新状态”。连接成功后，刚才已确认的译文会自动继续安装；仍未连接时可完全重启 Steam 后刷新。已有译本需要覆盖时，仍会单独确认。
 
 - 在“已管理 → JSON”查看 lite 当前译文，或打开为本地草稿编辑，再选择“发送到 SATLI-lite”。显示语言与开关在 lite 中设置。
 - 覆盖 lite 已有译文前需要确认；已有本地编辑时会特别提示。未连接或状态变化时，可能需要重新查询再发送。
-- Steam 未启动时，可以把已确认的请求排队，之后由 lite 处理。首次排队前，插件必须至少成功启动过一次。SATLI 无需常驻。
+- 图形界面会等待 lite 连接后再发送新译文；连接中断时保留当前选择，刷新连接后继续。已投递请求只追踪原请求，避免重复导入。命令行仍支持离线排队，SATLI 无需常驻。
 - 发送结果分为待处理、已接收、成功或失败等状态；实际显示效果仍请在 Steam 中确认。
 
 “本地”页也能直接发送符合要求的 BIN/ZIP，编辑器可以发送当前草稿，无需先写回 Steam。曾使用旧版 **SATLI Achievement Display Bridge** 的用户，可通过设置中的迁移入口移除旧插件后启用 lite；迁移不会主动删除原有译文快照或 BIN 备份。

@@ -129,20 +129,23 @@ public sealed class LiteClient
         return result;
     }
 
-    public Task<LiteResult> QueryAsync(string appId, CancellationToken cancellationToken = default) => SerializedAsync(async () =>
+    public Task<LiteResult> QueryAsync(string appId, CancellationToken cancellationToken = default,
+        bool requireConnected = false) => SerializedAsync(async () =>
     {
         var previous = await ResumeCoreAsync(appId, TimeSpan.Zero, cancellationToken).ConfigureAwait(false);
         if (previous?.Pending == true) return previous;
-        return await SubmitAsync(Request(appId, "query_app"), cancellationToken).ConfigureAwait(false);
+        return await SubmitAsync(Request(appId, "query_app"), cancellationToken, requireConnected).ConfigureAwait(false);
     }, cancellationToken);
 
     public Task<LiteResult> ImportAsync(
         string appId, JsonObject translation, string language, string sourceKind,
-        JsonObject? authorizedConflict = null, CancellationToken cancellationToken = default, string? sourceVersion = null) => SerializedAsync(async () =>
+        JsonObject? authorizedConflict = null, CancellationToken cancellationToken = default, string? sourceVersion = null,
+        bool requireConnected = false) => SerializedAsync(async () =>
     {
         translation = TranslationJson.Parse(JsonSerializer.SerializeToUtf8Bytes(translation), appId);
         var version = translation["version"]!.GetValue<int>();
         var connection = await InspectAsync(cancellationToken).ConfigureAwait(false);
+        if (requireConnected && !connection.Connected) throw new LiteConnectionUnavailableException();
         if (!connection.CanSubmit) throw new PreflightException(connection.Message);
         if (!connection.TranslationVersions.Contains(version))
             throw new PreflightException($"当前 SATLI-lite 不支持格式 {version} JSON，请升级插件；已下载的 JSON 会保留。");
@@ -164,12 +167,13 @@ public sealed class LiteClient
         if (sourceVersion is not null) request["source"]!["version"] = sourceVersion;
         request["conflict"] = authorizedConflict?.DeepClone() ?? new JsonObject { ["mode"] = "reject" };
         request["translation"] = translation.DeepClone();
-        return await SubmitAsync(request, cancellationToken).ConfigureAwait(false);
+        return await SubmitAsync(request, cancellationToken, requireConnected).ConfigureAwait(false);
     }, cancellationToken);
 
-    private async Task<LiteResult> SubmitAsync(JsonObject request, CancellationToken cancellationToken)
+    private async Task<LiteResult> SubmitAsync(JsonObject request, CancellationToken cancellationToken, bool requireConnected = false)
     {
         var connection = await InspectAsync(cancellationToken).ConfigureAwait(false);
+        if (requireConnected && !connection.Connected) throw new LiteConnectionUnavailableException();
         if (!connection.CanSubmit) throw new PreflightException(connection.Message);
         var appId = request["app_id"]!.ToString();
         var bytes = JsonSerializer.SerializeToUtf8Bytes(request);

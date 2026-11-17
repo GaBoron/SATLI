@@ -93,37 +93,25 @@ internal sealed class LiteWorkflowService
         if (!preview.Languages.Contains(language)) throw new InvalidDataException("译文不包含所选目标语言。");
         if (!await ReplacementConfirmationDialog.ConfirmJsonAsync(root, preview, language)) return null;
         var client = Client(settings);
-        if (!await new LiteSetupService().EnsureReadyAsync(root, client, settings, game.AppId)) return null;
-        var previous = await client.ResumeAsync(game.AppId, TimeSpan.Zero);
-        if (previous?.Pending == true) return previous;
-        var connection = await client.InspectAsync();
-        // The plugin enforces reject at execution time, so an offline request cannot silently replace existing text.
-        if (!connection.Connected)
-            return await Task.Run(() => client.ImportAsync(game.AppId, translation, language, sourceKind, sourceVersion: sourceVersion));
-        var query = await client.QueryAsync(game.AppId);
-        if (!query.Succeeded) return query;
-        JsonObject? conflict = null;
-        if (query.App?["exists"]?.GetValue<bool>() == true)
-        {
-            var localEdits = query.App["local_edits"]?.GetValue<bool>() == true;
-            var dialog = new ContentDialog
+        return await new LiteImportWorkflow(client).ApplyAsync(game.AppId, translation, language, sourceKind,
+            () => new LiteSetupService().EnsureReadyAsync(root, client, settings, game.AppId),
+            async app =>
             {
-                XamlRoot = root, Title = "确认覆盖 SATLI-lite 中的译本",
-                Content = localEdits
-                    ? "lite 已有本地编辑或外部导入的译本。继续将覆盖当前内容，并由 lite 保留历史。"
-                    : "lite 已保存此游戏的译本。继续将替换该译本，并由 lite 保留历史。",
-                PrimaryButtonText = "覆盖并请求启用", CloseButtonText = "取消",
-                DefaultButton = ContentDialogButton.Close,
-            };
-            if (await dialog.ShowAsync() != ContentDialogResult.Primary) return null;
-            conflict = new JsonObject
+                var dialog = new ContentDialog
+                {
+                    XamlRoot = root, Title = "确认覆盖 SATLI-lite 中的译本",
+                    Content = app["local_edits"]?.GetValue<bool>() == true
+                        ? "lite 已有本地编辑或外部导入的译本。继续将覆盖当前内容，并由 lite 保留历史。"
+                        : "lite 已保存此游戏的译本。继续将替换该译本，并由 lite 保留历史。",
+                    PrimaryButtonText = "覆盖并请求启用", CloseButtonText = "取消",
+                    DefaultButton = ContentDialogButton.Close,
+                };
+                return await dialog.ShowAsync() == ContentDialogResult.Primary;
+            }, sourceVersion, message =>
             {
-                ["mode"] = "replace", ["expected_revision"] = query.App["revision"]!.DeepClone(),
-                ["allow_local_edits"] = localEdits,
-            };
-        }
-        return await Task.Run(() => client.ImportAsync(game.AppId, translation, language, sourceKind, conflict,
-            sourceVersion: sourceVersion));
+                App.ViewModel.Operation.SetStatus(message);
+                _ = App.Logs.WriteAsync("信息", "SATLI-lite", message);
+            });
     }
 
     private static async Task<string> ChooseLanguageAsync(XamlRoot root, IReadOnlyList<string> languages)
