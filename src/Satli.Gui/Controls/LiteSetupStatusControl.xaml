@@ -1,0 +1,37 @@
+<UserControl
+    x:Class="Satli_Gui.Controls.LiteSetupStatusControl"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <UserControl.Resources>
+        <Style x:Key="CompleteStatusStyle" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{ThemeResource SystemFillColorSuccessBrush}" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+        </Style>
+        <Style x:Key="PendingStatusStyle" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{ThemeResource TextFillColorSecondaryBrush}" />
+        </Style>
+    </UserControl.Resources>
+    <StackPanel Spacing="14">
+        <Grid ColumnSpacing="24" RowSpacing="10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+            <TextBlock Text="Millennium" />
+            <TextBlock x:Name="MillenniumValue" Grid.Column="1" Text="检查中…" />
+            <TextBlock Grid.Row="1" Text="SATLI-lite" />
+            <TextBlock x:Name="InstalledValue" Grid.Row="1" Grid.Column="1" Text="检查中…" />
+            <TextBlock Grid.Row="2" Text="lite 启用状态" />
+            <TextBlock x:Name="EnabledValue" Grid.Row="2" Grid.Column="1" Text="检查中…" />
+            <TextBlock Grid.Row="3" Text="运行连接" />
+            <TextBlock x:Name="ConnectionValue" Grid.Row="3" Grid.Column="1" Text="检查中…" />
+        </Grid>
+        <TextBlock x:Name="NextStepText" Text="正在检查安装与启用状态…" TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+    </StackPanel>
+</UserControl>

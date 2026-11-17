@@ -75,8 +75,7 @@
                     </Grid.ColumnDefinitions>
                     <StackPanel VerticalAlignment="Center" Spacing="3">
                         <TextBlock Text="SATLI-lite" Style="{StaticResource BodyStrongTextBlockStyle}" />
-                        <TextBlock x:Name="LiteStatusText" Text="正在检查 Millennium 与插件安装…" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
-                        <TextBlock Text="缺少 Millennium 时一并下载安装；已有安装会保留。" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
+                        <controls:LiteSetupStatusControl x:Name="LiteStatusControl" MaxWidth="460" Margin="0,8,0,0" />
                     </StackPanel>
                     <Button x:Name="ManageLiteButton" Grid.Column="1" Content="安装 / 管理 SATLI-lite" Click="ManageLite_Click" />
                 </Grid>

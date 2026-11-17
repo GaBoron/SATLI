@@ -29,6 +29,19 @@ public sealed class LiteClient
     public string PluginPath => LitePluginInstaller.PluginPath(_steam);
     public string SteamDirectory => _steam;
 
+    public async Task<LiteSetupStatus> InspectSetupAsync(CancellationToken cancellationToken = default)
+    {
+        var connection = await InspectAsync(cancellationToken).ConfigureAwait(false);
+        var millennium = MillenniumInstallation.IsInstalled(_steam);
+        var plugin = File.Exists(PluginPath);
+        var enabled = millennium && plugin
+            ? await MillenniumInstallation.ReadLiteEnabledAsync(_steam, cancellationToken).ConfigureAwait(false)
+            : null;
+        // A live compatible backend proves activation when the persisted selection cannot be read.
+        if (enabled is null && connection.Connected) enabled = true;
+        return new(millennium, plugin, enabled, connection);
+    }
+
     public async Task<LiteConnection> InspectAsync(CancellationToken cancellationToken = default)
     {
         if (File.Exists(Path.Combine(_steam, "millennium", "plugins", "satli.star")))

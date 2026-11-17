@@ -20,12 +20,12 @@ public sealed partial class SettingsPage
         var settings = ViewModel.Settings;
         try
         {
-            var connection = await Task.Run(async () => await LiteWorkflowService.Client(settings).InspectAsync());
-            if (inspection == _liteInspection) LiteStatusText.Text = connection.Message;
+            var status = await Task.Run(async () => await LiteWorkflowService.Client(settings).InspectSetupAsync());
+            if (inspection == _liteInspection) LiteStatusControl.Update(status);
         }
         catch (Exception exception)
         {
-            if (inspection == _liteInspection) LiteStatusText.Text = "尚未检测到可用安装，请检查 Steam 目录后打开管理入口。";
+            if (inspection == _liteInspection) LiteStatusControl.ShowUnavailable();
             await App.Logs.WriteAsync("警告", "SATLI-lite 安装", "设置页安装检测未完成；可检查 Steam 目录后重试。");
             await App.Logs.WriteExceptionDetailsAsync("SATLI-lite 安装", exception);
         }
