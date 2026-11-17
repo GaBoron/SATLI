@@ -5,6 +5,19 @@ namespace Satli_Gui.Services;
 /// <summary>Keeps installation, persisted activation and live connection distinct in setup guidance.</summary>
 internal sealed record LiteSetupStatusDisplay(string Millennium, string Installed, string Enabled, string Connection, string NextStep)
 {
+    public static string SummaryFor(LiteSetupStatus status)
+    {
+        if (status.Connection.State == "legacy_bridge") return "发现旧显示桥，等待迁移。";
+        if (!status.MillenniumInstalled) return "尚未安装 Millennium。";
+        if (!status.PluginInstalled) return "Millennium 已安装，lite 待安装。";
+        if (status.PluginEnabled == false) return "已安装，尚未启用。";
+        if (status.Connection.State == "incompatible") return "已安装，需要更新。";
+        if (status.Connection.Connected) return "已连接，可使用译文。";
+        if (status.PluginEnabled == true)
+            return status.Connection.State == "steam_stopped" ? "已启用，等待 Steam 启动。" : "已启用，等待连接。";
+        return "已安装，启用状态待确认。";
+    }
+
     public static LiteSetupStatusDisplay From(LiteSetupStatus status)
     {
         var connection = status.Connection;

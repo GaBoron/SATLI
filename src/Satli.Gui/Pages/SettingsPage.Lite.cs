@@ -21,11 +21,11 @@ public sealed partial class SettingsPage
         try
         {
             var status = await Task.Run(async () => await LiteWorkflowService.Client(settings).InspectSetupAsync());
-            if (inspection == _liteInspection) LiteStatusControl.Update(status);
+            if (inspection == _liteInspection) LiteStatusSummary.Text = LiteSetupStatusDisplay.SummaryFor(status);
         }
         catch (Exception exception)
         {
-            if (inspection == _liteInspection) LiteStatusControl.ShowUnavailable();
+            if (inspection == _liteInspection) LiteStatusSummary.Text = "暂时无法确认状态，请打开管理入口检查。";
             await App.Logs.WriteAsync("警告", "SATLI-lite 安装", "设置页安装检测未完成；可检查 Steam 目录后重试。");
             await App.Logs.WriteExceptionDetailsAsync("SATLI-lite 安装", exception);
         }

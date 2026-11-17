@@ -75,7 +75,7 @@
                     </Grid.ColumnDefinitions>
                     <StackPanel VerticalAlignment="Center" Spacing="3">
                         <TextBlock Text="SATLI-lite" Style="{StaticResource BodyStrongTextBlockStyle}" />
-                        <controls:LiteSetupStatusControl x:Name="LiteStatusControl" MaxWidth="460" Margin="0,8,0,0" />
+                        <TextBlock x:Name="LiteStatusSummary" Text="正在检查安装状态…" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextTrimming="CharacterEllipsis" />
                     </StackPanel>
                     <Button x:Name="ManageLiteButton" Grid.Column="1" Content="安装 / 管理 SATLI-lite" Click="ManageLite_Click" />
                 </Grid>
