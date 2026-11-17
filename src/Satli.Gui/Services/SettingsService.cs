@@ -101,6 +101,7 @@ public sealed class SettingsService
                     SteamDirectory = settings.SteamDirectory,
                     DataDirectory = settings.DataDirectory,
                     Offline = settings.Offline,
+                    UseLegacyBinInstallation = settings.UseLegacyBinInstallation,
                     Theme = settings.Theme,
                     Material = WindowMaterialService.Normalize(settings.Material),
                     LoggingEnabled = settings.LoggingEnabled,

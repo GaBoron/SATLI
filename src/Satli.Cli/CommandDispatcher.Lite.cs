@@ -140,11 +140,20 @@ internal sealed partial class CommandDispatcher
     {
         RequireYes(args);
         var steam = Satli.Core.Steam.SteamLocator.FindSteamDirectory(args.SteamDirectory);
-        if (args.Has("--offline") && !File.Exists(LitePluginInstaller.PluginPath(steam)))
-            throw new PreflightException("离线模式下无法首次下载 SATLI-lite");
+        if (!File.Exists(LitePluginInstaller.PluginPath(steam)) && File.Exists(LitePluginInstaller.LegacyPluginPath(steam)))
+            throw new PreflightException("发现旧 SATLI 显示桥。请退出 Steam 并确认移除旧桥后，再安装 lite。");
+        if (args.Has("--offline") && (!MillenniumInstallation.IsInstalled(steam) || !File.Exists(LitePluginInstaller.PluginPath(steam))))
+            throw new PreflightException("离线模式下无法首次下载 Millennium 或 SATLI-lite");
         using var http = NetworkClient();
-        _events.Emit("lite-install", "item-started", new JsonObject { ["message"] = "正在检查 SATLI-lite，缺少时下载官方安装包" });
-        var result = await LitePluginInstaller.InstallAsync(steam, http);
+        _events.Emit("lite-install", "item-started", new JsonObject { ["message"] = "正在检查 Millennium 和 SATLI-lite，缺少时下载并校验官方组件" });
+        void Progress(string message) => _events.Emit("lite-install", "item-progress", new JsonObject { ["message"] = message });
+        var hostInstalled = await MillenniumInstaller.EnsureInstalledAsync(steam, http, args.DataDirectory, onProgress: Progress);
+        _events.Emit("lite-install", "item-progress", new JsonObject
+        {
+            ["component"] = "millennium", ["installed"] = hostInstalled,
+            ["message"] = hostInstalled ? "Millennium 安装完成，正在准备 SATLI-lite。" : "已检测到 Millennium，保留现有安装。",
+        });
+        var result = await LitePluginInstaller.InstallAsync(steam, http, cacheDirectory: args.DataDirectory, onProgress: Progress);
         var message = result.AlreadyInstalled
             ? "已发现 SATLI-lite，保留现有安装，不重复下载；后续更新由 lite 自身管理。请在 Steam → Millennium → Plugins 检查启用状态。"
             : "插件文件已校验并保存；请在 Steam → Millennium → Plugins 启用并重启 Steam。尚未应用译文。";
@@ -153,6 +162,7 @@ internal sealed partial class CommandDispatcher
         _events.Emit("lite-install", "completed", new JsonObject
         {
             ["already_installed"] = result.AlreadyInstalled, ["plugin_path"] = result.PluginPath,
+            ["millennium_installed"] = hostInstalled,
             ["legacy_bridge_present"] = legacyPresent,
             ["message"] = message,
             ["exit_code"] = 0,

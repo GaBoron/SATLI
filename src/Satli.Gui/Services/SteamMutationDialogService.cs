@@ -12,7 +12,7 @@ public sealed class SteamMutationDialogService
         _workflow = new SteamMutationWorkflow(steam ?? new SteamProcessController());
     }
 
-    public async Task<bool> ExecuteAsync(XamlRoot xamlRoot, Func<Task<bool>> operationAsync)
+    public async Task<bool> ExecuteAsync(XamlRoot xamlRoot, Func<Task<bool>> operationAsync, string? explanation = null)
     {
         SteamMutationOutcome outcome;
         try
@@ -20,7 +20,7 @@ public sealed class SteamMutationDialogService
             outcome = await _workflow.ExecuteAsync(
                 async () =>
                 {
-                    var choice = await ShowChoiceAsync(xamlRoot);
+                    var choice = await ShowChoiceAsync(xamlRoot, explanation);
                     await App.Logs.WriteAsync(
                         "详细",
                         "Steam 进程控制",
@@ -66,7 +66,7 @@ public sealed class SteamMutationDialogService
         _ => "取消",
     };
 
-    private static async Task<SteamRunningChoice> ShowChoiceAsync(XamlRoot xamlRoot)
+    private static async Task<SteamRunningChoice> ShowChoiceAsync(XamlRoot xamlRoot, string? explanation)
     {
         var dialog = new ContentDialog
         {
@@ -74,7 +74,7 @@ public sealed class SteamMutationDialogService
             Title = "Steam 正在运行",
             Content = new TextBlock
             {
-                Text = "Steam 可能覆盖成就文件。“关闭并重启”仅在操作成功后于后台重启 Steam。",
+                Text = (explanation ?? "Steam 可能覆盖成就文件。") + "“关闭并重启”仅在操作成功后于后台重启 Steam。",
                 TextWrapping = TextWrapping.Wrap,
             },
             PrimaryButtonText = "强制关闭",

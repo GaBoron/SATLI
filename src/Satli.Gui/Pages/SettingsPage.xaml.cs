@@ -42,6 +42,7 @@ public sealed partial class SettingsPage : Page
         _steamDirectory = ViewModel.Settings.SteamDirectory;
         _dataDirectory = ViewModel.Settings.DataDirectory;
         OfflineSwitch.IsOn = ViewModel.Settings.Offline;
+        LegacyBinSwitch.IsOn = ViewModel.Settings.UseLegacyBinInstallation;
         ThemeBox.SelectedIndex = ViewModel.Settings.Theme switch { "light" => 1, "dark" => 2, _ => 0 };
         MaterialBox.SelectedIndex = ViewModel.Settings.Material switch { "acrylic" => 1, "solid" => 2, _ => 0 };
         LoggingSwitch.IsOn = ViewModel.Settings.LoggingEnabled;
@@ -93,6 +94,7 @@ public sealed partial class SettingsPage : Page
                 SteamDirectory = _steamDirectory,
                 DataDirectory = _dataDirectory,
                 Offline = OfflineSwitch.IsOn,
+                UseLegacyBinInstallation = LegacyBinSwitch.IsOn,
                 Theme = theme,
                 Material = material,
                 LoggingEnabled = LoggingSwitch.IsOn,
@@ -221,6 +223,7 @@ public sealed partial class SettingsPage : Page
     private async void OfflineSwitch_Toggled(object sender, RoutedEventArgs e)
     {
         UpdateToggleStateText(OfflineSwitch, OfflineStateText);
+        UpdateToggleStateText(LegacyBinSwitch, LegacyBinStateText);
         SteamLibrarySettingsEditor.SetOffline(OfflineSwitch.IsOn);
         if (!_isInitializing)
         {
@@ -275,7 +278,7 @@ public sealed partial class SettingsPage : Page
         {
             "detailed" => "包含基础日志，并增加 App ID、游戏名、语言、数量、文件名、工程与 AI 生成结果摘要、界面资源加载结果、逐项事件、后台预加载与并行准备耗时和异常类型；不记录 AI 密钥、请求或回复正文。",
             "debug" => "包含详细日志，并记录参数、CLI 事件摘要、标准错误、耗时、完整路径、异常堆栈和运行环境；不记录译文正文，重启后自动恢复为“详细”。",
-            _ => "记录各功能的关键开始与结果、用户取消、警告和错误摘要，包括 JSON 校验、本地译文发送、lite 安装与旧桥迁移、连接及请求结果；不记录译文正文。",
+            _ => "记录各功能的关键开始与结果、用户取消、警告和错误摘要，包括 JSON 校验、本地译文发送、Millennium 与 lite 安装、旧方式安装开关、旧桥迁移、连接及请求结果；不记录译文正文。",
         };
     }
 

@@ -11,7 +11,12 @@ public sealed class SchemaRevisionService
         var result = await RunAsync(["schema", "revisions", "list", game.AppId, "--jsonl"]);
         return result.Events
             .Where(item => item.Operation == "schema-revisions-list" && item.Event == "item-succeeded")
-            .Select(item => SchemaRevisionItem.FromPayload(item.Payload))
+            .Select(item =>
+            {
+                var revision = SchemaRevisionItem.FromPayload(item.Payload);
+                revision.BinInstallationEnabled = App.ViewModel.Settings.UseLegacyBinInstallation;
+                return revision;
+            })
             .ToArray();
     }
 

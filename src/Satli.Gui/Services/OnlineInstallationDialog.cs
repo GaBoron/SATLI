@@ -23,31 +23,47 @@ internal static class OnlineInstallationDialog
         content.Children.Add(description);
         var dialog = new ContentDialog { XamlRoot = root, Title = "安装翻译", Content = content,
             PrimaryButtonText = "使用 lite", CloseButtonText = "取消" };
+        bool IsBin() => (method.SelectedItem as ComboBoxItem)?.Tag?.ToString() == "bin";
+        void UpdateMethod()
+        {
+            var selected = method.SelectedItem as ComboBoxItem;
+            var bin = IsBin();
+            language.Visibility = bin || selected is null ? Visibility.Collapsed : Visibility.Visible;
+            description.Text = selected is null ? LegacyBinInstallation.LockedMessage
+                : bin ? "旧方式：备份并写入本机成就文件，可能不生效或被 Steam 覆盖。"
+                : "使用 SATLI-lite 在 Steam 中显示译文；缺少 Millennium 时由 SATLI 一并下载安装。";
+            dialog.PrimaryButtonText = bin ? "安装 BIN" : "使用 lite";
+            dialog.IsPrimaryButtonEnabled = selected?.IsEnabled == true;
+        }
         void UpdateVariant()
         {
             if (variant.SelectedItem is not SchemaVariantOption option) return;
-            method.ItemsSource = option.HasJson
-                ? option.HasBin ? new[] { "JSON（lite）", "BIN" } : new[] { "JSON（lite）" }
-                : new[] { "BIN" };
-            method.SelectedIndex = 0;
+            var unlocked = App.ViewModel.Settings.UseLegacyBinInstallation;
+            method.Items.Clear();
+            method.Items.Add(new ComboBoxItem { Content = "JSON（lite）", Tag = "json", IsEnabled = option.HasJson });
+            var binItem = new ComboBoxItem
+            {
+                Content = !option.HasBin ? "BIN（此译本未提供）" : unlocked ? "BIN（旧方式）" : "BIN（已锁定）",
+                Tag = "bin", IsEnabled = option.HasBin && unlocked,
+            };
+            ToolTipService.SetToolTip(binItem, !unlocked ? LegacyBinInstallation.LockedMessage
+                : "旧方式会写入 Steam 成就缓存，可能不生效或被覆盖。");
+            method.Items.Add(binItem);
+            method.SelectedIndex = option.HasJson ? 0 : option.HasBin && unlocked ? 1 : -1;
+            method.PlaceholderText = "BIN 已锁定，请在设置中解锁";
             language.ItemsSource = option.Languages.Select(SteamLanguageCatalog.CreateOption).ToArray();
             language.DisplayMemberPath = nameof(SteamLanguageOption.DisplayName);
             language.SelectedIndex = Math.Max(0, option.Languages.ToList().IndexOf("schinese"));
+            UpdateMethod();
         }
         variant.SelectionChanged += (_, _) => UpdateVariant();
-        method.SelectionChanged += (_, _) =>
-        {
-            var bin = method.SelectedItem?.ToString() == "BIN";
-            language.Visibility = bin ? Visibility.Collapsed : Visibility.Visible;
-            description.Text = bin ? "备份并写入本机成就文件。" : "使用 SATLI-lite 在 Steam 中显示译文。";
-            dialog.PrimaryButtonText = bin ? "安装 BIN" : "使用 lite";
-        };
+        method.SelectionChanged += (_, _) => UpdateMethod();
         UpdateVariant();
         var result = await dialog.ShowAsync();
-        if (result == ContentDialogResult.None) return null;
+        if (result != ContentDialogResult.Primary || method.SelectedItem is not ComboBoxItem { IsEnabled: true }) return null;
         if (variant.SelectedItem is not SchemaVariantOption chosen) return null;
         game.SelectedVariant = chosen;
-        return new(method.SelectedItem?.ToString() == "BIN" ? "bin" : "json",
+        return new(IsBin() ? "bin" : "json",
             chosen.VariantId, (language.SelectedItem as SteamLanguageOption)?.Code ?? "");
     }
 

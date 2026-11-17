@@ -34,7 +34,7 @@ public sealed class LiteClient
         if (File.Exists(Path.Combine(_steam, "millennium", "plugins", "satli.star")))
             return new("legacy_bridge", "发现旧 SATLI 显示桥。可先选择已管理译文发送到 lite；移除旧桥后再启用 lite，原快照和备份会保留。", []);
         if (!MillenniumInstallation.IsInstalled(_steam))
-            return new("millennium_missing", "未安装 Millennium，请按官方指南安装。", []);
+            return new("millennium_missing", "尚未安装 Millennium。SATLI 可下载并安装 Millennium 和 SATLI-lite，已有组件会保留。", []);
         if (!File.Exists(PluginPath))
             return new("not_installed", "未安装 SATLI-lite。", []);
         var protocol = await ReadAsync(Path.Combine(_root, "protocol.json"), 65536, cancellationToken).ConfigureAwait(false);

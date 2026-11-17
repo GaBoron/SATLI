@@ -21,6 +21,7 @@ public sealed class SchemaRevisionItem
     public string VariantId { get; set; } = string.Empty;
     public bool IsCurrent { get; set; }
     public bool IsAvailable { get; set; } = true;
+    public bool BinInstallationEnabled { get; set; }
 
     public string ActionText => Action switch
     {
@@ -57,7 +58,7 @@ public sealed class SchemaRevisionItem
         ? $"commit {ShortCommit} · SHA-256 {SchemaSha256}"
         : $"成品已丢失 · 原记录 SHA-256 {SchemaSha256}";
     public bool CanPreview => IsAvailable;
-    public bool CanActivate => IsAvailable && !IsCurrent;
+    public bool CanActivate => IsAvailable && !IsCurrent && BinInstallationEnabled;
     public Visibility CurrentVisibility => IsCurrent ? Visibility.Visible : Visibility.Collapsed;
 
     public static SchemaRevisionItem FromPayload(JsonElement payload) => new()

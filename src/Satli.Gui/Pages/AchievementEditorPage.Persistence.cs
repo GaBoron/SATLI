@@ -65,6 +65,11 @@ public sealed partial class AchievementEditorPage
     private async Task<bool> SaveChangesAsync()
     {
         if (_project is not null) return await SaveDraftCheckpointAsync(force: true);
+        if (!App.ViewModel.Settings.UseLegacyBinInstallation)
+        {
+            App.ViewModel.ShowInfo(LegacyBinInstallation.LockedMessage, InfoBarSeverity.Warning);
+            return false;
+        }
         if (!await ConfirmIncompleteAsync("保存到本机"))
         {
             return false;

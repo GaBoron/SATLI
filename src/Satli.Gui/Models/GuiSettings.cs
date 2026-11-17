@@ -5,6 +5,7 @@ public sealed class GuiSettings
     public string SteamDirectory { get; set; } = string.Empty;
     public string DataDirectory { get; set; } = string.Empty;
     public bool Offline { get; set; }
+    public bool UseLegacyBinInstallation { get; set; }
     public string Theme { get; set; } = "system";
     public string Material { get; set; } = "mica";
     public bool LoggingEnabled { get; set; } = true;

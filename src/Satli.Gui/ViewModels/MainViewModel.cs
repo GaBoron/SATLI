@@ -171,6 +171,8 @@ public sealed class MainViewModel : ObservableObject
             debug: true);
         await _settingsService.SaveAsync(settings);
         Settings = settings;
+        if (previous.UseLegacyBinInstallation != settings.UseLegacyBinInstallation)
+            await App.Logs.WriteAsync("信息", "安装方式", settings.UseLegacyBinInstallation ? "已解锁旧方式 BIN 安装。" : "已锁定旧方式 BIN 安装。");
         _updateService.ConfigureNetwork(settings.Network);
         OnPropertyChanged(nameof(Settings));
         OnPropertyChanged(nameof(CurrentSteamDirectory));

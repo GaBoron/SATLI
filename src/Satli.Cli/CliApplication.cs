@@ -54,7 +54,7 @@ public static class CliApplication
                 await output.WriteLineAsync("catalog-json APP_ID --variant VARIANT：校验并缓存 JSON，不修改 Steam BIN。");
                 await output.WriteLineAsync("schema export APP_ID --format json --output FILE [--variant-id ID] [--source BIN_OR_ZIP | --managed]：导出独立翻译 JSON；可加 --edits-file FILE --target-language CODE 导出编辑结果，不写回 Steam 或修订历史。");
                 await output.WriteLineAsync("schema revisions export APP_ID REVISION --format json --output FILE [--variant-id ID]：导出历史修订；JSON 仅包含显示文本，不能取代完整 BIN。");
-                await output.WriteLineAsync("lite-install --yes：下载并校验官方插件，完成后仍需在 Steam 中启用。");
+                await output.WriteLineAsync("lite-install --yes：缺少时下载并安装官方 Millennium 和插件；首次安装 Millennium 需退出 Steam，完成后仍需启用插件。");
                 await output.WriteLineAsync("lite retire-legacy --yes：退出 Steam 后，仅将旧 satli.star 移入回收站，保留译文、快照和备份。");
                 await output.WriteLineAsync("lite inspect | status APP_ID | resume APP_ID：检查连接、查询实际状态或刷新原请求。");
                 await output.WriteLineAsync("lite import APP_ID (--catalog | --source FILE | --managed) --language LANGUAGE --yes [--variant ID]：发送 JSON 或转换 BIN/ZIP。默认拒绝覆盖。");

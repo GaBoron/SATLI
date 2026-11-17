@@ -16,6 +16,7 @@ public sealed partial class LocalGamesPage : Page
     private bool _isImporting;
 
     public GameInventoryViewModel ViewModel { get; } = new(GameInventoryScope.Local);
+    public MainViewModel Main => App.ViewModel;
 
     public LocalGamesPage()
     {
@@ -98,7 +99,7 @@ public sealed partial class LocalGamesPage : Page
             _isImporting = false;
             if (sender is AppBarButton completedButton)
             {
-                completedButton.IsEnabled = true;
+                completedButton.IsEnabled = Main.Settings.UseLegacyBinInstallation;
             }
         }
     }

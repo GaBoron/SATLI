@@ -76,9 +76,25 @@
                     <StackPanel VerticalAlignment="Center" Spacing="3">
                         <TextBlock Text="SATLI-lite" Style="{StaticResource BodyStrongTextBlockStyle}" />
                         <TextBlock x:Name="LiteStatusText" Text="正在检查 Millennium 与插件安装…" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
-                        <TextBlock Text="独立安装、启用指引和旧桥迁移；无需先选择游戏或安装 BIN。" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
+                        <TextBlock Text="缺少 Millennium 时一并下载安装；已有安装会保留。" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
                     </StackPanel>
                     <Button x:Name="ManageLiteButton" Grid.Column="1" Content="安装 / 管理 SATLI-lite" Click="ManageLite_Click" />
+                </Grid>
+            </Border>
+            <Border Style="{StaticResource SettingsCardStyle}">
+                <Grid Style="{StaticResource SettingsRowStyle}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel VerticalAlignment="Center" Spacing="3">
+                        <TextBlock Text="使用旧方式安装" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                        <TextBlock Text="解锁 BIN 安装、本地导入与写回。旧方式会修改 Steam 成就缓存，可能不生效或被 Steam 覆盖；建议使用 SATLI-lite。" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+                        <TextBlock x:Name="LegacyBinStateText" Style="{StaticResource SettingsToggleStateTextStyle}" />
+                        <ToggleSwitch x:Name="LegacyBinSwitch" Style="{StaticResource SettingsToggleSwitchStyle}" Toggled="LegacyBinSwitch_Toggled" AutomationProperties.Name="使用旧方式安装，解锁 BIN 安装" />
+                    </StackPanel>
                 </Grid>
             </Border>
 

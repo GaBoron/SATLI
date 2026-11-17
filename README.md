@@ -34,7 +34,7 @@
 
 1. 从 Microsoft Store 安装 SATLI，或在 [Releases](https://github.com/GaBoron/SATLI/releases/latest) 下载独立安装版。
 2. 打开软件，在“云端”页搜索游戏并预览译本。
-3. 选择“JSON（lite）”在 Steam 中显示译文，或选择“BIN”管理本机成就文件。首次使用 lite 时按界面指引安装并启用插件。
+3. 选择“JSON（lite）”在 Steam 中显示译文。SATLI 会下载安装缺少的 Millennium 和 lite，已有组件会保留；随后按指引启用插件。BIN 安装默认锁定，可在设置中开启“使用旧方式安装”后解锁。
 
 需要 Windows 10 2004 或更新版本、x64 处理器及 Steam。安装渠道、权限与操作说明见 [使用指南](docs/USAGE.md)。
 

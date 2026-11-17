@@ -30,9 +30,13 @@ SATLI can download the independent MIT-licensed
 [SATLI-lite](https://github.com/GaBoron/SATLI-lite) plugin from its official GitHub Releases
 when the user confirms installation in Settings or during JSON display management.
 No display plugin or its JavaScript/Lua build dependencies are bundled.
-SATLI-lite requires the independently installed MIT-licensed
+SATLI-lite requires the MIT-licensed
 [Millennium](https://github.com/SteamClientHomebrew/Millennium) framework.
-Millennium is not bundled or installed automatically by SATLI.
+When the user confirms setup, SATLI downloads missing Millennium components from
+the framework's official GitHub Releases, verifies the published asset digest,
+and installs the Windows archive into the selected Steam directory. Existing
+installations are preserved. Neither Millennium nor its standalone installer is
+bundled with SATLI; Millennium retains its own copyright and [MIT license](https://github.com/SteamClientHomebrew/Millennium/blob/main/LICENSE.md).
 
 ## Translation data and game content
 

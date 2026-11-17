@@ -52,7 +52,7 @@
                                 <Button Content="预览" Click="Preview_Click" Tag="{x:Bind}" IsEnabled="{x:Bind CanPreview}" />
                                 <Button Content="导出" Click="Export_Click" Tag="{x:Bind}" IsEnabled="{x:Bind CanPreview}" />
                                 <Button Content="导出 JSON" Click="ExportJson_Click" Tag="{x:Bind}" IsEnabled="{x:Bind CanPreview}" />
-                                <Button Content="设为当前" Click="Activate_Click" Tag="{x:Bind}" IsEnabled="{x:Bind CanActivate}" />
+                                <Button Content="设为当前" Click="Activate_Click" Tag="{x:Bind}" IsEnabled="{x:Bind CanActivate}" ToolTipService.ToolTip="写回 BIN 需在设置中开启“使用旧方式安装”" />
                             </StackPanel>
                         </Grid>
                     </Border>

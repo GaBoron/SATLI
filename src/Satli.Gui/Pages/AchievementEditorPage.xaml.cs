@@ -90,6 +90,9 @@ public sealed partial class AchievementEditorPage : Page
             $"App ID {_game.AppId} · {_inspection.Rows.Count} 个成就 · " + (_project is null ? "本地 BIN" :
                 $"JSON 工程 · {_project.VariantId} · 来源：{_project.Source} · 获取于 {_project.RetrievedAt.ToLocalTime():g}");
         SaveButton.Label = _project is null ? "保存到本机" : "保存草稿";
+        SaveButton.IsEnabled = _project is not null || App.ViewModel.Settings.UseLegacyBinInstallation;
+        ToolTipService.SetToolTip(SaveButton, _project is null && !SaveButton.IsEnabled
+            ? LegacyBinInstallation.LockedMessage : null);
         ExportBinButton.Visibility = ExportZipButton.Visibility = HistoryButton.Visibility =
             _project is null ? Visibility.Visible : Visibility.Collapsed;
         var referenceLanguageOptions = _inspection.Languages

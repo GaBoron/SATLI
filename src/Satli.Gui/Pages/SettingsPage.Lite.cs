@@ -8,6 +8,12 @@ public sealed partial class SettingsPage
 {
     private int _liteInspection;
 
+    private async void LegacyBinSwitch_Toggled(object sender, RoutedEventArgs e)
+    {
+        UpdateToggleStateText(LegacyBinSwitch, LegacyBinStateText);
+        if (!_isInitializing) await ApplySettingsAsync();
+    }
+
     private async Task RefreshLiteDescriptionAsync()
     {
         var inspection = ++_liteInspection;

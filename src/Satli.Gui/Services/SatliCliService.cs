@@ -16,6 +16,11 @@ public sealed class SatliCliService
         DownloadSourceSettings? downloadSourceSettings = null)
     {
         var argumentList = arguments.ToList();
+        if (LegacyBinInstallation.IsInstallation(argumentList) && !App.ViewModel.Settings.UseLegacyBinInstallation)
+        {
+            await App.Logs.WriteAsync("警告", "安装方式", "已阻止锁定状态下的 BIN 写入。");
+            throw new InvalidOperationException(LegacyBinInstallation.LockedMessage);
+        }
         onDiagnostic?.Invoke($"请求参数={FormatArguments(argumentList)}");
         var invocation = new CliInvocation(
             argumentList,

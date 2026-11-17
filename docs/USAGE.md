@@ -16,7 +16,7 @@ SATLI 用于管理 Windows 本机成就文件、制作翻译，以及通过 SATL
 
 1. 在“云端”页搜索游戏名或 App ID，点击“查看成就”预览语言与版本。
 2. 点击“安装”，选择译本、目标语言及安装方式；“可管理”页也提供批量入口。
-3. 选择 **JSON（lite）** 时，SATLI 将译文交给 SATLI lite 显示；选择 **BIN** 时，SATLI 校验并备份本机文件，再安装所选译本。
+3. 默认选择 **JSON（lite）**，将译文交给 SATLI lite 显示。**BIN** 选项保持可见但默认锁定；如需使用，在“设置 → Steam 译文显示”开启“使用旧方式安装”，再选择 BIN，SATLI 会校验并备份本机文件后安装译本。
 
 JSON 路线无需修改 Steam BIN，BIN 路线也不依赖 lite。只浏览与预览译文时不需要安装 lite。已加载的列表和译文可以离线查看，首次下载仍需联网。
 
@@ -24,7 +24,9 @@ Steam 可能在更新后重建 BIN 缓存，因此更推荐使用 lite 显示译
 
 ## 使用 SATLI lite
 
-可以在“设置 → Steam 译文显示 → 安装 / 管理 SATLI-lite”检查或安装插件，也可在选择 JSON 安装时按提示操作。SATLI 从 [lite 官方 Release](https://github.com/GaBoron/SATLI-lite/releases/latest) 获取插件；**Millennium 需要按其[官方指南](https://docs.steambrew.app/users/getting-started/installation)另行安装**。
+可以在“设置 → Steam 译文显示 → 安装 / 管理 SATLI-lite”检查或安装插件，也可在选择 JSON 安装时按提示操作。SATLI 会从官方 Release 下载并校验缺少的 [Millennium](https://github.com/SteamClientHomebrew/Millennium/releases/latest) 和 [lite](https://github.com/GaBoron/SATLI-lite/releases/latest)，无需另行下载安装器；本机已有组件时保留原安装，不重复下载或覆盖。
+
+首次安装 Millennium 需要退出 Steam，程序会提供关闭及完成后重启的选择。下载沿用 SATLI 的代理与 DNS 设置；GitHub 发布信息接口不可用时，改用已核实的官方固定版本。失败时可重试，已校验的安装包会保留供后续安装使用。
 
 安装后，在 **Steam → Millennium → Plugins** 启用 SATLI lite，并彻底退出、重新启动 Steam，再回到 SATLI 连接。
 
@@ -39,7 +41,7 @@ Steam 可能在更新后重建 BIN 缓存，因此更推荐使用 lite 显示译
 
 “已管理 → BIN”提供安装记录、状态检查及恢复；“已管理 → JSON”显示 lite 的译文和请求状态。BIN 文件被 Steam 或其他软件改动后，普通恢复会拒绝覆盖；确认强制恢复时，会先归档当前文件。JSON 安装不创建 BIN 备份，也不使用 BIN 恢复操作。
 
-在“本地”页选择游戏并点击“编辑”，可修改成就名称和说明、添加目标语言、对照其他语言，并自动保存草稿。写回本机前必须退出 Steam；如果源文件或成就集合已变化，应用会阻止直接覆盖。需要投稿时，可以导出 BIN、标准 ZIP 或独立 JSON。
+在“本地”页选择游戏并点击“编辑”，可修改成就名称和说明、添加目标语言、对照其他语言，并自动保存草稿。安装本地 BIN、写回本机及将历史修订设为当前版本，均需先开启“使用旧方式安装”；关闭该选项不影响编辑、导出和恢复已有备份。写回本机前必须退出 Steam；如果源文件或成就集合已变化，应用会阻止直接覆盖。需要投稿时，可以导出 BIN、标准 ZIP 或独立 JSON。
 
 ## 制作、导入与贡献翻译
 
