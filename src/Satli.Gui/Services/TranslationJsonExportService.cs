@@ -1,6 +1,7 @@
 using System.Text.RegularExpressions;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Satli.Core;
 using Satli_Gui.Models;
 
 namespace Satli_Gui.Services;
@@ -109,7 +110,9 @@ public static partial class TranslationJsonExportService
         await App.Logs.WriteAsync("警告", "翻译 JSON", "翻译 JSON 未能导出，请检查界面中的校验结果。");
         await App.Logs.WriteAsync("详细", "翻译 JSON",
             $"异常类型={exception.GetType().Name}；HRESULT=0x{exception.HResult:X8}。", detailed: true);
-        await App.Logs.WriteAsync("调试", "翻译 JSON", exception.ToString(), debug: true);
+        // Integrity messages can include placeholders copied from source and translated text.
+        var details = exception is IntegrityException ? exception.StackTrace ?? "" : exception.ToString();
+        await App.Logs.WriteAsync("调试", "翻译 JSON", details, debug: true);
     }
 
     [GeneratedRegex("\\A[a-z0-9][a-z0-9-]{0,63}\\z", RegexOptions.CultureInvariant)]

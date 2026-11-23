@@ -1,5 +1,6 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Satli.Core;
 using Satli_Gui.Models;
 using Satli_Gui.Services;
 
@@ -37,16 +38,28 @@ public sealed partial class AchievementEditorPage
 
     private async void SendLite_Click(object sender, RoutedEventArgs e)
     {
-        if (_inspection is null || _game is null || !await ConfirmIncompleteAsync("发送到 SATLI-lite")) return;
-        if (_project is not null)
+        if (_inspection is null || _game is null) return;
+        if (!await ConfirmIncompleteAsync("发送到 SATLI-lite"))
+        {
+            await App.Logs.WriteAsync("信息", "SATLI-lite", "用户取消发送编辑器译文。");
+            return;
+        }
+        if (_project is { } project)
         {
             if (!await SaveDraftCheckpointAsync(force: true)) return;
-            try { await Task.Run(() => _project.Build(forPublication: true)); }
+            await App.Logs.WriteAsync("信息", "SATLI-lite", "开始发送前的 JSON 工程校验。");
+            try { await Task.Run(() => project.Build(forPublication: true)); }
             catch (Exception exception)
             {
                 App.ViewModel.ShowInfo($"译文校验未通过：{exception.Message}", InfoBarSeverity.Error);
+                await App.Logs.WriteAsync(exception is IntegrityException ? "警告" : "错误", "SATLI-lite",
+                    "发送前的 JSON 工程校验未通过，请检查界面提示。");
+                await App.Logs.WriteAsync("详细", "SATLI-lite",
+                    $"App ID={project.AppId}；异常类型={exception.GetType().Name}。", detailed: true);
+                await App.Logs.WriteAsync("调试", "SATLI-lite", exception.StackTrace ?? "", debug: true);
                 return;
             }
+            await App.Logs.WriteAsync("信息", "SATLI-lite", "发送前的 JSON 工程校验通过。");
         }
         var rows = _inspection.Rows.Select(row => new Satli.Core.Formats.AchievementPreviewRow(row.Index, row.ApiName,
             new Dictionary<string, Satli.Core.Formats.AchievementTranslation>(StringComparer.Ordinal)
