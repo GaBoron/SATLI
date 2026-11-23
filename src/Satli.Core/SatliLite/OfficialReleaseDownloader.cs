@@ -118,7 +118,7 @@ internal static class OfficialReleaseDownloader
             try
             {
                 using var request = new HttpRequestMessage(HttpMethod.Get, url);
-                request.Headers.UserAgent.ParseAdd("SATLI/3.0.1");
+                request.Headers.UserAgent.ParseAdd("SATLI/4.0.0");
                 using var response = await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, deadline.Token).ConfigureAwait(false);
                 response.EnsureSuccessStatusCode();
                 if (response.Content.Headers.ContentLength > limit) throw new IntegrityException("下载内容超过安全上限。");
